@@ -1,12 +1,12 @@
-defmodule PetalBoilerplateWeb do
+defmodule ListableTestWeb do
   @moduledoc """
   The entrypoint for defining your web interface, such
   as controllers, views, channels and so on.
 
   This can be used in your application as:
 
-      use PetalBoilerplateWeb, :controller
-      use PetalBoilerplateWeb, :view
+      use ListableTestWeb, :controller
+      use ListableTestWeb, :view
 
   The definitions below will be executed for every view,
   controller, etc, so keep them short and clean, focused
@@ -19,11 +19,11 @@ defmodule PetalBoilerplateWeb do
 
   def controller do
     quote do
-      use Phoenix.Controller, namespace: PetalBoilerplateWeb
+      use Phoenix.Controller, namespace: ListableTestWeb
 
       import Plug.Conn
-      import PetalBoilerplateWeb.Gettext
-      alias PetalBoilerplateWeb.Router.Helpers, as: Routes
+      import ListableTestWeb.Gettext
+      alias ListableTestWeb.Router.Helpers, as: Routes
     end
   end
 
@@ -31,7 +31,7 @@ defmodule PetalBoilerplateWeb do
     quote do
       use Phoenix.View,
         root: "lib/petal_boilerplate_web/templates",
-        namespace: PetalBoilerplateWeb
+        namespace: ListableTestWeb
 
       # Import convenience functions from controllers
       import Phoenix.Controller,
@@ -45,7 +45,7 @@ defmodule PetalBoilerplateWeb do
   def live_view do
     quote do
       use Phoenix.LiveView,
-        layout: {PetalBoilerplateWeb.LayoutView, "live.html"}
+        layout: {ListableTestWeb.LayoutView, "live.html"}
 
       unquote(view_helpers())
     end
@@ -72,7 +72,7 @@ defmodule PetalBoilerplateWeb do
   def channel do
     quote do
       use Phoenix.Channel
-      import PetalBoilerplateWeb.Gettext
+      import ListableTestWeb.Gettext
     end
   end
 
@@ -88,12 +88,12 @@ defmodule PetalBoilerplateWeb do
       # Import basic rendering functionality (render, render_layout, etc)
       import Phoenix.View
 
-      import PetalBoilerplateWeb.ErrorHelpers
-      import PetalBoilerplateWeb.Gettext
-      alias PetalBoilerplateWeb.Router.Helpers, as: Routes
+      import ListableTestWeb.ErrorHelpers
+      import ListableTestWeb.Gettext
+      alias ListableTestWeb.Router.Helpers, as: Routes
 
       # Import global components
-      import PetalBoilerplateWeb.Components.{
+      import ListableTestWeb.Components.{
         ColorSchemeSwitch
       }
 

@@ -8,13 +8,13 @@
 import Config
 
 config :petal_boilerplate,
-  ecto_repos: [PetalBoilerplate.Repo]
+  ecto_repos: [ListableTest.Repo]
 
 # Configures the endpoint
-config :petal_boilerplate, PetalBoilerplateWeb.Endpoint,
+config :petal_boilerplate, ListableTestWeb.Endpoint,
   url: [host: "localhost"],
-  render_errors: [view: PetalBoilerplateWeb.ErrorView, accepts: ~w(html json), layout: false],
-  pubsub_server: PetalBoilerplate.PubSub,
+  render_errors: [view: ListableTestWeb.ErrorView, accepts: ~w(html json), layout: false],
+  pubsub_server: ListableTest.PubSub,
   live_view: [signing_salt: "Fd8SWPu3"]
 
 # Configures the mailer
@@ -24,7 +24,7 @@ config :petal_boilerplate, PetalBoilerplateWeb.Endpoint,
 #
 # For production it's recommended to configure a different adapter
 # at the `config/runtime.exs`.
-config :petal_boilerplate, PetalBoilerplate.Mailer, adapter: Swoosh.Adapters.Local
+config :petal_boilerplate, ListableTest.Mailer, adapter: Swoosh.Adapters.Local
 
 # Swoosh API client is needed for adapters other than SMTP.
 config :swoosh, :api_client, false
@@ -49,7 +49,7 @@ config :phoenix, :json_library, Jason
 
 config :petal_components,
        :error_translator_function,
-       {PetalBoilerplateWeb.ErrorHelpers, :translate_error}
+       {ListableTestWeb.ErrorHelpers, :translate_error}
 
 config :tailwind,
   version: "3.1.8",

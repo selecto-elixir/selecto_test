@@ -1,4 +1,4 @@
-defmodule PetalBoilerplate.Repo do
+defmodule ListableTest.Repo do
   use Ecto.Repo,
     otp_app: :petal_boilerplate,
     adapter: Ecto.Adapters.Postgres

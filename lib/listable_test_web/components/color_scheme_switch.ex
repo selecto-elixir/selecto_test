@@ -1,4 +1,4 @@
-defmodule PetalBoilerplateWeb.Components.ColorSchemeSwitch do
+defmodule ListableTestWeb.Components.ColorSchemeSwitch do
   use Phoenix.Component
 
   @doc """

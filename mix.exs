@@ -1,4 +1,4 @@
-defmodule PetalBoilerplate.MixProject do
+defmodule ListableTest.MixProject do
   use Mix.Project
 
   def project do
@@ -19,7 +19,7 @@ defmodule PetalBoilerplate.MixProject do
   # Type `mix help compile.app` for more information.
   def application do
     [
-      mod: {PetalBoilerplate.Application, []},
+      mod: {ListableTest.Application, []},
       extra_applications: [:logger, :runtime_tools]
     ]
   end

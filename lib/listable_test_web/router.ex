@@ -1,11 +1,11 @@
-defmodule PetalBoilerplateWeb.Router do
-  use PetalBoilerplateWeb, :router
+defmodule ListableTestWeb.Router do
+  use ListableTestWeb, :router
 
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
     plug :fetch_live_flash
-    plug :put_root_layout, {PetalBoilerplateWeb.LayoutView, :root}
+    plug :put_root_layout, {ListableTestWeb.LayoutView, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
   end
@@ -14,7 +14,7 @@ defmodule PetalBoilerplateWeb.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/", PetalBoilerplateWeb do
+  scope "/", ListableTestWeb do
     pipe_through :browser
 
     get "/", PageController, :index
@@ -25,7 +25,7 @@ defmodule PetalBoilerplateWeb.Router do
   end
 
   # Other scopes may use custom stacks.
-  # scope "/api", PetalBoilerplateWeb do
+  # scope "/api", ListableTestWeb do
   #   pipe_through :api
   # end
 
@@ -41,7 +41,7 @@ defmodule PetalBoilerplateWeb.Router do
 
     scope "/" do
       pipe_through :browser
-      live_dashboard "/dashboard", metrics: PetalBoilerplateWeb.Telemetry
+      live_dashboard "/dashboard", metrics: ListableTestWeb.Telemetry
     end
   end
 

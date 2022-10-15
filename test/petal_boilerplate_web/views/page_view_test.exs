@@ -1,3 +1,3 @@
-defmodule PetalBoilerplateWeb.PageViewTest do
-  use PetalBoilerplateWeb.ConnCase, async: true
+defmodule ListableTestWeb.PageViewTest do
+  use ListableTestWeb.ConnCase, async: true
 end

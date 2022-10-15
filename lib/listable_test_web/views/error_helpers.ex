@@ -1,4 +1,4 @@
-defmodule PetalBoilerplateWeb.ErrorHelpers do
+defmodule ListableTestWeb.ErrorHelpers do
   @moduledoc """
   Conveniences for translating and building error messages.
   """
@@ -39,9 +39,9 @@ defmodule PetalBoilerplateWeb.ErrorHelpers do
     # should be written to the errors.po file. The :count option is
     # set by Ecto and indicates we should also apply plural rules.
     if count = opts[:count] do
-      Gettext.dngettext(PetalBoilerplateWeb.Gettext, "errors", msg, msg, count, opts)
+      Gettext.dngettext(ListableTestWeb.Gettext, "errors", msg, msg, count, opts)
     else
-      Gettext.dgettext(PetalBoilerplateWeb.Gettext, "errors", msg, opts)
+      Gettext.dgettext(ListableTestWeb.Gettext, "errors", msg, opts)
     end
   end
 end

@@ -1,6 +1,6 @@
-defmodule PetalBoilerplate do
+defmodule ListableTest do
   @moduledoc """
-  PetalBoilerplate keeps the contexts that define your domain
+  ListableTest keeps the contexts that define your domain
   and business logic.
 
   Contexts are also responsible for managing your data, regardless

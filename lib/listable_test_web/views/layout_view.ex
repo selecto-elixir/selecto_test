@@ -1,5 +1,5 @@
-defmodule PetalBoilerplateWeb.LayoutView do
-  use PetalBoilerplateWeb, :view
+defmodule ListableTestWeb.LayoutView do
+  use ListableTestWeb, :view
 
   # Phoenix LiveDashboard is available only in development by default,
   # so we instruct Elixir to not warn if the dashboard route is missing.

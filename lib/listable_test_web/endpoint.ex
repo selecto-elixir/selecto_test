@@ -1,4 +1,4 @@
-defmodule PetalBoilerplateWeb.Endpoint do
+defmodule ListableTestWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :petal_boilerplate
 
   # The session will be stored in the cookie and signed,
@@ -46,5 +46,5 @@ defmodule PetalBoilerplateWeb.Endpoint do
   plug Plug.MethodOverride
   plug Plug.Head
   plug Plug.Session, @session_options
-  plug PetalBoilerplateWeb.Router
+  plug ListableTestWeb.Router
 end
