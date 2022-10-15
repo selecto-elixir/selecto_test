@@ -7,11 +7,11 @@
 # General application configuration
 import Config
 
-config :petal_boilerplate,
+config :listable_test,
   ecto_repos: [ListableTest.Repo]
 
 # Configures the endpoint
-config :petal_boilerplate, ListableTestWeb.Endpoint,
+config :listable_test, ListableTestWeb.Endpoint,
   url: [host: "localhost"],
   render_errors: [view: ListableTestWeb.ErrorView, accepts: ~w(html json), layout: false],
   pubsub_server: ListableTest.PubSub,
@@ -24,7 +24,7 @@ config :petal_boilerplate, ListableTestWeb.Endpoint,
 #
 # For production it's recommended to configure a different adapter
 # at the `config/runtime.exs`.
-config :petal_boilerplate, ListableTest.Mailer, adapter: Swoosh.Adapters.Local
+config :listable_test, ListableTest.Mailer, adapter: Swoosh.Adapters.Local
 
 # Swoosh API client is needed for adapters other than SMTP.
 config :swoosh, :api_client, false

@@ -3,7 +3,7 @@ defmodule ListableTest.MixProject do
 
   def project do
     [
-      app: :petal_boilerplate,
+      app: :listable_test,
       version: "0.1.0",
       elixir: "~> 1.13",
       elixirc_paths: elixirc_paths(Mix.env()),

@@ -30,7 +30,7 @@ defmodule ListableTestWeb do
   def view do
     quote do
       use Phoenix.View,
-        root: "lib/petal_boilerplate_web/templates",
+        root: "lib/listable_test_web/templates",
         namespace: ListableTestWeb
 
       # Import convenience functions from controllers

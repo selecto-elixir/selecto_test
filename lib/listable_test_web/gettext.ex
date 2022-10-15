@@ -20,5 +20,5 @@ defmodule ListableTestWeb.Gettext do
 
   See the [Gettext Docs](https://hexdocs.pm/gettext) for detailed usage.
   """
-  use Gettext, otp_app: :petal_boilerplate
+  use Gettext, otp_app: :listable_test
 end
