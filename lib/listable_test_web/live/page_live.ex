@@ -1,39 +1,36 @@
 defmodule ListableTestWeb.PageLive do
   use ListableTestWeb, :live_view
 
+
+
+  defp listable_domain() do
+    %{
+      source: ListableTest.Test.Planet,
+      joins: [
+        :solar_system,
+        :satellites,
+      ],
+      requires_filters: [{"solar_system[id]", 1}],
+      required_order_by: [ {:desc, "mass"} ],
+      required_selected: ["name", "solar_system[name]"]
+
+      ## To test group bys..
+      #required_selected: [ "registrations_id", {"avg", "id"} ],
+      #required_group_by: ["registrations_id"]
+    }
+  end
+
+
   @impl true
   def mount(_params, _session, socket) do
-    {:ok,
-     assign(socket,
-       modal: false,
-       slide_over: false,
-       pagination_page: 1
-     )}
+    {:ok, socket }
   end
 
   @impl true
   def handle_params(params, _uri, socket) do
-    case socket.assigns.live_action do
-      :index ->
-        {:noreply, assign(socket, modal: false, slide_over: false)}
-
-      :modal ->
-        {:noreply, assign(socket, modal: params["size"])}
-
-      :slide_over ->
-        {:noreply, assign(socket, slide_over: params["origin"])}
-
-      :pagination ->
-        {:noreply, assign(socket, pagination_page: String.to_integer(params["page"]))}
-    end
+    socket = assign(socket, listable: Listable.configure(ListableTest.Repo, listable_domain()))
+    {:noreply, socket}
   end
 
-  @impl true
-  def handle_event("close_modal", _, socket) do
-    {:noreply, push_patch(socket, to: "/live")}
-  end
 
-  def handle_event("close_slide_over", _, socket) do
-    {:noreply, push_patch(socket, to: "/live")}
-  end
 end
