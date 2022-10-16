@@ -12,7 +12,12 @@ defmodule ListableTestWeb.PageLive do
       ],
       requires_filters: [{"solar_system[id]", 1}],
       required_order_by: [ {:desc, "mass"} ],
-      required_selected: ["name", "solar_system[name]"]
+      required_selected: [
+        {:upper, "name", "NAME"},
+        {:lower, "solar_system[name]", "SOLNAME"},
+        {:literal, "littest_string", "HI"},
+        #{:literal, "littest_num", 1010}
+      ]
 
     }
   end
