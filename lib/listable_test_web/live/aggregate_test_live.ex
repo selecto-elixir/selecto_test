@@ -15,7 +15,7 @@ defmodule ListableTestWeb.AggregateTestLive do
       #required_selected: ["name", "solar_system[name]"]
 
       ## To test group bys..
-      required_selected: [ "solar_system[name]", {:max, "mass"}, {:count}, {:now}, {:avg, "radius"} ],
+      required_selected: [ "solar_system[name]", {:max, "mass"}, {:count}, {:now}, {:avg, "radius"}, {:upper, {:literal, "testupper"}, "testup"} ],
       required_group_by: ["solar_system[name]"]
     }
   end
