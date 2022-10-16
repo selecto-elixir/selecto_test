@@ -15,7 +15,7 @@ defmodule ListableTestWeb.PageLive do
       #required_selected: ["name", "solar_system[name]"]
 
       ## To test group bys..
-      required_selected: [ "solar_system[name]", {"avg", "mass"}, {"count"}, {"avg", "radius"} ],
+      required_selected: [ "solar_system[name]", {"max", "mass"}, {"count"}, {"avg", "radius"} ],
       required_group_by: ["solar_system[name]"]
     }
   end
