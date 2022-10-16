@@ -1,4 +1,4 @@
-defmodule ListableTestWeb.PageLive do
+defmodule ListableTestWeb.AggregateTestLive do
   use ListableTestWeb, :live_view
 
 
@@ -11,9 +11,12 @@ defmodule ListableTestWeb.PageLive do
         :satellites,
       ],
       requires_filters: [{"solar_system[id]", 1}],
-      required_order_by: [ {:desc, "mass"} ],
-      required_selected: ["name", "solar_system[name]"]
+      #required_order_by: [ {:desc, "mass"} ],
+      #required_selected: ["name", "solar_system[name]"]
 
+      ## To test group bys..
+      required_selected: [ "solar_system[name]", {"max", "mass"}, {"count"}, {"avg", "radius"} ],
+      required_group_by: ["solar_system[name]"]
     }
   end
 
