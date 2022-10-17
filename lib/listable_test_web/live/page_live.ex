@@ -31,8 +31,16 @@ defmodule ListableTestWeb.PageLive do
 
   @impl true
   def handle_params(_params, _uri, socket) do
-    socket = assign(socket, listable: Listable.configure(ListableTest.Repo, listable_domain()))
+    socket = assign(socket,
+      view_sel: "aggregate",
+      listable: Listable.configure(ListableTest.Repo, listable_domain()))
     {:noreply, socket}
+  end
+
+  ### For View Selector
+  @impl true
+  def handle_info({:view_set, view }, socket) do
+    {:noreply, assign(socket, view_sel: view)}
   end
 
 
