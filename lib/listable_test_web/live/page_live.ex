@@ -2,6 +2,7 @@ defmodule ListableTestWeb.PageLive do
   use ListableTestWeb, :live_view
 
 
+  use ListableComponentsPetal.ViewSelector
 
   defp listable_domain() do
     %{
@@ -35,12 +36,6 @@ defmodule ListableTestWeb.PageLive do
       view_sel: "aggregate",
       listable: Listable.configure(ListableTest.Repo, listable_domain()))
     {:noreply, socket}
-  end
-
-  ### For View Selector
-  @impl true
-  def handle_info({:view_set, view }, socket) do
-    {:noreply, assign(socket, view_sel: view)}
   end
 
 
