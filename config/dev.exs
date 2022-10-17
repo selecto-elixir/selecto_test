@@ -21,7 +21,7 @@ config :listable_test, ListableTestWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4000],
   check_origin: false,
   code_reloader: true,
-  reloadable_apps: [:listable, :listable_test],
+  reloadable_apps: [:listable, :listable_test, :listable_components_petal],
   debug_errors: true,
   secret_key_base: "47TFd8fpLTZROcN4Lxz/OQ5fz4hVFMNCsSxHKwSrRGZGxDcWKyGH+1uxAtGYn1/Q",
   watchers: [
