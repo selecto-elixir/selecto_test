@@ -11,8 +11,6 @@ defmodule ListableTestWeb.AggregateTestLive do
         :satellites,
       ],
       requires_filters: [{"solar_system[id]", 1}],
-      #required_order_by: [ {:desc, "mass"} ],
-      #required_selected: ["name", "solar_system[name]"]
 
       ## To test group bys..
       required_selected: [ "solar_system[name]", {:max, "mass"}, {:count}, {:now}, {:avg, "radius"}, {:upper, {:literal, "testupper"}, "testup"} ],
