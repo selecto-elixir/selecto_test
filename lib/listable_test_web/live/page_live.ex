@@ -14,8 +14,9 @@ defmodule ListableTestWeb.PageLive do
       required_order_by: [ {:desc, "mass"} ],
       required_selected: [
         {:upper, "name", "NAME"},
+        "mass",
         {:lower, "solar_system[name]", "SOLNAME"},
-        {:literal, "littest_string", "HI"},
+        {:literal, "literal", "HI"},
         #{:literal, "littest_num", 1010}
       ]
 
