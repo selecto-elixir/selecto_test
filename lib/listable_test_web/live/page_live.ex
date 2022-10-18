@@ -27,7 +27,8 @@ defmodule ListableTestWeb.PageLive do
     socket =
       assign(socket,
         view_sel: "aggregate",
-        group_by: [],
+        group_by: listable.set.group_by,
+        order_by: listable.set.order_by,
         selected: listable.set.selected,
         listable: listable
       )
