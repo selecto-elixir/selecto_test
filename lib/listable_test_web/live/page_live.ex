@@ -12,13 +12,7 @@ defmodule ListableTestWeb.PageLive do
       ],
       requires_filters: [{"solar_system[id]", 1}],
       required_order_by: [{:desc, "mass"}],
-      required_selected: [
-        {:upper, "name", "NAME"},
-        "mass",
-        {:lower, "solar_system[name]", "SOLNAME"},
-        {:literal, "literal", "HI"}
-        # {:literal, "littest_num", 1010}
-      ]
+      required_selected: [ "id", "name" ]
     }
   end
 
@@ -29,13 +23,14 @@ defmodule ListableTestWeb.PageLive do
 
   @impl true
   def handle_params(_params, _uri, socket) do
+    listable = Listable.configure(ListableTest.Repo, listable_domain())
     socket =
       assign(socket,
         view_sel: "aggregate",
         group_by: [],
-        listable: Listable.configure(ListableTest.Repo, listable_domain())
+        selected: [],
+        listable: listable
       )
-
     {:noreply, socket}
   end
 end
