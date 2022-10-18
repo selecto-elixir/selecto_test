@@ -11,13 +11,16 @@ defmodule ListableTest do
     %{
       ### Source is the first table in the query
       source: ListableTest.Test.SolarSystem,
+      name: "Solar System",
       joins: [
         planets: %{
           name: "Planet",
           import_unconfigured_columns: true,
           columns: %{
             ### special column definitions
-
+            name: %{
+              name: "Name",
+            }
           },
           filters: %{
             ### Special filter definitions
