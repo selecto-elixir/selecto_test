@@ -34,6 +34,7 @@ defmodule ListableTestWeb.PageLive do
   def handle_params(_params, _uri, socket) do
     socket = assign(socket,
       view_sel: "aggregate",
+      group_by: [],
       listable: Listable.configure(ListableTest.Repo, listable_domain()))
     {:noreply, socket}
   end
