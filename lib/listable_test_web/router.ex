@@ -20,7 +20,6 @@ defmodule ListableTestWeb.Router do
     live "/", PageLive, :index
     live "/aggregates", AggregateTestLive, :index
     live "/detail", DetailTestLive, :index
-
   end
 
   # Other scopes may use custom stacks.

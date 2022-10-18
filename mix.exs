@@ -53,7 +53,6 @@ defmodule ListableTest.MixProject do
       {:tailwind, "~> 0.1", runtime: Mix.env() == :dev},
       {:listable, path: "../listable"},
       {:listable_components_petal, path: "../listable_components_petal"}
-
     ]
   end
 
