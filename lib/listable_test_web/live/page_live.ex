@@ -28,7 +28,7 @@ defmodule ListableTestWeb.PageLive do
       assign(socket,
         view_sel: "aggregate",
         group_by: [],
-        selected: [],
+        selected: listable.set.selected,
         listable: listable
       )
     {:noreply, socket}
