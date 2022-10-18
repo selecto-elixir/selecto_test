@@ -9,12 +9,18 @@ defmodule ListableTest do
 
   def listable_domain() do
     %{
+      ### Source is the first table in the query
       source: ListableTest.Test.SolarSystem,
       joins: [
         planets: %{
           name: "Planet",
           import_unconfigured_columns: true,
           columns: %{
+            ### special column definitions
+
+          },
+          filters: %{
+            ### Special filter definitions
 
           },
           joins: [
@@ -27,9 +33,12 @@ defmodule ListableTest do
       ],
       import_unconfigured_columns: true,
       columns: %{
-        name: %{
-          name: "Name",
-        }
+        ### special column definitions
+
+      },
+      filters: %{
+        ### Special filter definitions
+
       },
       requires_filters: [{"id", 1}],
       #required_order_by: ["mass"],
