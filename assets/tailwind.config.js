@@ -5,6 +5,7 @@ module.exports = {
     "../lib/*_web/**/*.*ex",
     "./js/**/*.js",
     "../deps/petal_components/**/*.*ex",
+    "../../listable_components_petal/**/*.*ex",
   ],
   theme: {
     extend: {
