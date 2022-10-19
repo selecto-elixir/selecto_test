@@ -1,4 +1,6 @@
 <.container max_width="full">
+  <button phx-click="toggle_show_view">Toggle View Controller</button>
+  <div :if={@show_view}>
   <.live_component
     module={ListableComponentsPetal.ViewSelector}
     id="config"
@@ -9,5 +11,7 @@
     selected={@selected}
     listable={@listable}
   />
+  </div>
+
   <.live_component module={ListableComponentsPetal.Results} id="results" listable={@listable} />
 </.container>

@@ -15,6 +15,9 @@ defmodule ListableTestWeb.PageLive do
     listable = Listable.configure(ListableTest.Repo, ListableTest.listable_domain())
     socket =
       assign(socket,
+        show_view: false,
+
+        ### required for lsitable components
         view_sel: "detail",
         group_by: prep_sels(listable.set.group_by),
         order_by: prep_sels(listable.set.order_by),
@@ -29,4 +32,8 @@ defmodule ListableTestWeb.PageLive do
     list |> Enum.map(fn item -> {UUID.uuid4, item, %{} } end)
   end
 
+  @impl true
+  def handle_event("toggle_show_view", _par, socket) do
+    {:noreply, assign(socket, show_view: !socket.assigns.show_view)}
+  end
 end
