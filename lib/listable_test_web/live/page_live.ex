@@ -16,11 +16,17 @@ defmodule ListableTestWeb.PageLive do
     socket =
       assign(socket,
         view_sel: "detail",
-        group_by: listable.set.group_by,
-        order_by: listable.set.order_by,
-        selected: listable.set.selected,
+        group_by: prep_sels(listable.set.group_by),
+        order_by: prep_sels(listable.set.order_by),
+        selected: prep_sels(listable.set.selected),
         listable: listable
       )
     {:noreply, socket}
   end
+
+  # handle this better. TODO
+  defp prep_sels(list) do
+    list |> Enum.map(fn item -> {UUID.uuid4, item, %{} } end)
+  end
+
 end

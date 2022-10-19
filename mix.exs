@@ -20,7 +20,7 @@ defmodule ListableTest.MixProject do
   def application do
     [
       mod: {ListableTest.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools, :crypto]
     ]
   end
 
@@ -52,7 +52,8 @@ defmodule ListableTest.MixProject do
       {:petal_components, "~> 0.18.0"},
       {:tailwind, "~> 0.1", runtime: Mix.env() == :dev},
       {:listable, path: "../listable"},
-      {:listable_components_petal, path: "../listable_components_petal"}
+      {:listable_components_petal, path: "../listable_components_petal"},
+      {:uuid, "~> 1.1"}
     ]
   end
 
