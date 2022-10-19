@@ -19,34 +19,33 @@ defmodule ListableTest do
           columns: %{
             ### special column definitions
             name: %{
-              name: "Name",
+              name: "Name"
             }
           },
-          filters: %{
-            ### Special filter definitions
-
-          },
+          filters:
+            %{
+              ### Special filter definitions
+            },
           joins: [
             satellites: %{
               name: "Natural Satellites",
               joins: []
             }
           ]
-        },
+        }
       ],
       import_unconfigured_columns: true,
-      columns: %{
-        ### special column definitions
-
-      },
-      filters: %{
-        ### Special filter definitions
-
-      },
+      columns:
+        %{
+          ### special column definitions
+        },
+      filters:
+        %{
+          ### Special filter definitions
+        },
       requires_filters: [{"id", 1}],
-      #required_order_by: ["mass"],
-      required_selected: [ "id", "name" ],
+      # required_order_by: ["mass"],
+      required_selected: ["id", "name"]
     }
   end
-
 end

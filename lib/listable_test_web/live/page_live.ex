@@ -3,8 +3,6 @@ defmodule ListableTestWeb.PageLive do
 
   use ListableComponentsPetal.ViewSelector
 
-
-
   @impl true
   def mount(_params, _session, socket) do
     {:ok, socket}
@@ -13,6 +11,7 @@ defmodule ListableTestWeb.PageLive do
   @impl true
   def handle_params(_params, _uri, socket) do
     listable = Listable.configure(ListableTest.Repo, ListableTest.listable_domain())
+
     socket =
       assign(socket,
         show_view: false,
@@ -25,12 +24,13 @@ defmodule ListableTestWeb.PageLive do
         selected: prep_sels(listable.set.selected),
         listable: listable
       )
+
     {:noreply, socket}
   end
 
   # handle this better. TODO
   defp prep_sels(list) do
-    list |> Enum.map(fn item -> {UUID.uuid4, item, %{} } end)
+    list |> Enum.map(fn item -> {UUID.uuid4(), item, %{}} end)
   end
 
   @impl true

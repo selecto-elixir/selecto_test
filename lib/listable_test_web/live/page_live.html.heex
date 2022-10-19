@@ -1,17 +1,16 @@
 <.container max_width="full">
   <button phx-click="toggle_show_view">Toggle View Controller</button>
   <div :if={@show_view}>
-  <.live_component
-    module={ListableComponentsPetal.ViewSelector}
-    id="config"
-    active_tab={@active_tab}
-    view_sel={@view_sel}
-    group_by={@group_by}
-    order_by={@order_by}
-
-    selected={@selected}
-    listable={@listable}
-  />
+    <.live_component
+      module={ListableComponentsPetal.ViewSelector}
+      id="config"
+      active_tab={@active_tab}
+      view_sel={@view_sel}
+      group_by={@group_by}
+      order_by={@order_by}
+      selected={@selected}
+      listable={@listable}
+    />
   </div>
 
   <.live_component module={ListableComponentsPetal.Results} id="results" listable={@listable} />
