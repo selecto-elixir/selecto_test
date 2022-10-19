@@ -17,11 +17,12 @@ defmodule ListableTestWeb.PageLive do
         show_view: false,
 
         ### required for lsitable components
-        view_sel: "detail",
+        view_mode: "detail",
         active_tab: "view",
         group_by: prep_sels(listable.set.group_by),
         order_by: prep_sels(listable.set.order_by),
         selected: prep_sels(listable.set.selected),
+        aggregate: [],
         listable: listable
       )
 
