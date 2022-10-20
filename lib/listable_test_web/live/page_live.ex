@@ -22,6 +22,7 @@ defmodule ListableTestWeb.PageLive do
         group_by: prep_sels(listable.set.group_by),
         order_by: prep_sels(listable.set.order_by),
         selected: prep_sels(listable.set.selected),
+        filters: [],
         aggregate: [],
         listable: listable
       )
