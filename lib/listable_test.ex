@@ -25,6 +25,12 @@ defmodule ListableTest do
           filters:
             %{
               ### Special filter definitions
+              "is_earth" => %{
+                type: :boolean,
+                true: ["planet[name]", "earth"],
+                false: ["planet[name]", {"!=", "earth"}],
+
+              }
             },
           joins: [
             satellites: %{
@@ -43,9 +49,9 @@ defmodule ListableTest do
         %{
           ### Special filter definitions
         },
-      requires_filters: [{"id", 1}],
+      required_filters: [{"id", 1}, {"name", {"!=", "Rats"}}, {"planets[name]", {"!=", "Mars"}}, {"satellites[name]", nil}],
       # required_order_by: ["mass"],
-      required_selected: ["id", "name"]
+      required_selected: ["id", "name", "planets[name]"]
     }
   end
 end
