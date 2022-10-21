@@ -49,7 +49,9 @@ defmodule ListableTest do
         %{
           ### Special filter definitions
         },
-      required_filters: [{"id", 1}, {"name", {"!=", "Rats"}}, {"planets[name]", {"!=", "Mars"}}, {"satellites[name]", nil}],
+      required_filters: [{"id", 1}, {"name", {"!=", "Rats"}}, {"planets[name]", {"!=", "Mars"}}, {"satellites[name]", nil},
+          {"planets[mass]", {"between", 1.0, 100000.0}}, {"planets[atmosphere]", :not_true}
+      ],
       # required_order_by: ["mass"],
       required_selected: ["id", "name", "planets[name]"]
     }
