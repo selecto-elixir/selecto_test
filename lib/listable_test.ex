@@ -56,10 +56,10 @@ defmodule ListableTest do
         {"satellites[name]", nil},
         {"planets[mass]", {"between", 1.0, 100000.0}},
         {"planets[atmosphere]", :not_true},
-        #{:or, [
-        #  {"planents[id]", {"<", 3}},
-        #  {"planents[id]", {">", 6}},
-        #]}
+        {:or, [
+          {"planets[id]", {"<", 3}},
+          {"planets[id]", {">", 6}},
+        ]}
       ],
       # required_order_by: ["mass"],
       required_selected: ["id", "name", "planets[name]"]
