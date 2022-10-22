@@ -25,22 +25,36 @@ defmodule ListableTest do
           filters:
             %{
               ### Special filter definitions
-              "is_earth" => %{
+              is_earth: %{
                 type: :boolean,
                 true: ["planet[name]", "earth"],
                 false: ["planet[name]", {"!=", "earth"}],
+              },
+              special: %{
+                name: "Special Filter (Should be overridden...)"
 
               }
             },
           joins: [
             satellites: %{
               name: "Natural Satellites",
-              joins: []
-            }
+
+            },
+            # nonassoctest: %{
+            #   name: "Test Join",
+
+            #   join_table: [],
+            #   join_clause: [
+            #     {}
+
+            #   ],
+            #   columns: %{},
+            #   filters: %{}
+            # }
           ]
         }
       ],
-      import_unconfigured_columns: true,
+      import_unconfigured_columns: true, #TODO
       columns:
         %{
           ### special column definitions
@@ -48,6 +62,10 @@ defmodule ListableTest do
       filters:
         %{
           ### Special filter definitions
+          special: %{
+            name: "Special Filter (Solar System)"
+
+          }
         },
       required_filters: [
         {"id", 1},
