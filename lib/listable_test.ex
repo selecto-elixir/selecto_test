@@ -19,7 +19,11 @@ defmodule ListableTest do
           columns: %{
             ### special column definitions
             name: %{
-              name: "Name"
+              name: "Name",
+            },
+            id: %{
+              name: "Planet ID",
+              id: "planet_id"
             }
           },
           filters:
@@ -40,17 +44,18 @@ defmodule ListableTest do
               name: "Natural Satellites",
 
             },
-            # nonassoctest: %{
-            #   name: "Test Join",
+            nonassoctest: %{ ###TODO extra joins
+              not_assoc: true,
+              name: "Test Join",
 
-            #   join_table: [],
-            #   join_clause: [
-            #     {}
+              join_table: :tablename, ## atom - for Schema module, string for table name
+              join_clause: [
+                {}
 
-            #   ],
-            #   columns: %{},
-            #   filters: %{}
-            # }
+              ],
+              columns: %{},
+              filters: %{}
+            }
           ]
         }
       ],
@@ -75,8 +80,8 @@ defmodule ListableTest do
         {"planets[mass]", {"between", 1.0, 100000.0}},
         {"planets[atmosphere]", :not_true},
         {:or, [
-          {"planets[id]", {"<", 3}},
-          {"planets[id]", {">", 6}},
+          {"planet_id", {"<", 3}},
+          {"planet_id", {">", 6}},
         ]}
       ],
       # required_order_by: ["mass"],
