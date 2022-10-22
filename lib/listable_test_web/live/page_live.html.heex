@@ -2,7 +2,7 @@
   <button phx-click="toggle_show_view">Toggle View Controller</button>
   <div :if={@show_view}>
     <.live_component
-      module={ListableComponentsPetal.ViewSelector}
+      module={ListableComponentsTailwind.ViewSelector}
       id="config"
       active_tab={@active_tab}
       view_mode={@view_mode}
@@ -15,5 +15,5 @@
     />
   </div>
 
-  <.live_component module={ListableComponentsPetal.Results} id="results" listable={@listable} />
+  <.live_component module={ListableComponentsTailwind.Results} id="results" listable={@listable} />
 </.container>

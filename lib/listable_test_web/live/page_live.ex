@@ -1,7 +1,7 @@
 defmodule ListableTestWeb.PageLive do
   use ListableTestWeb, :live_view
 
-  use ListableComponentsPetal.ViewSelector
+  use ListableComponentsTailwind.ViewSelector
 
   @impl true
   def mount(_params, _session, socket) do
