@@ -50,7 +50,6 @@ ListableTest.Repo.insert(%ListableTest.Test.Satellite{
   radius: 12756 / 2
 })
 
-
 ListableTest.Repo.insert(%ListableTest.Test.Planet{
   solar_system_id: 1,
   name: "Mars",
@@ -75,25 +74,27 @@ ListableTest.Repo.insert(%ListableTest.Test.Satellite{
   mass: 8.93e22,
   radius: 12756 / 2
 })
+
 ListableTest.Repo.insert(%ListableTest.Test.Satellite{
   planet_id: 5,
   name: "Europa",
   mass: 4.8e22,
   radius: 12756 / 2
 })
+
 ListableTest.Repo.insert(%ListableTest.Test.Satellite{
   planet_id: 5,
   name: "Ganymede",
   mass: 1.48e23,
   radius: 12756 / 2
 })
+
 ListableTest.Repo.insert(%ListableTest.Test.Satellite{
   planet_id: 5,
   name: "Callisto",
   mass: 1.08e23,
   radius: 12756 / 2
 })
-
 
 ListableTest.Repo.insert(%ListableTest.Test.Planet{
   solar_system_id: 1,
@@ -103,12 +104,14 @@ ListableTest.Repo.insert(%ListableTest.Test.Planet{
   surface_temp: -140.0,
   atmosphere: true
 })
+
 ListableTest.Repo.insert(%ListableTest.Test.Satellite{
   planet_id: 6,
   name: "Titan",
   mass: 1.35e23,
   radius: 12756 / 2
 })
+
 ListableTest.Repo.insert(%ListableTest.Test.Planet{
   solar_system_id: 1,
   name: "Uranus",

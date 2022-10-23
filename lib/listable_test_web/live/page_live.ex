@@ -14,7 +14,8 @@ defmodule ListableTestWeb.PageLive do
 
     socket =
       assign(socket,
-        show_view: false,  ### Changte to LiveView.JS TODO
+        ### Changte to LiveView.JS TODO
+        show_view: false,
 
         ### required for lsitable components
         view_mode: "detail",
