@@ -74,15 +74,15 @@ defmodule ListableTest do
         },
       required_filters: [
         {"id", 1},
-        {"name", {"!=", "Rats"}},
-        {"planets[name]", {"!=", "Mars"}},
-        {"satellites[name]", nil},
-        {"planets[mass]", {"between", 1.0, 100000.0}},
-        {"planets[atmosphere]", :not_true},
-        {:or, [
-          {"planet_id", {"<", 3}},
-          {"planet_id", {">", 6}},
-        ]}
+       # {"name", {"!=", "Rats"}},
+       # {"planets[name]", {"!=", "Mars"}},
+       # {"satellites[name]", nil},
+       # {"planets[mass]", {"between", 1.0, 100000.0}},
+       # {"planets[atmosphere]", :not_true},
+       # {:or, [
+       #   {"planet_id", {"<", 3}},
+       #   {"planet_id", {">", 6}},
+       # ]}
       ],
       # required_order_by: ["mass"],
       required_selected: ["id", "name", "planets[name]"]
