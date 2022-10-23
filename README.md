@@ -1,8 +1,25 @@
 # Listable Test Project
 
-Copied with love from Petal Components library
+Boilerplate copied with love from Petal Components library
 
-Projects using listable_components_tailwind should include Tailwind and Alpine.js as is done in this project
+This project uses git checkouts to [listable](https://github.com/seeken/listable) and [listable_components_tailwind](https://github.com/seeken/listable_components_tailwind) which it expects to find sibling to this dir
+
+Note that Aggregates view does not work right now
+
+This app provides a liveview 
+
+
+
+
+
+
+
+Projects using listable_components_tailwind should include Tailwind and Alpine.js as is done in this project.
+
+You need to add the push event hook from assets/js/hooks
+
+
+
 
 ## Get up and running
 
