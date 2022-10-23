@@ -6,7 +6,11 @@ This project uses git checkouts to [listable](https://github.com/seeken/listable
 
 Note that Aggregates view does not work right now
 
-This app provides a liveview 
+This app provides 3 live views: 
+
+ - / the component interface to edit / run queries
+ - /aggregates a test view only of aggregates
+ - /detail a test detail view
 
 
 
