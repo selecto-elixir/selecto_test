@@ -2,8 +2,6 @@
 
 This project uses git checkouts to [listable](https://github.com/seeken/listable) and [listable_components_tailwind](https://github.com/seeken/listable_components_tailwind) which it expects to find sibling to this dir
 
-Note that Aggregates view does not work right now
-
 This app provides 3 live views: 
 
  - / the component interface to edit / run queries
