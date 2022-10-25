@@ -51,8 +51,8 @@ defmodule ListableTest.MixProject do
       {:plug_cowboy, "~> 2.5"},
       {:petal_components, "~> 0.18.0"},
       {:tailwind, "~> 0.1", runtime: Mix.env() == :dev},
-      {:listable, path: "../listable"},
-      {:listable_components_tailwind, path: "../listable_components_tailwind"},
+      {:listable, path: "./vendor/listable"},
+      {:listable_components_tailwind, path: "./vendor/listable_components_tailwind"},
       {:uuid, "~> 1.1"}
     ]
   end
