@@ -1,6 +1,6 @@
 # Listable Test Project
 
-This project uses git checkouts to [listable](https://github.com/seeken/listable) and [listable_components_tailwind](https://github.com/seeken/listable_components_tailwind) which it expects to find sibling to this dir
+This project uses git checkouts to [listable](https://github.com/seeken/listable) and [listable_components_tailwind](https://github.com/seeken/listable_components_tailwind) which it expects to find in the vendor subdir to this dir.
 
 This app provides 3 live views: 
 
