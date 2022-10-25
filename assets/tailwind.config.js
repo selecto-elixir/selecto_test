@@ -5,7 +5,7 @@ module.exports = {
     "../lib/*_web/**/*.*ex",
     "./js/**/*.js",
     "../deps/petal_components/**/*.*ex",
-    "../../listable_components_tailwind/**/*.*ex",
+    "../vendor/listable_components_tailwind/**/*.*ex",
   ],
   theme: {
     extend: {

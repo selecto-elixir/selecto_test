@@ -38,3 +38,4 @@ npm-debug.log
 .elixir_ls
 
 listable_test.code-workspace
+.DS_Store
