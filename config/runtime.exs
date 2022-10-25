@@ -8,8 +8,8 @@ import Config
 # The block below contains prod specific runtime configuration.
 
 # Start the phoenix server if environment is set and running in a release
-if System.get_env("PHX_SERVER") && System.get_env("RELEASE_NAME") do
-  config :listable_test, ListableTest.Endpoint, server: true
+if System.get_env("PHX_SERVER") do #&& System.get_env("RELEASE_NAME") do
+  config :listable_test, ListableTestWeb.Endpoint, server: true
 end
 
 if config_env() == :prod do
@@ -44,7 +44,7 @@ if config_env() == :prod do
   port = String.to_integer(System.get_env("PORT") || "4000")
 
   config :listable_test, ListableTestWeb.Endpoint,
-    url: [host: host, port: 443],
+    url: [host: host, port: 443, scheme: "https"],
     http: [
       # Enable IPv6 and bind on all interfaces.
       # Set it to {0, 0, 0, 0, 0, 0, 0, 1} for local network only access.
