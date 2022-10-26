@@ -6,6 +6,7 @@
       id="config"
       active_tab={@active_tab}
       view_mode={@view_mode}
+      applied_view={@view_mode}
       group_by={@group_by}
       order_by={@order_by}
       selected={@selected}
@@ -15,5 +16,12 @@
     />
   </div>
 
-  <.live_component module={ListableComponentsTailwind.Results} id="results" listable={@listable} />
+  <%= if @applied_view == "detail" do %>
+    <.live_component module={ListableComponentsTailwind.Results} id="results" listable={@listable} />
+  <% else %>
+    <.live_component module={ListableComponentsTailwind.Components.AggregateTable} 
+      id="results" 
+      listable={@listable}
+    />
+  <% end %>
 </.container>

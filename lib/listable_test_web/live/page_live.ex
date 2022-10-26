@@ -19,6 +19,7 @@ defmodule ListableTestWeb.PageLive do
 
         ### required for lsitable components
         view_mode: "detail",
+        applied_view: "detail",
         active_tab: "view",
         group_by: prep_sels(listable.set.group_by),
         order_by: prep_sels(listable.set.order_by),
