@@ -12,6 +12,9 @@ defmodule ListableTest do
       ### Source is the first table in the query
       source: ListableTest.Test.SolarSystem,
       name: "Solar System",
+      domain_data: %{ ### TODO to be used for contructing links
+        domain: "planets"
+      },
       joins: [
         planets: %{
           name: "Planet",
@@ -24,6 +27,8 @@ defmodule ListableTest do
             id: %{
               name: "Planet ID",
               id: "planet_id",
+              also_select: "planets[name]", ### TODO !
+              #link: ~P"/:domain/planets/:id" # tap tap tap
             },
             mass: %{
               format: fn #yes this is redic
