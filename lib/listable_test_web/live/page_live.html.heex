@@ -18,7 +18,7 @@
   </div>
 
   <%= if @applied_view == "detail" do %>
-    <.live_component module={ListableComponentsTailwind.Results} id="results" listable={@listable} />
+    <.live_component module={ListableComponentsTailwind.Components.DetailTable} id="results" listable={@listable} />
   <% else %>
     <.live_component module={ListableComponentsTailwind.Components.AggregateTable} 
       id="results" 
