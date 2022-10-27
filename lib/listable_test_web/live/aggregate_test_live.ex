@@ -7,12 +7,7 @@ defmodule ListableTestWeb.AggregateTestLive do
     %{
       domain
       | ## To test group bys..
-        required_selected: [
-          "name",
-          # {:max, "planet[mass]"},
-          {:count}
-          # {:avg, "planet[radius]"},
-        ]
+        required_selected: [ ]
         # required_group_by: ["solar_system[name]"]
     }
   end
@@ -26,11 +21,13 @@ defmodule ListableTestWeb.AggregateTestLive do
   def handle_params(_params, _uri, socket) do
     socket =
       assign(socket,
+        detail_links: false,
         listable:
           Listable.configure(ListableTest.Repo, listable_domain())
-          |> Listable.group_by(["name"])
+          |> Listable.group_by([{:extract, "inserted_at", "year"}])
           |> Listable.select([
-            "name",
+            {:extract, "inserted_at", "year"},
+
             {:avg, "planets[mass]"},
             {:min, "planets[mass]"},
             {:max, "planets[mass]"}
