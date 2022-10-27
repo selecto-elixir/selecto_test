@@ -1,0 +1,10 @@
+
+listable = Listable.configure(ListableTest.Repo, ListableTest.listable_domain()) 
+listable =  Listable.group_by(listable, ["id"])
+
+listable = put_in(listable.set.selected, [])
+listable = Listable.select(listable,  {:subquery, :count, "planets[name]"} )
+
+Listable.execute(listable)
+
+

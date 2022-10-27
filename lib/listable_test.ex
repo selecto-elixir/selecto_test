@@ -69,7 +69,7 @@ defmodule ListableTest do
         }
       },
       required_filters: [
-        #{"id", 1}
+        {"id", [1,2,3,4,5,6]}
         # {"name", {"!=", "Rats"}},
         # {"planets[name]", {"!=", "Mars"}},
         # {"satellites[name]", nil},
