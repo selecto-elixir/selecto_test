@@ -23,7 +23,13 @@ defmodule ListableTest do
             },
             id: %{
               name: "Planet ID",
-              id: "planet_id"
+              id: "planet_id",
+            },
+            mass: %{
+              format: fn #yes this is redic
+                v when is_float(v) -> :erlang.float_to_binary(v, [decimals: 3])
+                _ -> ""
+            end
             }
           },
           filters: %{
