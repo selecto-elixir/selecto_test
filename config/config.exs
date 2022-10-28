@@ -7,14 +7,14 @@
 # General application configuration
 import Config
 
-config :listable_test,
-  ecto_repos: [ListableTest.Repo]
+config :selecto_test,
+  ecto_repos: [SelectoTestt.Repo]
 
 # Configures the endpoint
-config :listable_test, ListableTestWeb.Endpoint,
+config :selecto_test, SelectoTesttWeb.Endpoint,
   url: [host: "localhost"],
-  render_errors: [view: ListableTestWeb.ErrorView, accepts: ~w(html json), layout: false],
-  pubsub_server: ListableTest.PubSub,
+  render_errors: [view: SelectoTesttWeb.ErrorView, accepts: ~w(html json), layout: false],
+  pubsub_server: SelectoTestt.PubSub,
   live_view: [signing_salt: "Fd8SWPu3"]
 
 # Configures the mailer
@@ -24,7 +24,7 @@ config :listable_test, ListableTestWeb.Endpoint,
 #
 # For production it's recommended to configure a different adapter
 # at the `config/runtime.exs`.
-config :listable_test, ListableTest.Mailer, adapter: Swoosh.Adapters.Local
+config :selecto_test, SelectoTestt.Mailer, adapter: Swoosh.Adapters.Local
 
 # Swoosh API client is needed for adapters other than SMTP.
 config :swoosh, :api_client, false
@@ -49,7 +49,7 @@ config :phoenix, :json_library, Jason
 
 config :petal_components,
        :error_translator_function,
-       {ListableTestWeb.ErrorHelpers, :translate_error}
+       {SelectoTesttWeb.ErrorHelpers, :translate_error}
 
 config :tailwind,
   version: "3.1.8",

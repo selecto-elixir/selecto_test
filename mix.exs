@@ -1,9 +1,9 @@
-defmodule ListableTest.MixProject do
+defmodule SelectoTestt.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :listable_test,
+      app: :selecto_test,
       version: "0.1.0",
       elixir: "~> 1.13",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -19,7 +19,7 @@ defmodule ListableTest.MixProject do
   # Type `mix help compile.app` for more information.
   def application do
     [
-      mod: {ListableTest.Application, []},
+      mod: {SelectoTestt.Application, []},
       extra_applications: [:logger, :runtime_tools, :crypto]
     ]
   end
@@ -51,8 +51,8 @@ defmodule ListableTest.MixProject do
       {:plug_cowboy, "~> 2.5"},
       {:petal_components, "~> 0.18.0"},
       {:tailwind, "~> 0.1", runtime: Mix.env() == :dev},
-      {:listable, path: "./vendor/listable"},
-      {:listable_components_tailwind, path: "./vendor/listable_components_tailwind"},
+      {:selecto, path: "./vendor/selecto"},
+      {:selecto_components, path: "./vendor/selecto_components"},
       {:uuid, "~> 1.1"}
     ]
   end

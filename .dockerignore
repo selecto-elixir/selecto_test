@@ -24,7 +24,7 @@ doc
 **/*.ez
 
 # Ignore package tarball (built via "mix hex.build").
-**/listable_test-*.tar
+**/selecto_test-*.tar
 
 # Ignore assets that are produced by build tools.
 priv/static/assets
@@ -39,4 +39,4 @@ assets/node_modules
 **/.vscode
 **/.elixir_ls
 
-**/listable_test.code-workspace
+**/selecto_test.code-workspace

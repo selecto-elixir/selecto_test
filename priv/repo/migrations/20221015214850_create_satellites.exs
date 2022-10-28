@@ -1,4 +1,4 @@
-defmodule ListableTest.Repo.Migrations.CreateSatellites do
+defmodule SelectoTestt.Repo.Migrations.CreateSatellites do
   use Ecto.Migration
 
   def change do

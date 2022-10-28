@@ -1,6 +1,6 @@
-# Listable Test Project
+# selecto Test Project
 
-This project uses git checkouts to [listable](https://github.com/seeken/listable) and [listable_components_tailwind](https://github.com/seeken/listable_components_tailwind) which it expects to find in the vendor subdir to this dir.
+This project uses git checkouts to [selecto](https://github.com/seeken/selecto) and [selecto_components](https://github.com/seeken/selecto_components) which it expects to find in the vendor subdir to this dir.
 
 This app provides 3 live views: 
 
@@ -9,7 +9,7 @@ This app provides 3 live views:
  - /detail a test detail view
 
 
-Projects using listable_components_tailwind should include Tailwind and Alpine.js as is done in this project.
+Projects using selecto_components should include Tailwind and Alpine.js as is done in this project.
 
 You need to add the push event hook from assets/js/hooks
 

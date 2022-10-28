@@ -1,10 +1,10 @@
 
-listable = Listable.configure(ListableTest.Repo, ListableTest.listable_domain()) 
-listable =  Listable.group_by(listable, ["id"])
+selecto = selecto.configure(SelectoTestt.Repo, SelectoTestt.selecto_domain()) 
+selecto =  selecto.group_by(selecto, ["id"])
 
-listable = put_in(listable.set.selected, [])
-listable = Listable.select(listable,  {:subquery, :count, "planets[name]"} )
+selecto = put_in(selecto.set.selected, [])
+selecto = selecto.select(selecto,  {:subquery, :count, "planets[name]"} )
 
-Listable.execute(listable)
+selecto.execute(selecto)
 
 

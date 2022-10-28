@@ -1,6 +1,6 @@
-# fly.toml file generated for listable on 2022-10-24T20:55:28-06:00
+# fly.toml file generated for selecto on 2022-10-24T20:55:28-06:00
 
-app = "listable"
+app = "selecto"
 kill_signal = "SIGTERM"
 kill_timeout = 5
 processes = []
@@ -9,7 +9,7 @@ processes = []
   release_command = "/app/bin/migrate"
 
 [env]
-  PHX_HOST = "listable.fly.dev"
+  PHX_HOST = "selecto.fly.dev"
   PORT = "8080"
 
 [experimental]

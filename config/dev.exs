@@ -1,10 +1,10 @@
 import Config
 
 # Configure your database
-config :listable_test, ListableTest.Repo,
+config :selecto_test, SelectoTestt.Repo,
   username: "postgres",
   password: "postgres",
-  database: "listable_test_dev",
+  database: "selecto_test_dev",
   hostname: "localhost",
   show_sensitive_data_on_connection_error: true,
   pool_size: 10
@@ -15,13 +15,13 @@ config :listable_test, ListableTest.Repo,
 # The watchers configuration can be used to run external
 # watchers to your application. For example, we use it
 # with esbuild to bundle .js and .css sources.
-config :listable_test, ListableTestWeb.Endpoint,
+config :selecto_test, SelectoTesttWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
   http: [ip: {127, 0, 0, 1}, port: 4000],
   check_origin: false,
   code_reloader: true,
-  reloadable_apps: [:listable, :listable_test, :listable_components_tailwind],
+  reloadable_apps: [:selecto, :selecto_test, :selecto_components],
   debug_errors: true,
   secret_key_base: "47TFd8fpLTZROcN4Lxz/OQ5fz4hVFMNCsSxHKwSrRGZGxDcWKyGH+1uxAtGYn1/Q",
   watchers: [
@@ -54,13 +54,13 @@ config :listable_test, ListableTestWeb.Endpoint,
 # different ports.
 
 # Watch static and templates for browser reloading.
-config :listable_test, ListableTestWeb.Endpoint,
+config :selecto_test, SelectoTesttWeb.Endpoint,
   live_reload: [
     patterns: [
       ~r"priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$",
       ~r"priv/gettext/.*(po)$",
-      ~r"lib/listable_test_web/(live|views)/.*(ex)$",
-      ~r"lib/listable_test_web/templates/.*(eex)$"
+      ~r"lib/selecto_test_web/(live|views)/.*(ex)$",
+      ~r"lib/selecto_test_web/templates/.*(eex)$"
     ]
   ]
 
