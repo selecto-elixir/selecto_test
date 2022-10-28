@@ -9,22 +9,24 @@ This app provides 3 live views:
  - /detail a test detail view
 
 
+Notes 
 Projects using selecto_components should include Tailwind and Alpine.js as is done in this project.
 
-You need to add the push event hook from assets/js/hooks
+You also need to add the push event hook from assets/js/hooks.
 
 Plans:
  - bigger database with lots of tables and data
 
 
 
-## Get up and running
+1) checkout selecto and selecto_components into vendor subdir
+2) mix deps.get
+3) mix ecto.create
+4) mix ecto.migrate
+5) mix run priv/repo/seeds.exs
+6) iex -S mix phx.server
 
-Optionally change your database name in `dev.exs`.
 
-1. Setup the project with `mix setup`
-2. Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
-3. Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
 
 
 
