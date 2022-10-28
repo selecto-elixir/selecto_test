@@ -1,7 +1,5 @@
 defmodule SelectoTest.Seed do
-
   def init() do
-
     SelectoTest.Repo.insert(%SelectoTest.Test.SolarSystem{
       galaxy: "Milky Way",
       name: "Sol"
@@ -130,30 +128,22 @@ defmodule SelectoTest.Seed do
     })
 
     for n <- ~w(Sirius Betelgeuse Deneb PCentauri Ross Wolf Groombridge) do
-      {:ok, sol} = SelectoTest.Repo.insert(%SelectoTest.Test.SolarSystem{
-        galaxy: "Milky Way",
-        name: n
-      })
+      {:ok, sol} =
+        SelectoTest.Repo.insert(%SelectoTest.Test.SolarSystem{
+          galaxy: "Milky Way",
+          name: n
+        })
 
-      for p <- Enum.to_list( 1..3 ) do
+      for p <- Enum.to_list(1..3) do
         SelectoTest.Repo.insert(%SelectoTest.Test.Planet{
           solar_system_id: sol.id,
           name: "Planet #{p}",
           mass: 1.30e22 * :rand.uniform(10_000_000),
           radius: 2376 / 2 * :rand.uniform(1_000),
-          surface_temp: 1000 -1.0 * :rand.uniform(1_270),
+          surface_temp: 1000 - 1.0 * :rand.uniform(1_270),
           atmosphere: true
         })
       end
-
-
-
     end
-
-
-
   end
-
-
-
 end

@@ -18,10 +18,15 @@
   </div>
 
   <%= if @applied_view == "detail" do %>
-    <.live_component module={SelectoComponents.Components.DetailTable} id="results" selecto={@selecto} />
+    <.live_component
+      module={SelectoComponents.Components.DetailTable}
+      id="results"
+      selecto={@selecto}
+    />
   <% else %>
-    <.live_component module={SelectoComponents.Components.AggregateTable} 
-      id="results" 
+    <.live_component
+      module={SelectoComponents.Components.AggregateTable}
+      id="results"
       selecto={@selecto}
     />
   <% end %>

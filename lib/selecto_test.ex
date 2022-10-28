@@ -12,7 +12,8 @@ defmodule SelectoTest do
       ### Source is the first table in the query
       source: SelectoTest.Test.SolarSystem,
       name: "Solar System",
-      domain_data: %{ ### TODO to be used for contructing links
+      ### TODO to be used for contructing links
+      domain_data: %{
         domain: "planets"
       },
       joins: [
@@ -27,14 +28,16 @@ defmodule SelectoTest do
             id: %{
               name: "Planet ID",
               id: "planet_id",
-              also_select: "planets[name]", ### TODO !
-              #link: ~P"/:domain/planets/:id" # tap tap tap
+              ### TODO !
+              also_select: "planets[name]"
+              # link: ~P"/:domain/planets/:id" # tap tap tap
             },
             mass: %{
-              format: fn #yes this is redic
-                v when is_float(v) -> :erlang.float_to_binary(v, [decimals: 3])
+              # yes this is redic
+              format: fn
+                v when is_float(v) -> :erlang.float_to_binary(v, decimals: 3)
                 _ -> ""
-            end
+              end
             }
           },
           filters: %{
@@ -80,7 +83,7 @@ defmodule SelectoTest do
         }
       },
       required_filters: [
-        {"id", [1,2,3,4,5,6]}
+        {"id", [1, 2, 3, 4, 5, 6]}
         # {"name", {"!=", "Rats"}},
         # {"planets[name]", {"!=", "Mars"}},
         # {"satellites[name]", nil},

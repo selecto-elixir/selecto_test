@@ -7,7 +7,7 @@ defmodule SelectoTestWeb.AggregateTestLive do
     %{
       domain
       | ## To test group bys..
-        required_selected: [ ]
+        required_selected: []
         # required_group_by: ["solar_system[name]"]
     }
   end
@@ -27,7 +27,6 @@ defmodule SelectoTestWeb.AggregateTestLive do
           |> Selecto.group_by([{:extract, "inserted_at", "year"}])
           |> Selecto.select([
             {:extract, "inserted_at", "year"},
-
             {:avg, "planets[mass]"},
             {:min, "planets[mass]"},
             {:max, "planets[mass]"}

@@ -8,7 +8,8 @@ import Config
 # The block below contains prod specific runtime configuration.
 
 # Start the phoenix server if environment is set and running in a release
-if System.get_env("PHX_SERVER") do #&& System.get_env("RELEASE_NAME") do
+# && System.get_env("RELEASE_NAME") do
+if System.get_env("PHX_SERVER") do
   config :selecto_test, SelectoTestWeb.Endpoint, server: true
 end
 
