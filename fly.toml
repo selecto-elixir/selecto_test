@@ -1,6 +1,6 @@
-# fly.toml file generated for selectotest on 2022-10-27T21:01:44-06:00
+# fly.toml file generated for testselecto on 2022-10-28T14:03:41-06:00
 
-app = "selectotest"
+app = "testselecto"
 kill_signal = "SIGTERM"
 kill_timeout = 5
 processes = []
@@ -9,7 +9,7 @@ processes = []
   release_command = "/app/bin/migrate"
 
 [env]
-  PHX_HOST = "selectotest.fly.dev"
+  PHX_HOST = "testselecto.fly.dev"
   PORT = "8080"
 
 [experimental]
