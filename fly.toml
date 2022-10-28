@@ -1,4 +1,4 @@
-# fly.toml file generated for selecto on 2022-10-24T20:55:28-06:00
+# fly.toml file generated for selecto on 2022-10-27T20:55:30-06:00
 
 app = "selecto"
 kill_signal = "SIGTERM"
