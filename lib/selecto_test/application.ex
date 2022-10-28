@@ -1,4 +1,4 @@
-defmodule SelectoTestt.Application do
+defmodule SelectoTest.Application do
   # See https://hexdocs.pm/elixir/Application.html
   # for more information on OTP Applications
   @moduledoc false
@@ -9,20 +9,20 @@ defmodule SelectoTestt.Application do
   def start(_type, _args) do
     children = [
       # Start the Ecto repository
-      SelectoTestt.Repo,
+      SelectoTest.Repo,
       # Start the Telemetry supervisor
-      SelectoTesttWeb.Telemetry,
+      SelectoTestWeb.Telemetry,
       # Start the PubSub system
-      {Phoenix.PubSub, name: SelectoTestt.PubSub},
+      {Phoenix.PubSub, name: SelectoTest.PubSub},
       # Start the Endpoint (http/https)
-      SelectoTesttWeb.Endpoint
-      # Start a worker by calling: SelectoTestt.Worker.start_link(arg)
-      # {SelectoTestt.Worker, arg}
+      SelectoTestWeb.Endpoint
+      # Start a worker by calling: SelectoTest.Worker.start_link(arg)
+      # {SelectoTest.Worker, arg}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
-    opts = [strategy: :one_for_one, name: SelectoTestt.Supervisor]
+    opts = [strategy: :one_for_one, name: SelectoTest.Supervisor]
     Supervisor.start_link(children, opts)
   end
 
@@ -30,7 +30,7 @@ defmodule SelectoTestt.Application do
   # whenever the application is updated.
   @impl true
   def config_change(changed, _new, removed) do
-    SelectoTesttWeb.Endpoint.config_change(changed, removed)
+    SelectoTestWeb.Endpoint.config_change(changed, removed)
     :ok
   end
 end

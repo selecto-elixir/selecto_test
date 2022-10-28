@@ -1,3 +1,3 @@
-defmodule SelectoTesttWeb.PageViewTest do
-  use SelectoTesttWeb.ConnCase, async: true
+defmodule SelectoTestWeb.PageViewTest do
+  use SelectoTestWeb.ConnCase, async: true
 end

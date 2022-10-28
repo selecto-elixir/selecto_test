@@ -1,4 +1,4 @@
-defmodule SelectoTestt.Release do
+defmodule SelectoTest.Release do
   @moduledoc """
   Used for executing DB release tasks when run in production without Mix
   installed.

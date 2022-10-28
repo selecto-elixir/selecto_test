@@ -1,4 +1,4 @@
-defmodule SelectoTesttWeb.Endpoint do
+defmodule SelectoTestWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :selecto_test
 
   # The session will be stored in the cookie and signed,
@@ -46,5 +46,5 @@ defmodule SelectoTesttWeb.Endpoint do
   plug Plug.MethodOverride
   plug Plug.Head
   plug Plug.Session, @session_options
-  plug SelectoTesttWeb.Router
+  plug SelectoTestWeb.Router
 end

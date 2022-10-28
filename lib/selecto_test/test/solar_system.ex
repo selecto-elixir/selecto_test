@@ -1,4 +1,4 @@
-defmodule SelectoTestt.Test.SolarSystem do
+defmodule SelectoTest.Test.SolarSystem do
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -6,7 +6,7 @@ defmodule SelectoTestt.Test.SolarSystem do
     field :galaxy, :string
     field :name, :string
 
-    has_many :planets, SelectoTestt.Test.Planet
+    has_many :planets, SelectoTest.Test.Planet
 
     timestamps()
   end

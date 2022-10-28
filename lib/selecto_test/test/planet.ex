@@ -1,4 +1,4 @@
-defmodule SelectoTestt.Test.Planet do
+defmodule SelectoTest.Test.Planet do
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -9,8 +9,8 @@ defmodule SelectoTestt.Test.Planet do
     field :radius, :float
     field :surface_temp, :float
 
-    belongs_to :solar_system, SelectoTestt.Test.SolarSystem
-    has_many :satellites, SelectoTestt.Test.Satellite
+    belongs_to :solar_system, SelectoTest.Test.SolarSystem
+    has_many :satellites, SelectoTest.Test.Satellite
 
     timestamps()
   end

@@ -1,1 +1,1 @@
-call "%~dp0\selecto_test" eval SelectoTestt.Release.migrate
+call "%~dp0\selecto_test" eval SelectoTest.Release.migrate

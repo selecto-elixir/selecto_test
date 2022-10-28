@@ -1,4 +1,4 @@
-defmodule SelectoTestt.Test.Satellite do
+defmodule SelectoTest.Test.Satellite do
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -8,7 +8,7 @@ defmodule SelectoTestt.Test.Satellite do
     field :period, :float
     field :radius, :float
 
-    belongs_to :planet, SelectoTestt.Test.Planet
+    belongs_to :planet, SelectoTest.Test.Planet
 
     timestamps()
   end

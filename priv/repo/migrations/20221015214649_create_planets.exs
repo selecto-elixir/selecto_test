@@ -1,4 +1,4 @@
-defmodule SelectoTestt.Repo.Migrations.CreatePlanets do
+defmodule SelectoTest.Repo.Migrations.CreatePlanets do
   use Ecto.Migration
 
   def change do

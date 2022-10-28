@@ -1,13 +1,13 @@
-defmodule SelectoTestt.Seed do
+defmodule SelectoTest.Seed do
 
   def init() do
 
-    SelectoTestt.Repo.insert(%SelectoTestt.Test.SolarSystem{
+    SelectoTest.Repo.insert(%SelectoTest.Test.SolarSystem{
       galaxy: "Milky Way",
       name: "Sol"
     })
 
-    SelectoTestt.Repo.insert(%SelectoTestt.Test.Planet{
+    SelectoTest.Repo.insert(%SelectoTest.Test.Planet{
       solar_system_id: 1,
       name: "Mercury",
       mass: 3.3e23,
@@ -15,7 +15,7 @@ defmodule SelectoTestt.Seed do
       surface_temp: 167.0
     })
 
-    SelectoTestt.Repo.insert(%SelectoTestt.Test.Planet{
+    SelectoTest.Repo.insert(%SelectoTest.Test.Planet{
       solar_system_id: 1,
       name: "Venus",
       mass: 4.87e24,
@@ -24,7 +24,7 @@ defmodule SelectoTestt.Seed do
       atmosphere: true
     })
 
-    SelectoTestt.Repo.insert(%SelectoTestt.Test.Planet{
+    SelectoTest.Repo.insert(%SelectoTest.Test.Planet{
       solar_system_id: 1,
       name: "Earth",
       mass: 5.97e24,
@@ -33,14 +33,14 @@ defmodule SelectoTestt.Seed do
       atmosphere: true
     })
 
-    SelectoTestt.Repo.insert(%SelectoTestt.Test.Satellite{
+    SelectoTest.Repo.insert(%SelectoTest.Test.Satellite{
       planet_id: 3,
       name: "Moon",
       mass: 7.3e22,
       radius: 12756 / 2
     })
 
-    SelectoTestt.Repo.insert(%SelectoTestt.Test.Planet{
+    SelectoTest.Repo.insert(%SelectoTest.Test.Planet{
       solar_system_id: 1,
       name: "Mars",
       mass: 6.4e23,
@@ -49,7 +49,7 @@ defmodule SelectoTestt.Seed do
       atmosphere: true
     })
 
-    SelectoTestt.Repo.insert(%SelectoTestt.Test.Planet{
+    SelectoTest.Repo.insert(%SelectoTest.Test.Planet{
       solar_system_id: 1,
       name: "Jupiter",
       mass: 1.9e27,
@@ -58,35 +58,35 @@ defmodule SelectoTestt.Seed do
       atmosphere: true
     })
 
-    SelectoTestt.Repo.insert(%SelectoTestt.Test.Satellite{
+    SelectoTest.Repo.insert(%SelectoTest.Test.Satellite{
       planet_id: 5,
       name: "IO",
       mass: 8.93e22,
       radius: 12756 / 2
     })
 
-    SelectoTestt.Repo.insert(%SelectoTestt.Test.Satellite{
+    SelectoTest.Repo.insert(%SelectoTest.Test.Satellite{
       planet_id: 5,
       name: "Europa",
       mass: 4.8e22,
       radius: 12756 / 2
     })
 
-    SelectoTestt.Repo.insert(%SelectoTestt.Test.Satellite{
+    SelectoTest.Repo.insert(%SelectoTest.Test.Satellite{
       planet_id: 5,
       name: "Ganymede",
       mass: 1.48e23,
       radius: 12756 / 2
     })
 
-    SelectoTestt.Repo.insert(%SelectoTestt.Test.Satellite{
+    SelectoTest.Repo.insert(%SelectoTest.Test.Satellite{
       planet_id: 5,
       name: "Callisto",
       mass: 1.08e23,
       radius: 12756 / 2
     })
 
-    SelectoTestt.Repo.insert(%SelectoTestt.Test.Planet{
+    SelectoTest.Repo.insert(%SelectoTest.Test.Planet{
       solar_system_id: 1,
       name: "Saturn",
       mass: 5.685e26,
@@ -95,14 +95,14 @@ defmodule SelectoTestt.Seed do
       atmosphere: true
     })
 
-    SelectoTestt.Repo.insert(%SelectoTestt.Test.Satellite{
+    SelectoTest.Repo.insert(%SelectoTest.Test.Satellite{
       planet_id: 6,
       name: "Titan",
       mass: 1.35e23,
       radius: 12756 / 2
     })
 
-    SelectoTestt.Repo.insert(%SelectoTestt.Test.Planet{
+    SelectoTest.Repo.insert(%SelectoTest.Test.Planet{
       solar_system_id: 1,
       name: "Uranus",
       mass: 8.682e25,
@@ -111,7 +111,7 @@ defmodule SelectoTestt.Seed do
       atmosphere: true
     })
 
-    SelectoTestt.Repo.insert(%SelectoTestt.Test.Planet{
+    SelectoTest.Repo.insert(%SelectoTest.Test.Planet{
       solar_system_id: 1,
       name: "Neptune",
       mass: 1.02e26,
@@ -120,7 +120,7 @@ defmodule SelectoTestt.Seed do
       atmosphere: true
     })
 
-    SelectoTestt.Repo.insert(%SelectoTestt.Test.Planet{
+    SelectoTest.Repo.insert(%SelectoTest.Test.Planet{
       solar_system_id: 1,
       name: "Pluto",
       mass: 1.30e22,
@@ -130,13 +130,13 @@ defmodule SelectoTestt.Seed do
     })
 
     for n <- ~w(Sirius Betelgeuse Deneb PCentauri Ross Wolf Groombridge) do
-      {:ok, sol} = SelectoTestt.Repo.insert(%SelectoTestt.Test.SolarSystem{
+      {:ok, sol} = SelectoTest.Repo.insert(%SelectoTest.Test.SolarSystem{
         galaxy: "Milky Way",
         name: n
       })
 
       for p <- Enum.to_list( 1..3 ) do
-        SelectoTestt.Repo.insert(%SelectoTestt.Test.Planet{
+        SelectoTest.Repo.insert(%SelectoTest.Test.Planet{
           solar_system_id: sol.id,
           name: "Planet #{p}",
           mass: 1.30e22 * :rand.uniform(10_000_000),

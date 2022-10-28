@@ -1,4 +1,4 @@
-defmodule SelectoTesttWeb.Components.ColorSchemeSwitch do
+defmodule SelectoTestWeb.Components.ColorSchemeSwitch do
   use Phoenix.Component
 
   @doc """

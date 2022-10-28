@@ -1,4 +1,4 @@
-defmodule SelectoTestt.MixProject do
+defmodule SelectoTest.MixProject do
   use Mix.Project
 
   def project do
@@ -19,7 +19,7 @@ defmodule SelectoTestt.MixProject do
   # Type `mix help compile.app` for more information.
   def application do
     [
-      mod: {SelectoTestt.Application, []},
+      mod: {SelectoTest.Application, []},
       extra_applications: [:logger, :runtime_tools, :crypto]
     ]
   end

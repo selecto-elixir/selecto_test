@@ -1,8 +1,8 @@
-defmodule SelectoTesttWeb.AggregateTestLive do
-  use SelectoTesttWeb, :live_view
+defmodule SelectoTestWeb.AggregateTestLive do
+  use SelectoTestWeb, :live_view
 
   defp selecto_domain() do
-    domain = SelectoTestt.selecto_domain()
+    domain = SelectoTest.selecto_domain()
 
     %{
       domain
@@ -23,9 +23,9 @@ defmodule SelectoTesttWeb.AggregateTestLive do
       assign(socket,
         detail_links: false,
         selecto:
-          selecto.configure(SelectoTestt.Repo, selecto_domain())
-          |> selecto.group_by([{:extract, "inserted_at", "year"}])
-          |> selecto.select([
+          Selecto.configure(SelectoTest.Repo, selecto_domain())
+          |> Selecto.group_by([{:extract, "inserted_at", "year"}])
+          |> Selecto.select([
             {:extract, "inserted_at", "year"},
 
             {:avg, "planets[mass]"},

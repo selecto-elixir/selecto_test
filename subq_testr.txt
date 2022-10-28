@@ -1,10 +1,10 @@
 
-selecto = selecto.configure(SelectoTestt.Repo, SelectoTestt.selecto_domain()) 
-selecto =  selecto.group_by(selecto, ["id"])
+selecto = Selecto.configure(SelectoTest.Repo, SelectoTest.selecto_domain()) 
+selecto =  Selecto.group_by(selecto, ["id"])
 
 selecto = put_in(selecto.set.selected, [])
-selecto = selecto.select(selecto,  {:subquery, :count, "planets[name]"} )
+selecto = Selecto.select(selecto,  {:subquery, :count, "planets[name]"} )
 
-selecto.execute(selecto)
+Selecto.execute(selecto)
 
 

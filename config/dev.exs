@@ -1,7 +1,7 @@
 import Config
 
 # Configure your database
-config :selecto_test, SelectoTestt.Repo,
+config :selecto_test, SelectoTest.Repo,
   username: "postgres",
   password: "postgres",
   database: "selecto_test_dev",
@@ -15,7 +15,7 @@ config :selecto_test, SelectoTestt.Repo,
 # The watchers configuration can be used to run external
 # watchers to your application. For example, we use it
 # with esbuild to bundle .js and .css sources.
-config :selecto_test, SelectoTesttWeb.Endpoint,
+config :selecto_test, SelectoTestWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
   http: [ip: {127, 0, 0, 1}, port: 4000],
@@ -54,7 +54,7 @@ config :selecto_test, SelectoTesttWeb.Endpoint,
 # different ports.
 
 # Watch static and templates for browser reloading.
-config :selecto_test, SelectoTesttWeb.Endpoint,
+config :selecto_test, SelectoTestWeb.Endpoint,
   live_reload: [
     patterns: [
       ~r"priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$",

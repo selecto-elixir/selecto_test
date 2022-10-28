@@ -1,5 +1,5 @@
-defmodule SelectoTesttWeb.PageControllerTest do
-  use SelectoTesttWeb.ConnCase
+defmodule SelectoTestWeb.PageControllerTest do
+  use SelectoTestWeb.ConnCase
 
   test "GET /", %{conn: conn} do
     conn = get(conn, "/")

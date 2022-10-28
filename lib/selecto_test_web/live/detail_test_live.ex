@@ -1,5 +1,5 @@
-defmodule SelectoTesttWeb.DetailTestLive do
-  use SelectoTesttWeb, :live_view
+defmodule SelectoTestWeb.DetailTestLive do
+  use SelectoTestWeb, :live_view
 
   @impl true
   def mount(_params, _session, socket) do
@@ -10,7 +10,7 @@ defmodule SelectoTesttWeb.DetailTestLive do
   def handle_params(_params, _uri, socket) do
     socket =
       assign(socket,
-        selecto: selecto.configure(SelectoTestt.Repo, SelectoTestt.selecto_domain())
+        selecto: Selecto.configure(SelectoTest.Repo, SelectoTest.selecto_domain())
       )
 
     {:noreply, socket}

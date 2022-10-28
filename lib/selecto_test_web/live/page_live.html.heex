@@ -2,7 +2,7 @@
   <button phx-click="toggle_show_view">Toggle View Controller</button>
   <div :if={@show_view}>
     <.live_component
-      module={selectoComponentsTailwind.ViewSelector}
+      module={SelectoComponents.ViewSelector}
       id="config"
       active_tab={@active_tab}
       view_mode={@view_mode}
@@ -18,9 +18,9 @@
   </div>
 
   <%= if @applied_view == "detail" do %>
-    <.live_component module={selectoComponentsTailwind.Components.DetailTable} id="results" selecto={@selecto} />
+    <.live_component module={SelectoComponents.Components.DetailTable} id="results" selecto={@selecto} />
   <% else %>
-    <.live_component module={selectoComponentsTailwind.Components.AggregateTable} 
+    <.live_component module={SelectoComponents.Components.AggregateTable} 
       id="results" 
       selecto={@selecto}
     />

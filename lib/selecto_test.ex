@@ -1,6 +1,6 @@
-defmodule SelectoTestt do
+defmodule SelectoTest do
   @moduledoc """
-  SelectoTestt keeps the contexts that define your domain
+  SelectoTest keeps the contexts that define your domain
   and business logic.
 
   Contexts are also responsible for managing your data, regardless
@@ -10,7 +10,7 @@ defmodule SelectoTestt do
   def selecto_domain() do
     %{
       ### Source is the first table in the query
-      source: SelectoTestt.Test.SolarSystem,
+      source: SelectoTest.Test.SolarSystem,
       name: "Solar System",
       domain_data: %{ ### TODO to be used for contructing links
         domain: "planets"

@@ -1,3 +1,3 @@
-defmodule SelectoTesttWeb.PageView do
-  use SelectoTesttWeb, :view
+defmodule SelectoTestWeb.PageView do
+  use SelectoTestWeb, :view
 end

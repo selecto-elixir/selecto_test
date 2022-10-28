@@ -1,4 +1,4 @@
-defmodule SelectoTesttWeb.Telemetry do
+defmodule SelectoTestWeb.Telemetry do
   use Supervisor
   import Telemetry.Metrics
 
@@ -65,7 +65,7 @@ defmodule SelectoTesttWeb.Telemetry do
     [
       # A module, function and arguments to be invoked periodically.
       # This function must call :telemetry.execute/3 and a metric must be added above.
-      # {SelectoTesttWeb, :count_users, []}
+      # {SelectoTestWeb, :count_users, []}
     ]
   end
 end

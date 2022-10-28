@@ -1,12 +1,12 @@
-defmodule SelectoTesttWeb do
+defmodule SelectoTestWeb do
   @moduledoc """
   The entrypoint for defining your web interface, such
   as controllers, views, channels and so on.
 
   This can be used in your application as:
 
-      use SelectoTesttWeb, :controller
-      use SelectoTesttWeb, :view
+      use SelectoTestWeb, :controller
+      use SelectoTestWeb, :view
 
   The definitions below will be executed for every view,
   controller, etc, so keep them short and clean, focused
@@ -19,11 +19,11 @@ defmodule SelectoTesttWeb do
 
   def controller do
     quote do
-      use Phoenix.Controller, namespace: SelectoTesttWeb
+      use Phoenix.Controller, namespace: SelectoTestWeb
 
       import Plug.Conn
-      import SelectoTesttWeb.Gettext
-      alias SelectoTesttWeb.Router.Helpers, as: Routes
+      import SelectoTestWeb.Gettext
+      alias SelectoTestWeb.Router.Helpers, as: Routes
     end
   end
 
@@ -31,7 +31,7 @@ defmodule SelectoTesttWeb do
     quote do
       use Phoenix.View,
         root: "lib/selecto_test_web/templates",
-        namespace: SelectoTesttWeb
+        namespace: SelectoTestWeb
 
       # Import convenience functions from controllers
       import Phoenix.Controller,
@@ -45,7 +45,7 @@ defmodule SelectoTesttWeb do
   def live_view do
     quote do
       use Phoenix.LiveView,
-        layout: {SelectoTesttWeb.LayoutView, "live.html"}
+        layout: {SelectoTestWeb.LayoutView, "live.html"}
 
       unquote(view_helpers())
     end
@@ -72,7 +72,7 @@ defmodule SelectoTesttWeb do
   def channel do
     quote do
       use Phoenix.Channel
-      import SelectoTesttWeb.Gettext
+      import SelectoTestWeb.Gettext
     end
   end
 
@@ -88,12 +88,12 @@ defmodule SelectoTesttWeb do
       # Import basic rendering functionality (render, render_layout, etc)
       import Phoenix.View
 
-      import SelectoTesttWeb.ErrorHelpers
-      import SelectoTesttWeb.Gettext
-      alias SelectoTesttWeb.Router.Helpers, as: Routes
+      import SelectoTestWeb.ErrorHelpers
+      import SelectoTestWeb.Gettext
+      alias SelectoTestWeb.Router.Helpers, as: Routes
 
       # Import global components
-      import SelectoTesttWeb.Components.{
+      import SelectoTestWeb.Components.{
         ColorSchemeSwitch
       }
 

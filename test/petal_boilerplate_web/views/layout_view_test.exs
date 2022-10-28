@@ -1,5 +1,5 @@
-defmodule SelectoTesttWeb.LayoutViewTest do
-  use SelectoTesttWeb.ConnCase, async: true
+defmodule SelectoTestWeb.LayoutViewTest do
+  use SelectoTestWeb.ConnCase, async: true
 
   # When testing helpers, you may want to import Phoenix.HTML and
   # use functions such as safe_to_string() to convert the helper

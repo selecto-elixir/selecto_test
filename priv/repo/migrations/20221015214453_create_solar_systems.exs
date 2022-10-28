@@ -1,4 +1,4 @@
-defmodule SelectoTestt.Repo.Migrations.CreateSolarSystems do
+defmodule SelectoTest.Repo.Migrations.CreateSolarSystems do
   use Ecto.Migration
 
   def change do
