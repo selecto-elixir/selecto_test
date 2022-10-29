@@ -53,7 +53,7 @@ defmodule SelectoTest do
           },
           joins: [
             satellites: %{
-              name: "Natural Satellites"
+              name: "Satellites"
             },
             ### TODO extra joins
             nonassoctest: %{
