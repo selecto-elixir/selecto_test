@@ -1,5 +1,5 @@
 <.container max_width="full">
-  <button phx-click="toggle_show_view">Toggle View Controller</button>
+  <.button phx-click="toggle_show_view">Toggle View Controller</.button>
   <div :if={@show_view}>
     <.live_component
       module={SelectoComponents.ViewSelector}
