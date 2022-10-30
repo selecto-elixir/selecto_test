@@ -1,0 +1,37 @@
+# Selecto Demo
+
+## Section
+
+```elixir
+selecto = Selecto.configure(SelectoTest.Repo, SelectoTest.selecto_domain())
+```
+
+```elixir
+selecto = Selecto.filter(selecto, {"id", 1})
+selecto = Selecto.select(selecto, "planets[mass]")
+selecto |> Selecto.execute()
+```
+
+```elixir
+selecto =
+  Selecto.filter(
+    selecto,
+    {:or,
+     [
+       {"planets[name]", "Earth"},
+       {"planets[name]", "Venus"}
+     ]}
+  )
+
+selecto |> Selecto.execute()
+```
+
+```elixir
+selecto = Selecto.configure(SelectoTest.Repo, SelectoTest.selecto_domain())
+
+selecto =
+  selecto
+  |> Selecto.group_by(["id", "name"])
+  |> Selecto.select([{:avg, "planets[mass]"}, {:count}])
+  |> Selecto.execute()
+```

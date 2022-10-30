@@ -95,7 +95,7 @@ defmodule SelectoTest do
         # ]}
       ],
       # required_order_by: ["mass"],
-      required_selected: ["id", "name", "planets[name]"]
+      required_selected: ["id"]
     }
   end
 end
