@@ -127,22 +127,33 @@ defmodule SelectoTest.Seed do
       atmosphere: true
     })
 
-    for n <- ~w(Sirius Betelgeuse Deneb PCentauri Ross Wolf Groombridge) do
+    for n <- ~w(Acamar Acrux Alamak Alcor Alniyat Ayeyarwady Chaophraya Flegetonte Fomalhaut Koeia 	Meridiana Poerava Tangra Xihe 	Zosma) do
       {:ok, sol} =
         SelectoTest.Repo.insert(%SelectoTest.Test.SolarSystem{
           galaxy: "Milky Way",
           name: n
         })
 
-      for p <- Enum.to_list(1..3) do
-        SelectoTest.Repo.insert(%SelectoTest.Test.Planet{
+      for p <- Enum.to_list(1..:rand.uniform(6)) do
+        {:ok, pl} = SelectoTest.Repo.insert(%SelectoTest.Test.Planet{
           solar_system_id: sol.id,
-          name: "Planet #{p}",
-          mass: 1.30e22 * :rand.uniform(10_000_000),
-          radius: 2376 / 2 * :rand.uniform(1_000),
+          name: "#{n} #{p}",
+          mass: 1.30e22 * :rand.uniform(1_000_000),
+          radius: 0.99 * :rand.uniform(1_000),
           surface_temp: 1000 - 1.0 * :rand.uniform(1_270),
           atmosphere: true
         })
+
+        for s <- Enum.to_list( 1..:rand.uniform(3) ) do
+
+          SelectoTest.Repo.insert(%SelectoTest.Test.Satellite{
+            planet_id: pl.id,
+            name: "#{pl.name} #{s}",
+            mass: 1.30e22 * :rand.uniform(100),
+            radius: 0.98 * :rand.uniform(100)
+          })
+
+        end
       end
     end
   end
