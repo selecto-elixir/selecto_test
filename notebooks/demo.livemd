@@ -16,7 +16,6 @@ To use Selecto, you first create a domain:
 domain = %{
   columns: %{},
   domain_data: %{domain: "planets"},
-  filters: %{special: %{name: "Special Filter (Solar System)"}},
   joins: [
     planets: %{
       joins: [
@@ -41,7 +40,7 @@ Selecto will only allow the joins configured in the domain, and will always incl
 The selecto struct is created by Selecto.configure, with the Ecto Repo and the domain struct.
 
 ```elixir
-selecto = Selecto.configure(SelectoTest.Repo, SelectoTest.selecto_domain())
+selecto = Selecto.configure(SelectoTest.Repo, domain)
 ```
 
 ## Example Queries
