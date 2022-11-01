@@ -1,10 +1,41 @@
 # Selecto Demo
 
-## Section
+## Selecto, a query builder for Ecto
+
+Selecto lets you compose queries functionally, rather than through the Ecto DSL. This makes some types of queries vastly simpler to write.
+
+To use Selecto, you first create a domain:
+
+```elixir
+domain = SelectoTest.selecto_domain()
+```
+
+Which is used to configure and constrain the queries that Selecto can build.
+
+Selecto will only allow the joins configured in the domain, and will always include the required_filters when building the where clause.
+
+The selecto struct is created by Selecto.configure, with the Ecto Repo and the domain struct.
 
 ```elixir
 selecto = Selecto.configure(SelectoTest.Repo, SelectoTest.selecto_domain())
 ```
+
+## Example Queries
+
+This query:
+
+* filter by id = 1
+* select a field from a joined table
+* execute, yielding the query: 
+  ```sql
+  SELECT $1, s0."id", $2, p1."mass" 
+  FROM "solar_systems" AS s0 
+  LEFT OUTER JOIN "planets" AS p1 ON s0."id" = p1."solar_system_id" 
+  WHERE (s0."id" = ANY($3) AND (s0."id" = $4)) 
+  ["id", "planets[mass]", [1, 2, 3, 4, 5, 6], 1]
+  ```
+
+Note that the domain's 'required_filter' is present, as well as the filter we added in the example
 
 ```elixir
 selecto = Selecto.filter(selecto, {"id", 1})
@@ -12,26 +43,52 @@ selecto = Selecto.select(selecto, "planets[mass]")
 selecto |> Selecto.execute()
 ```
 
-```elixir
-selecto =
-  Selecto.filter(
-    selecto,
-    {:or,
-     [
-       {"planets[name]", "Earth"},
-       {"planets[name]", "Venus"}
-     ]}
-  )
+More sophisticated filters
 
-selecto |> Selecto.execute()
+Selecto allows you to filter with :or and :and.
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+{:or, [ list of filters ]}
+{:and, [ list of filters ]}
+
 ```
+
+This example creates the query:
+
+```sql
+SELECT $1, s0."id", $2, p1."mass", $3, p1."id", $4, p1."name" 
+FROM "solar_systems" AS s0 
+LEFT OUTER JOIN "planets" AS p1 ON s0."id" = p1."solar_system_id" 
+WHERE ((s0."id" = ANY($5) 
+AND (s0."id" = $6)) 
+AND ((p1."name" = $7) OR (p1."name" = $8))) 
+
+["id", "planets[mass]", "planet_id", "planets[name]", [1, 2, 3, 4, 5, 6], 1, "Earth", "Venus"]
+```
+
+```elixir
+Selecto.filter(
+  selecto,
+  {:or,
+   [
+     {"planets[name]", "Earth"},
+     {"planets[name]", "Venus"}
+   ]}
+)
+|> Selecto.select(["planet_id", "planets[name]"])
+|> Selecto.execute()
+```
+
+Group By Example
 
 ```elixir
 selecto = Selecto.configure(SelectoTest.Repo, SelectoTest.selecto_domain())
 
 selecto =
   selecto
-  |> Selecto.group_by(["id", "name"])
-  |> Selecto.select([{:avg, "planets[mass]"}, {:count}])
+  |> Selecto.group_by([{:rollup, ["id", "name"]}])
+  |> Selecto.select([{:sum, "planets[mass]"}, {:count}])
   |> Selecto.execute()
 ```
