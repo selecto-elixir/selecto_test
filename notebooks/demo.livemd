@@ -2,12 +2,36 @@
 
 ## Selecto, a query builder for Ecto
 
+TODO
+
+* setup instructions
+* more examples
+* domain details
+
 Selecto lets you compose queries functionally, rather than through the Ecto DSL. This makes some types of queries vastly simpler to write.
 
 To use Selecto, you first create a domain:
 
 ```elixir
-domain = SelectoTest.selecto_domain()
+domain = %{
+  columns: %{},
+  domain_data: %{domain: "planets"},
+  filters: %{special: %{name: "Special Filter (Solar System)"}},
+  joins: [
+    planets: %{
+      joins: [
+        satellites: %{
+          name: "Satellites"
+        }
+      ],
+      name: "Planet"
+    }
+  ],
+  name: "Solar System",
+  required_filters: [{"id", [1, 2, 3, 4, 5, 6]}],
+  required_selected: [],
+  source: SelectoTest.Test.SolarSystem
+}
 ```
 
 Which is used to configure and constrain the queries that Selecto can build.
@@ -84,11 +108,11 @@ Selecto.filter(
 Group By Example
 
 ```elixir
-selecto = Selecto.configure(SelectoTest.Repo, SelectoTest.selecto_domain())
+selecto = Selecto.configure(SelectoTest.Repo, domain)
 
 selecto =
   selecto
-  |> Selecto.group_by([{:rollup, ["id", "name"]}])
-  |> Selecto.select([{:sum, "planets[mass]"}, {:count}])
+  |> Selecto.group_by([{:rollup, ["name"]}])
+  |> Selecto.select(["name", {:sum, "planets[mass]"}, {:count}])
   |> Selecto.execute()
 ```
