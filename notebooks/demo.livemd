@@ -51,11 +51,11 @@ This query:
 * select a field from a joined table
 * execute, yielding the query: 
   ```sql
-  SELECT $1, s0."id", $2, p1."mass" 
-  FROM "solar_systems" AS s0 
-  LEFT OUTER JOIN "planets" AS p1 ON s0."id" = p1."solar_system_id" 
-  WHERE (s0."id" = ANY($3) AND (s0."id" = $4)) 
-  ["id", "planets[mass]", [1, 2, 3, 4, 5, 6], 1]
+      SELECT $1, s0."id", $2, p1."mass" 
+      FROM "solar_systems" AS s0 
+      LEFT OUTER JOIN "planets" AS p1 ON s0."id" = p1."solar_system_id" 
+      WHERE (s0."id" = ANY($3) AND (s0."id" = $4)) 
+      ["id", "planets[mass]", [1, 2, 3, 4, 5, 6], 1]
   ```
 
 Note that the domain's 'required_filter' is present, as well as the filter we added in the example
