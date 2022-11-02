@@ -53,7 +53,8 @@ defmodule SelectoTest.MixProject do
       {:tailwind, "~> 0.1", runtime: Mix.env() == :dev},
       {:selecto, path: "./vendor/selecto"},
       {:selecto_components, path: "./vendor/selecto_components"},
-      {:uuid, "~> 1.1"}
+      {:uuid, "~> 1.1"},
+      {:kino, "~> 0.7.0"}
     ]
   end
 

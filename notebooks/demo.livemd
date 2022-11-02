@@ -45,25 +45,30 @@ selecto = Selecto.configure(SelectoTest.Repo, domain)
 
 ## Example Queries
 
-This query:
+Simple Query
 
-* filter by id = 1
-* select a field from a joined table
+* filter by id = 1 (from solar system table)
+* select fields from a joined table (planets)
 * execute, yielding the query: 
   ```sql
-      SELECT $1, s0."id", $2, p1."mass" 
-      FROM "solar_systems" AS s0 
-      LEFT OUTER JOIN "planets" AS p1 ON s0."id" = p1."solar_system_id" 
+      SELECT $1, p1."name", $2, p1."mass" 
+      FROM "solar_systems" AS s0
+        LEFT OUTER JOIN "planets" AS p1 ON s0."id" = p1."solar_system_id" 
       WHERE (s0."id" = ANY($3) AND (s0."id" = $4)) 
-      ["id", "planets[mass]", [1, 2, 3, 4, 5, 6], 1]
+      ["planets[name]", "planets[mass]", [1, 2, 3, 4, 5, 6], 1]
+
   ```
 
 Note that the domain's 'required_filter' is present, as well as the filter we added in the example
 
 ```elixir
-selecto = Selecto.filter(selecto, {"id", 1})
-selecto = Selecto.select(selecto, "planets[mass]")
-selecto |> Selecto.execute()
+{results, aliases} =
+  selecto
+  |> Selecto.filter({"id", 1})
+  |> Selecto.select(["planets[name]", "planets[mass]"])
+  |> Selecto.execute()
+
+Kino.DataTable.new(results)
 ```
 
 More sophisticated filters
@@ -92,16 +97,19 @@ AND ((p1."name" = $7) OR (p1."name" = $8)))
 ```
 
 ```elixir
-Selecto.filter(
-  selecto,
-  {:or,
-   [
-     {"planets[name]", "Earth"},
-     {"planets[name]", "Venus"}
-   ]}
-)
-|> Selecto.select(["planets[id]", "planets[name]"])
-|> Selecto.execute()
+{results, aliases} =
+  Selecto.filter(
+    selecto,
+    {:or,
+     [
+       {"planets[name]", "Earth"},
+       {"planets[name]", "Venus"}
+     ]}
+  )
+  |> Selecto.select(["planets[id]", "planets[name]"])
+  |> Selecto.execute()
+
+Kino.DataTable.new(results)
 ```
 
 Group By Example
@@ -109,9 +117,11 @@ Group By Example
 ```elixir
 selecto = Selecto.configure(SelectoTest.Repo, domain)
 
-selecto =
+{results, aliases} =
   selecto
   |> Selecto.group_by([{:rollup, ["name"]}])
   |> Selecto.select(["name", {:sum, "planets[mass]"}, {:count}])
   |> Selecto.execute()
+
+Kino.DataTable.new(results)
 ```
