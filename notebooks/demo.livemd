@@ -100,7 +100,7 @@ Selecto.filter(
      {"planets[name]", "Venus"}
    ]}
 )
-|> Selecto.select(["planet_id", "planets[name]"])
+|> Selecto.select(["planets[id]", "planets[name]"])
 |> Selecto.execute()
 ```
 
