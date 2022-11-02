@@ -24,9 +24,7 @@ To use:
 3) mix ecto.create
 4) mix ecto.migrate
 5) mix run priv/repo/seeds.exs
-6) iex -S mix phx.server
+6) iex --sname selecto --cookie COOKIE -S mix phx.server
 
-
-
-
+(the sname / cookie are only required for connection via the livebook)
 
