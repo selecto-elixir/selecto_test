@@ -6,7 +6,12 @@
   <p class="alert alert-danger" role="alert" phx-click="lv:clear-flash" phx-value-key="error">
     <%= live_flash(@flash, :error) %>
   </p>
-  Make a nav bar... <.color_scheme_switch />
+  <.color_scheme_switch />
+
+  <.link href="/pagila">Pagila</.link>
+  <.link href="/">Main</.link>
+  <.link href="/aggregates">Agg</.link>
+  <.link href="/detail">Detail</.link>
 
   <div class="h-screen overflow-auto dark:bg-gray-500 dark:text-white">
     <%= @inner_content %>
