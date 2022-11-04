@@ -18,6 +18,8 @@ defmodule SelectoTestWeb.Router do
     pipe_through :browser
 
     live "/", PageLive, :index
+    live "/pagila", PagilaLive, :index
+
     live "/aggregates", AggregateTestLive, :index
     live "/detail", DetailTestLive, :index
   end
