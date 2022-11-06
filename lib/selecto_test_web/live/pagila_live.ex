@@ -50,6 +50,9 @@ defmodule SelectoTestWeb.PagilaLive do
         selected: prep_sels(selecto.set.selected),
         filters: [],
         aggregate: [],
+        per_page: 30,
+        page: 0,
+        executed: false,
         selecto: selecto
       )
 

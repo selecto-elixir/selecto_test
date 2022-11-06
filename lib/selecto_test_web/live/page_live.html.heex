@@ -13,6 +13,7 @@
       aggregate={@aggregate}
       selecto={@selecto}
       filters={@filters}
+      per_page={@per_page}
       detail_links={true}
     />
   </div>
@@ -22,6 +23,8 @@
       module={SelectoComponents.Components.DetailTable}
       id="results"
       selecto={@selecto}
+      per_page={@per_page}      
+      page={@page}
     />
   <% else %>
     <.live_component
