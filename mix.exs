@@ -51,8 +51,8 @@ defmodule SelectoTest.MixProject do
       {:plug_cowboy, "~> 2.5"},
       {:petal_components, "~> 0.18.0"},
       {:tailwind, "~> 0.1", runtime: Mix.env() == :dev},
-      {:selecto, path: "./vendor/selecto"},
-      {:selecto_components, path: "./vendor/selecto_components"},
+      {:selecto, path: "./vendor/selecto", override: true},
+      {:selecto_components, path: "./vendor/selecto_components", override: true},
       {:uuid, "~> 1.1"},
       {:kino, "~> 0.7.0"}
     ]

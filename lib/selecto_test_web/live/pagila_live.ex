@@ -1,11 +1,21 @@
 defmodule SelectoTestWeb.PagilaLive do
   use SelectoTestWeb, :live_view
 
+  use Phoenix.Component
+
   use SelectoComponents.ViewSelector
 
   @impl true
   def mount(_params, _session, socket) do
     {:ok, socket}
+  end
+
+  def film_link(assigns) do
+    ~H"""
+      <.link href={Routes.pagila_film_path(SelectoTestWeb.Endpoint, :index, @row["film[film_id]"])}>
+        <%= @row["film[name]"] %>
+      </.link>
+    """
   end
 
 
@@ -19,15 +29,19 @@ defmodule SelectoTestWeb.PagilaLive do
           name: "Actor-Film Join",
           joins: [
             film: %{
-              name: "Film"
+              name: "Film",
+              columns: %{
+                "film_link" => %{
+                  requires_select: ["film[film_id]", "film[name]"],
+                  format: &film_link/1
+                }
 
+
+              }
 
             }
-
           ]
-
         }
-
       ]
     }
   end
