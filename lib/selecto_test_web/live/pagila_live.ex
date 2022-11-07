@@ -30,15 +30,12 @@ defmodule SelectoTestWeb.PagilaLive do
           joins: [
             film: %{
               name: "Film",
-              columns: %{
+              custom_columns: %{
                 "film_link" => %{
                   requires_select: ["film[film_id]", "film[name]"],
                   format: &film_link/1
                 }
-
-
               }
-
             }
           ]
         }
