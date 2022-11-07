@@ -10,12 +10,11 @@ defmodule SelectoTestWeb.PagilaLive do
     {:ok, socket}
   end
 
-  def film_link(assigns) do
-    ~H"""
-      <.link href={Routes.pagila_film_path(SelectoTestWeb.Endpoint, :index, @row["film[film_id]"])}>
-        <%= @row["film[name]"] %>
-      </.link>
-    """
+  def film_link(row) do
+    {
+      Routes.pagila_film_path(SelectoTestWeb.Endpoint, :index, row["film[film_id]"]),
+      row["film[title]"]
+    } |> IO.inspect()
   end
 
 
@@ -34,7 +33,8 @@ defmodule SelectoTestWeb.PagilaLive do
                 "film_link" => %{
                   name: "Film Link",
                   requires_select: ["film[film_id]", "film[title]"],
-                  format: &film_link/1
+                  format: :link,
+                  link_parts: &film_link/1
                 }
               }
             }
