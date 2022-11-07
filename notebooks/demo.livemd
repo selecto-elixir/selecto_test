@@ -51,11 +51,11 @@ Simple Query
 * select fields from a joined table (planets)
 * execute, yielding the query: 
   ```sql
-          SELECT $1, p1."name", $2, p1."mass" 
-          FROM "solar_systems" AS s0
-            LEFT OUTER JOIN "planets" AS p1 ON s0."id" = p1."solar_system_id" 
-          WHERE (s0."id" = ANY($3) AND (s0."id" = $4)) 
-          ["planets[name]", "planets[mass]", [1, 2, 3, 4, 5, 6], 1]
+      SELECT $1, p1."name", $2, p1."mass" 
+      FROM "solar_systems" AS s0
+        LEFT OUTER JOIN "planets" AS p1 ON s0."id" = p1."solar_system_id" 
+      WHERE (s0."id" = ANY($3) AND (s0."id" = $4)) 
+      ["planets[name]", "planets[mass]", [1, 2, 3, 4, 5, 6], 1]
 
   ```
 

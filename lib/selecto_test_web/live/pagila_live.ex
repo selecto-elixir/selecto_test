@@ -32,7 +32,8 @@ defmodule SelectoTestWeb.PagilaLive do
               name: "Film",
               custom_columns: %{
                 "film_link" => %{
-                  requires_select: ["film[film_id]", "film[name]"],
+                  name: "Film Link",
+                  requires_select: ["film[film_id]", "film[title]"],
                   format: &film_link/1
                 }
               }
