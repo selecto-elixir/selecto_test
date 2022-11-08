@@ -12,7 +12,7 @@ defmodule SelectoTestWeb.PagilaLive do
   def mount(_params, _session, socket) do
     selecto = Selecto.configure(SelectoTest.Repo, selecto_domain())
 
-    {:ok, assign(socket, executed: false, show_view: false, selecto: selecto ) }
+    {:ok, assign(socket, executed: false, applied_view: nil,show_view: false, selecto: selecto ) }
   end
 
   def film_link(row) do
@@ -40,21 +40,22 @@ defmodule SelectoTestWeb.PagilaLive do
 
 
   @impl true
-  def handle_params(_params, _uri, socket) do
+  def handle_params(params, _uri, socket) do
 
     socket =
       assign(socket,
-        ### required for lsitable components
-        view_mode: "detail",
-        applied_view: "detail",
+        ### required for selecto components
+        view_mode: params["view_mode"] || "detail",
+        per_page: if params["per_page"] do String.to_integer(params["per_page"]) else 30 end,
+        page: if params["page"] do String.to_integer(params["page"]) else 0 end,
+
         active_tab: "view",
         aggregate: [],
         group_by: [],
         order_by: [],
         selected: [],
         filters: [],
-        per_page: 30,
-        page: 0,
+
       )
 
     {:noreply, socket}
