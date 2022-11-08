@@ -17,12 +17,19 @@ defmodule SelectoTestWeb.PagilaLive do
     }
   end
 
-  def film_card(assigns) do
+  def actor_card(assigns) do
     ~H"""
       <div>
-        Film Card for <%= @row["film[film_id]"] %>
+        Actor Card for <%= @row["actor_id"] %>
+        <%= @row["first_name"] %>
+        <%= @row["last_name"] %>
       </div>
     """
+  end
+
+  def process_film_card(_selecto, _params) do
+    #do we want to handle these in a batch or individually?
+
   end
 
   defp selecto_domain() do
@@ -30,6 +37,16 @@ defmodule SelectoTestWeb.PagilaLive do
       source: SelectoTest.Store.Actor,
       name: "Actors Selecto",
       required_filters: [{"actor_id", {">=", 1}}],
+      custom_columns: %{
+        "actor_card" => %{
+          name: "Actor Card",
+          requires_select: ~w(actor_id first_name last_name),
+          format: :component,
+          component: &actor_card/1,
+          process: &process_film_card/2
+        }
+      },
+
       joins: [
         film_actors: %{
           name: "Actor-Film Join",
@@ -43,13 +60,7 @@ defmodule SelectoTestWeb.PagilaLive do
                   format: :link,
                   link_parts: &film_link/1
                 },
-                "film_card" => %{
-                  name: "Film Card",
-                  requires_select: ["film[film_id]", "film[title]", "film[release_year]"],
-                  format: :component,
-                  component: &film_card/1
 
-                }
 
 
               }
