@@ -35,7 +35,8 @@ defmodule SelectoTestWeb.PagilaLive do
                   requires_select: ["film[film_id]", "film[title]"],
                   format: :link,
                   link_parts: &film_link/1
-                }
+                },
+
               }
             }
           ]
