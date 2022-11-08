@@ -17,6 +17,13 @@ defmodule SelectoTestWeb.PagilaLive do
     }
   end
 
+  def film_card(assigns) do
+    ~H"""
+      <div>
+        Film Card for <%= @row["film[film_id]"] %>
+      </div>
+    """
+  end
 
   defp selecto_domain() do
     %{
@@ -36,6 +43,14 @@ defmodule SelectoTestWeb.PagilaLive do
                   format: :link,
                   link_parts: &film_link/1
                 },
+                "film_card" => %{
+                  name: "Film Card",
+                  requires_select: ["film[film_id]", "film[title]", "film[release_year]"],
+                  format: :component,
+                  component: &film_card/1
+
+                }
+
 
               }
             }
