@@ -14,7 +14,7 @@ defmodule SelectoTestWeb.PagilaLive do
     {
       Routes.pagila_film_path(SelectoTestWeb.Endpoint, :index, row["film[film_id]"]),
       row["film[title]"]
-    } |> IO.inspect()
+    }
   end
 
 
