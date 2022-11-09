@@ -45,17 +45,17 @@ defmodule SelectoTestWeb.PagilaLive do
     socket =
       assign(socket,
         ### required for selecto components
+
         view_mode: params["view_mode"] || "detail",
+        active_tab: params["active_tab"] || "view",
         per_page: if params["per_page"] do String.to_integer(params["per_page"]) else 30 end,
         page: if params["page"] do String.to_integer(params["page"]) else 0 end,
 
-        active_tab: "view",
         aggregate: [],
         group_by: [],
         order_by: [],
         selected: [],
-        filters: [],
-
+        filters: []
       )
 
     {:noreply, socket}
