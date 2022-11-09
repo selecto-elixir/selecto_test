@@ -2,10 +2,9 @@ defmodule SelectoTestWeb.PagilaLive do
   use SelectoTestWeb, :live_view
 
   use Phoenix.Component
+  import Ecto.Query
 
   use SelectoComponents.ViewSelector
-
-
   ###
 
   @impl true
@@ -14,30 +13,6 @@ defmodule SelectoTestWeb.PagilaLive do
 
     {:ok, assign(socket, executed: false, applied_view: nil,show_view: false, selecto: selecto ) }
   end
-
-  def film_link(row) do
-    {
-      Routes.pagila_film_path(SelectoTestWeb.Endpoint, :index, row["film[film_id]"]),
-      row["film[title]"]
-    }
-  end
-
-  def actor_card(assigns) do
-    ~H"""
-      <div>
-        Actor Card for <%= @row["actor_id"] %>
-        <%= @row["first_name"] %>
-        <%= @row["last_name"] %>
-      </div>
-    """
-  end
-
-  def process_film_card(_selecto, _params) do
-    #do we want to handle these in a batch or individually?
-
-  end
-
-
 
   @impl true
   def handle_params(params, _uri, socket) do
@@ -78,31 +53,62 @@ defmodule SelectoTestWeb.PagilaLive do
       custom_columns: %{
         "actor_card" => %{
           name: "Actor Card",
-          requires_select: ~w(actor_id first_name last_name),
+          requires_select: ~w(actor_id first_name last_name)
+           ++ [{:subquery, {:dyn, "actor_films",
+            dynamic([{:selecto_root, par}], fragment(
+              "(select json_agg(f.title) from film f join film_actor af on f.film_id = af.film_id where af.actor_id = ?)", par.actor_id
+            ))
+           }} ],
           format: :component,
           component: &actor_card/1,
           process: &process_film_card/2
         }
       },
+
       joins: [
-        film_actors: %{
-          name: "Actor-Film Join",
-          joins: [
-            film: %{
-              name: "Film",
-              custom_columns: %{
-                "film_link" => %{
-                  name: "Film Link",
-                  requires_select: ["film[film_id]", "film[title]"],
-                  format: :link,
-                  link_parts: &film_link/1
-                },
-              }
+      film_actors: %{
+        name: "Actor-Film Join",
+        joins: [
+          film: %{
+            name: "Film",
+            custom_columns: %{
+              "film_link" => %{
+                name: "Film Link",
+                requires_select: ["film[film_id]", "film[title]"],
+                format: :link,
+                link_parts: &film_link/1
+              },
             }
-          ]
-        }
+          }
+        ]
+      }
       ]
     }
   end
+
+
+  def film_link(row) do
+    {
+      Routes.pagila_film_path(SelectoTestWeb.Endpoint, :index, row["film[film_id]"]),
+      row["film[title]"]
+    }
+  end
+
+  def actor_card(assigns) do
+    ~H"""
+      <div>
+        Actor Card for <%= @row["actor_id"] %>
+        <%= @row["first_name"] %>
+        <%= @row["last_name"] %>
+        <%= inspect( @row["actor_films"]) %>
+      </div>
+    """
+  end
+
+  def process_film_card(_selecto, _params) do
+    #do we want to handle these in a batch or individually?
+
+  end
+
 
 end
