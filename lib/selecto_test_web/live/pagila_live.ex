@@ -56,7 +56,7 @@ defmodule SelectoTestWeb.PagilaLive do
           requires_select: ~w(actor_id first_name last_name)
            ++ [{:subquery, {:dyn, "actor_films",
             dynamic([{:selecto_root, par}], fragment(
-              "(select json_agg(f.title) from film f join film_actor af on f.film_id = af.film_id where af.actor_id = ?)", par.actor_id
+              "(select json_agg( f.* ) from film f join film_actor af on f.film_id = af.film_id where af.actor_id = ?)", par.actor_id
             ))
            }} ],
           format: :component,
@@ -100,7 +100,15 @@ defmodule SelectoTestWeb.PagilaLive do
         Actor Card for <%= @row["actor_id"] %>
         <%= @row["first_name"] %>
         <%= @row["last_name"] %>
-        <%= inspect( @row["actor_films"]) %>
+
+        <ul>
+          <li :for={f <- @row["actor_films"]}>
+            <%= f["release_year"] %>
+            <%= f["title"] %>
+          </li>
+        </ul>
+
+
       </div>
     """
   end

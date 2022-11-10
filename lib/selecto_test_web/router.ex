@@ -17,7 +17,7 @@ defmodule SelectoTestWeb.Router do
   scope "/", SelectoTestWeb do
     pipe_through :browser
 
-    live "/", PageLive, :index
+    live "/", PagilaLive, :index
     live "/pagila", PagilaLive, :index
     live "/pagila/film/:film_id", PagilaFilmLive, :index
 

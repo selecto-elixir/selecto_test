@@ -6,6 +6,8 @@ defmodule SelectoTestWeb.PagilaFilmLive do
     ~H"""
       <div>
         Focus on film: <%= @film_id %>
+
+        This page is a test for the links from detail view
       </div>
     """
   end
