@@ -36,16 +36,31 @@ defmodule SelectoTestWeb.PagilaLive do
         #### Example Custom Column Component with subquery and config component
         "actor_card" => %{
           name: "Actor Card",
-          requires_select: ~w(actor_id first_name last_name)
-           ++ [{:subquery, {:dyn, "actor_films",
-            dynamic([{:selecto_root, par}], fragment(
-              "array(select row( f.title, f.release_year ) from film f join film_actor af on f.film_id = af.film_id where af.actor_id = ? order by release_year desc limit 5)", par.actor_id
-            ))
-           }} ],
+
+          ## Can also be a plain list or function which takes the column configuration struct and returns list
+          requires_select:
+            fn conf ->
+              limit = String.to_integer(Map.get(conf, "limit", "5"))
+
+              ~w(actor_id first_name last_name) ++ [{:subquery, {:dyn, "actor_films",
+                dynamic([{:selecto_root, par}], fragment(
+                  "array(select row( f.title, f.release_year )
+                    from film f join film_actor af on f.film_id = af.film_id
+                    where af.actor_id = ?
+                    order by release_year desc
+                    limit ?)",
+                      par.actor_id,
+                      ^limit
+
+                ))
+              }}]
+          end,
           format: :component,
           component: &actor_card/1,
-          process: &process_film_card/2,
           configure_component: &actor_card_config/1,
+
+          # TODO
+          process: &process_film_card/2,
         }
 
 
@@ -84,7 +99,7 @@ defmodule SelectoTestWeb.PagilaLive do
     ~H"""
       <div>
         Actor Card Config!
-        <input name={"#{@prefix}[test]"}/>
+        <input type="number" name={"#{@prefix}[limit]"}/>
       </div>
     """
   end
@@ -92,7 +107,7 @@ defmodule SelectoTestWeb.PagilaLive do
   defp actor_card(assigns) do
     ~H"""
       <div>
-        Actor Card for <%= @row["actor_id"] %> (<%= @config["test"] %>)
+        Actor Card for <%= @row["actor_id"] %> (<%= @config["limit"] %>)
         <%= @row["first_name"] %>
         <%= @row["last_name"] %>
 
