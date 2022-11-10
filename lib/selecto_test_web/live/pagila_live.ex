@@ -11,30 +11,9 @@ defmodule SelectoTestWeb.PagilaLive do
   def mount(_params, _session, socket) do
     selecto = Selecto.configure(SelectoTest.Repo, selecto_domain())
 
-    {:ok, assign(socket, executed: false, applied_view: nil,show_view: false, selecto: selecto ) }
+    {:ok, assign(socket,  selecto: selecto, show_view: false) }
   end
 
-  @impl true
-  def handle_params(params, _uri, socket) do
-
-    socket =
-      assign(socket,
-        ### required for selecto components
-
-        view_mode: params["view_mode"] || "detail",
-        active_tab: params["active_tab"] || "view",
-        per_page: if params["per_page"] do String.to_integer(params["per_page"]) else 30 end,
-        page: if params["page"] do String.to_integer(params["page"]) else 0 end,
-
-        aggregate: [],
-        group_by: [],
-        order_by: [],
-        selected: [],
-        filters: []
-      )
-
-    {:noreply, socket}
-  end
 
   @impl true
   def handle_event("toggle_show_view", _par, socket) do
@@ -45,7 +24,7 @@ defmodule SelectoTestWeb.PagilaLive do
   @doc """
   Test Domain
   """
-  defp selecto_domain() do
+  def selecto_domain() do
     %{
       source: SelectoTest.Store.Actor,
       name: "Actors Selecto",
