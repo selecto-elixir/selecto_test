@@ -31,6 +31,9 @@ defmodule SelectoTestWeb.PagilaLive do
       name: "Actors Selecto",
       required_filters: [{"actor_id", {">=", 1}}],
       custom_columns: %{
+
+
+        #### Example Custom Column Component with subquery and config component
         "actor_card" => %{
           name: "Actor Card",
           requires_select: ~w(actor_id first_name last_name)
@@ -41,8 +44,12 @@ defmodule SelectoTestWeb.PagilaLive do
            }} ],
           format: :component,
           component: &actor_card/1,
-          process: &process_film_card/2
+          process: &process_film_card/2,
+          configure_component: &actor_card_config/1,
         }
+
+
+
       },
 
       joins: [
@@ -73,11 +80,19 @@ defmodule SelectoTestWeb.PagilaLive do
       row["film[title]"]
     }
   end
-
-  def actor_card(assigns) do
+  defp actor_card_config(assigns) do
     ~H"""
       <div>
-        Actor Card for <%= @row["actor_id"] %>
+        Actor Card Config!
+        <input name={"#{@prefix}[test]"}/>
+      </div>
+    """
+  end
+
+  defp actor_card(assigns) do
+    ~H"""
+      <div>
+        Actor Card for <%= @row["actor_id"] %> (<%= @config["test"] %>)
         <%= @row["first_name"] %>
         <%= @row["last_name"] %>
 
