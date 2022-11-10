@@ -30,13 +30,17 @@ defmodule SelectoTestWeb.PagilaLive do
       source: SelectoTest.Store.Actor,
       name: "Actors Selecto",
       required_filters: [{"actor_id", {">=", 1}}],
-      custom_columns: %{
 
+      custom_fitlers: %{
+
+
+      },
+
+      custom_columns: %{
 
         #### Example Custom Column Component with subquery and config component
         "actor_card" => %{
           name: "Actor Card",
-
           ## Can also be a plain list or function which takes the column configuration struct and returns list
           requires_select:
             fn conf ->
@@ -55,10 +59,8 @@ defmodule SelectoTestWeb.PagilaLive do
                     limit ?)",
                       par.actor_id,
                       ^limit
-
-                ))
-              }}]
-          end,
+                ))}}]
+            end,
           format: :component,
           component: &actor_card/1,
           configure_component: &actor_card_config/1,
@@ -76,6 +78,12 @@ defmodule SelectoTestWeb.PagilaLive do
         name: "Actor-Film Join",
         joins: [
           film: %{
+            joins: [
+              language: %{
+                name: "Film Language"
+              }
+
+            ],
             name: "Film",
             custom_columns: %{
               "film_link" => %{
