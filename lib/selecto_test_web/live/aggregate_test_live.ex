@@ -21,7 +21,6 @@ defmodule SelectoTestWeb.AggregateTestLive do
   def handle_params(_params, _uri, socket) do
     socket =
       assign(socket,
-        detail_links: false,
         selecto:
           Selecto.configure(SelectoTest.Repo, selecto_domain())
           |> Selecto.group_by(

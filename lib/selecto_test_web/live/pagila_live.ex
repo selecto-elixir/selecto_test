@@ -7,6 +7,7 @@ defmodule SelectoTestWeb.PagilaLive do
   use SelectoComponents.ViewSelector
   ###
 
+
   @impl true
   def mount(_params, _session, socket) do
     selecto = Selecto.configure(SelectoTest.Repo, selecto_domain())
