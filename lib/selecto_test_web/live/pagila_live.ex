@@ -40,7 +40,11 @@ defmodule SelectoTestWeb.PagilaLive do
           ## Can also be a plain list or function which takes the column configuration struct and returns list
           requires_select:
             fn conf ->
-              limit = String.to_integer(Map.get(conf, "limit", "5"))
+              limit = case Map.get(conf, "limit") do
+                nil -> 5
+                "" -> 5
+                x when is_binary(x) -> String.to_integer(x)
+              end
 
               ~w(actor_id first_name last_name) ++ [{:subquery, {:dyn, "actor_films",
                 dynamic([{:selecto_root, par}], fragment(
@@ -98,7 +102,7 @@ defmodule SelectoTestWeb.PagilaLive do
   defp actor_card_config(assigns) do
     ~H"""
       <div>
-        Actor Card Config!
+        Actor Card Show # of Most Recent Films:
         <input type="number" name={"#{@prefix}[limit]"}/>
       </div>
     """
