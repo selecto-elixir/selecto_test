@@ -45,7 +45,7 @@ defmodule SelectoTestWeb.PagilaLive do
                 "" -> 5
                 x when is_binary(x) -> String.to_integer(x)
               end
-
+              #TODO fix bug where if this col is selexted 2x with different paremters, the second squashes the first
               ~w(actor_id first_name last_name) ++ [{:subquery, {:dyn, "actor_films",
                 dynamic([{:selecto_root, par}], fragment(
                   "array(select row( f.title, f.release_year )
