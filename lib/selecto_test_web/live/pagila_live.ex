@@ -80,7 +80,9 @@ defmodule SelectoTestWeb.PagilaLive do
           film: %{
             joins: [
               language: %{
-                name: "Film Language"
+                name: "Film Language",
+                type: :lookup, ### we don't really want to join on this, we can get the name via a lookup
+                lookup: {:select, :language_id, :language_id, :name}
               }
 
             ],
