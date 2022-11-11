@@ -90,7 +90,14 @@ defmodule SelectoTestWeb do
 
       import SelectoTestWeb.ErrorHelpers
       import SelectoTestWeb.Gettext
+
       alias SelectoTestWeb.Router.Helpers, as: Routes
+
+      # use Phoenix.VerifiedRoutes,
+      #   router: SelectoTestWeb.Router,
+      #   endpoint: SelectoTestWeb.Endpoint,
+      #   statics: ~w(images)
+
 
       # Import global components
       import SelectoTestWeb.Components.{

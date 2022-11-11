@@ -105,6 +105,7 @@ defmodule SelectoTestWeb.PagilaLive do
 
   def film_link(row) do
     {
+      #~p[/pagila/film/#{ row[ "film[film_id]" ]}],
       Routes.pagila_film_path(SelectoTestWeb.Endpoint, :index, row["film[film_id]"]),
       row["film[title]"]
     }
