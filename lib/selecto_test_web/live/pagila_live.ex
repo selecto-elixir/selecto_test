@@ -31,9 +31,13 @@ defmodule SelectoTestWeb.PagilaLive do
       name: "Actors Selecto",
       required_filters: [{"actor_id", {">=", 1}}],
 
-      custom_fitlers: %{
-
-
+      filters: %{
+        "actor_has_ratings" => %{
+          name: "Actor Has Ratings",
+          component: &actor_ratings/1,
+          type: :component,
+          apply: &actor_ratings_apply/2,
+        }
       },
 
       custom_columns: %{
@@ -102,6 +106,32 @@ defmodule SelectoTestWeb.PagilaLive do
     }
   end
 
+  def actor_ratings_apply( f, _selecto ) do
+    ratings = f["ratings"]
+    {"actor_id", {:subquery, :in,
+      dynamic([],
+        fragment(
+          "(select actor_id from film_actor fa join film f on fa.film_id = f.film_id where f.rating = ANY(?))",
+          ^ratings
+        )
+      )
+    }}
+  end
+
+  def actor_ratings(assigns) do
+    ~H"""
+      <div> Actor Ratings!
+        <label :for={v <- ~w(G PG PG-13 R NC-17)}>
+          <input
+            type="checkbox"
+            name={"filters[#{@uuid}][ratings][]"}
+            value={v}
+            checked={ Enum.member?(Map.get(@valmap, "ratings", []), v) }/>
+            <%= v %>
+          </label>
+      </div>
+    """
+  end
 
   def film_link(row) do
     {
