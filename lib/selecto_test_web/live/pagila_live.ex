@@ -108,14 +108,12 @@ defmodule SelectoTestWeb.PagilaLive do
 
   def actor_ratings_apply( f, _selecto ) do
     ratings = f["ratings"]
-    {"actor_id", {:subquery, :in,
-      dynamic([],
-        fragment(
-          "(select actor_id from film_actor fa join film f on fa.film_id = f.film_id where f.rating = ANY(?))",
-          ^ratings
-        )
-      )
-    }}
+    {"actor_id",
+      {:subquery, :in,
+          "(select actor_id from film_actor fa join film f on fa.film_id = f.film_id where f.rating = ANY(^SelectoParam^))",
+          [ratings]
+      }
+    }
   end
 
   def actor_ratings(assigns) do
