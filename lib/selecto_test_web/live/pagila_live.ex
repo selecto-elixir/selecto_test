@@ -55,7 +55,7 @@ defmodule SelectoTestWeb.PagilaLive do
               end
               #TODO fix bug where if this col is selexted 2x with different paremters, the second squashes the first
               ~w(actor_id first_name last_name) ++ [
-                  {:subquery, "actor_films",
+                  {:subquery,
                     "array(select row( f.title, f.release_year )
                       from film f join film_actor af on f.film_id = af.film_id
                       where af.actor_id = selecto_root.actor_id
@@ -136,10 +136,11 @@ defmodule SelectoTestWeb.PagilaLive do
   end
 
   def film_link(row) do
+    {id, title} = row
     {
       #~p[/pagila/film/#{ row[ "film[film_id]" ]}],
-      Routes.pagila_film_path(SelectoTestWeb.Endpoint, :index, row["film[film_id]"]),
-      row["film[title]"]
+      Routes.pagila_film_path(SelectoTestWeb.Endpoint, :index, id),
+      title
     }
   end
   defp actor_card_config(assigns) do
@@ -154,18 +155,19 @@ defmodule SelectoTestWeb.PagilaLive do
   defp actor_card(assigns) do
     ~H"""
       <div>
-        Actor Card for <%= @row["actor_id"] %> (<%= @config["limit"] %>)
-        <%= @row["first_name"] %>
-        <%= @row["last_name"] %>
+        <%= with {actor_id, first_name, last_name, actor_films} <- @row do %>
+        Actor Card for <%= actor_id %> (<%= @config["limit"] %>)
+        <%= first_name %>
+        <%= last_name %>
 
         <ul>
-          <li :for={{title, year} <- @row["actor_films"]}>
+          <li :for={{title, year} <- actor_films}>
             <%= year %>
             <%= title %>
           </li>
         </ul>
 
-
+        <% end %>
       </div>
     """
   end
