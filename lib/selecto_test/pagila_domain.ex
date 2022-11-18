@@ -16,6 +16,11 @@ defmodule SelectoTest.PagilaDomain do
         }
       },
       custom_columns: %{
+        "full_name" => %{
+          name: "Full Name",
+          select: {:concat, "first_name", {:literal, " "}, "last_name"}
+        },
+
         #### Example Custom Column Component with subquery and config component
         "actor_card" => %{
           name: "Actor Card",
