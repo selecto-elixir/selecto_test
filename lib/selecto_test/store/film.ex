@@ -1,5 +1,4 @@
 defmodule SelectoTest.Store.Film do
-
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -20,17 +19,14 @@ defmodule SelectoTest.Store.Film do
     field :last_update, :utc_datetime
 
     ## MPAA Rating ENum?
-    field :rating, Ecto.Enum, values: [:"G",:"PG",:"PG-13",:"R",:"NC-17"]
+    field :rating, Ecto.Enum, values: [:G, :PG, :"PG-13", :R, :"NC-17"]
 
     field :special_features, {:array, :string}
 
     has_many :film_actors, SelectoTest.Store.FilmActor, foreign_key: :film_id
     has_many :actors, through: [:film_actors, :actor]
 
-
     has_many :film_category, SelectoTest.Store.FilmCategory, foreign_key: :film_id
     has_many :categories, through: [:film_category, :category]
-
   end
-
 end

@@ -1,5 +1,4 @@
 defmodule SelectoTest.Store.Rental do
-
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -7,10 +6,9 @@ defmodule SelectoTest.Store.Rental do
 
   schema "rental" do
     field :rental_date, :utc_datetime
-    #has_one inventory
-    #has_one customer
+    # has_one inventory
+    # has_one customer
     field :return_date, :utc_datetime
-    #has_one staff
+    # has_one staff
   end
-
 end

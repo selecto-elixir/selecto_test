@@ -1,5 +1,4 @@
 defmodule SelectoTest.Store.Customer do
-
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -14,5 +13,4 @@ defmodule SelectoTest.Store.Customer do
     has_one :store, SelectoTest.Store.Store, foreign_key: :store_id
     has_one :address, SelectoTest.Store.Address, foreign_key: :address_id
   end
-
 end

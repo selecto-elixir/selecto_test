@@ -1,5 +1,4 @@
 defmodule SelectoTest.Store.Actor do
-
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -10,8 +9,6 @@ defmodule SelectoTest.Store.Actor do
     field :last_name, :string
 
     has_many :film_actors, SelectoTest.Store.FilmActor, foreign_key: :actor_id
-    has_many :films,  through: [:film_actors, :film]
-
+    has_many :films, through: [:film_actors, :film]
   end
-
 end

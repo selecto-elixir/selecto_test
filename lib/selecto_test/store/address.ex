@@ -1,5 +1,4 @@
 defmodule SelectoTest.Store.Address do
-
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -13,7 +12,5 @@ defmodule SelectoTest.Store.Address do
     field :phone, :string
 
     has_one :city, SelectoTest.Store.City, foreign_key: :city_id
-
   end
-
 end

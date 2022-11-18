@@ -1,5 +1,4 @@
 defmodule SelectoTest.Store.Inventory do
-
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -9,5 +8,4 @@ defmodule SelectoTest.Store.Inventory do
     belongs_to :film, SelectoTest.Store.Film, references: :film_id
     belongs_to :store, SelectoTest.Store.Store, references: :store_id
   end
-
 end

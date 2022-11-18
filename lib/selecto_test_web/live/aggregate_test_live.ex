@@ -23,14 +23,12 @@ defmodule SelectoTestWeb.AggregateTestLive do
       assign(socket,
         selecto:
           Selecto.configure(SelectoTest.Repo, selecto_domain())
-          |> Selecto.group_by(
-              [
-                {
-                  :rollup,
-                  [{:extract, "inserted_at", "year"}]
-                }
-              ]
-            )
+          |> Selecto.group_by([
+            {
+              :rollup,
+              [{:extract, "inserted_at", "year"}]
+            }
+          ])
           |> Selecto.select([
             {:extract, "inserted_at", "year"},
             {:avg, "planets[mass]"},

@@ -1,5 +1,4 @@
 defmodule SelectoTest.Store.Country do
-
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -8,5 +7,4 @@ defmodule SelectoTest.Store.Country do
   schema "country" do
     field :country, :string
   end
-
 end

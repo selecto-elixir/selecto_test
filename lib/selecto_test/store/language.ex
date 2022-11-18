@@ -1,5 +1,4 @@
 defmodule SelectoTest.Store.Language do
-
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -8,5 +7,4 @@ defmodule SelectoTest.Store.Language do
   schema "language" do
     field :name, :string
   end
-
 end

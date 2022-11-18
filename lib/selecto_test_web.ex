@@ -98,7 +98,6 @@ defmodule SelectoTestWeb do
       #   endpoint: SelectoTestWeb.Endpoint,
       #   statics: ~w(images)
 
-
       # Import global components
       import SelectoTestWeb.Components.{
         ColorSchemeSwitch

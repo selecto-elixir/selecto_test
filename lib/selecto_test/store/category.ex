@@ -1,5 +1,4 @@
 defmodule SelectoTest.Store.Category do
-
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -8,5 +7,4 @@ defmodule SelectoTest.Store.Category do
   schema "category" do
     field :name, :string
   end
-
 end
