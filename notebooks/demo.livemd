@@ -13,7 +13,38 @@ Selecto lets you compose queries functionally, rather than through the Ecto DSL.
 To use Selecto, you first create a domain:
 
 ```elixir
+domain = SelectoTest.PagilaDomain.domain()
+```
 
+Next, configure a Selecto struct
+
+```elixir
+selecto = Selecto.configure(SelectoTest.Repo, domain)
 ```
 
 ## Example Queries
+
+```elixir
+Selecto.configure(SelectoTest.Repo, SelectoTest.PagilaDomain.domain())
+|> Selecto.select(["first_name", "last_name", "actor_id"])
+|> Selecto.filter([
+  {:not,
+   {:or,
+    [
+      {"actor_id", [1, 2]},
+      {"actor_id", 3}
+    ]}}
+])
+|> Selecto.order_by({:desc, "actor_id"})
+|> Selecto.execute([])
+```
+
+```elixir
+Selecto.configure(SelectoTest.Repo, SelectoTest.PagilaDomain.domain())
+|> Selecto.select({:count, "*", {"first_name", {"!=", "DAN"}}})
+|> Selecto.execute([])
+```
+
+```elixir
+
+```
