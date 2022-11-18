@@ -26,6 +26,13 @@ selecto = Selecto.configure(SelectoTest.Repo, domain)
 
 ```elixir
 Selecto.configure(SelectoTest.Repo, SelectoTest.PagilaDomain.domain())
+|> Selecto.select([1, 1.1, true, {:literal, "string"}, {:count}])
+|> Selecto.filter({"actor_id", 1})
+|> Selecto.execute([])
+```
+
+```elixir
+Selecto.configure(SelectoTest.Repo, SelectoTest.PagilaDomain.domain())
 |> Selecto.select(["first_name", "last_name", "actor_id"])
 |> Selecto.filter([
   {:not,
@@ -46,5 +53,31 @@ Selecto.configure(SelectoTest.Repo, SelectoTest.PagilaDomain.domain())
 ```
 
 ```elixir
+Selecto.configure(SelectoTest.Repo, SelectoTest.PagilaDomain.domain())
+|> Selecto.select({:concat, ["first_name", {:literal, " "}, "last_name"]})
+|> Selecto.execute([])
+```
 
+```elixir
+Selecto.configure(SelectoTest.Repo, SelectoTest.PagilaDomain.domain())
+|> Selecto.select({:coalesce, ["language[name]", {:literal, "[Nil]"}]})
+|> Selecto.execute([])
+```
+
+```elixir
+Selecto.configure(SelectoTest.Repo, SelectoTest.PagilaDomain.domain())
+|> Selecto.select(
+  {:case,
+   [
+     {
+       {"first_name", {:like, "G%"}},
+       {:literal, "G!"}
+     },
+     {
+       {"first_name", {:like, "F%"}},
+       {:literal, "F!"}
+     }
+   ], "first_name"}
+)
+|> Selecto.execute([])
 ```
