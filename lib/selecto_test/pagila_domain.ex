@@ -19,8 +19,9 @@ defmodule SelectoTest.PagilaDomain do
         "full_name" => %{
           name: "Full Name",
           select: {:concat, ["first_name", {:literal, " "}, "last_name"]},
-          aggregate_filter: "actor_id",
-          aggregate_filter_select: "actor_id"
+          group_by_format: fn a -> a end,
+          group_by_filter: "actor_id",
+          group_by_filter_select: "actor_id"
         },
 
         #### Example Custom Column Component with subquery and config component
