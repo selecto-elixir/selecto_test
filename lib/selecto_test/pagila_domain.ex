@@ -7,6 +7,12 @@ defmodule SelectoTest.PagilaDomain do
       source: SelectoTest.Store.Actor,
       name: "Actors Selecto",
       required_filters: [{"actor_id", {">=", 1}}],
+
+      default_selected: ["first_name", "last_name"],
+      default_order_by: ["last_name"],
+      default_group_by: ["last_name", "first_name"],
+      default_aggregate: [{"actor_id", %{"format"=>"count"}}],
+
       filters: %{
         "actor_has_ratings" => %{
           name: "Actor Has Ratings",
