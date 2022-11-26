@@ -10,7 +10,7 @@ defmodule SelectoTest.PagilaDomain do
 
       default_selected: ["first_name", "last_name"],
       default_order_by: ["last_name"],
-      default_group_by: ["last_name", "first_name"],
+      default_group_by: ["full_name"],
       default_aggregate: [{"actor_id", %{"format"=>"count"}}],
 
       filters: %{
