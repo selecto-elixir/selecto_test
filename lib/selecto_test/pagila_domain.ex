@@ -13,6 +13,8 @@ defmodule SelectoTest.PagilaDomain do
       default_group_by: ["full_name"],
       default_aggregate: [{"actor_id", %{"format"=>"count"}}],
 
+
+      # Custom filters that cannot be created automatically from the schema
       filters: %{
         "actor_has_ratings" => %{
           name: "Actor Has Ratings",
@@ -21,10 +23,16 @@ defmodule SelectoTest.PagilaDomain do
           apply: &actor_ratings_apply/2
         }
       },
+
+      # Custom columns that cannot be created from the schema
       custom_columns: %{
+
+        ### Example custom column with group-by and filter directives
         "full_name" => %{
           name: "Full Name",
+          ### concat_ws?
           select: {:concat, ["first_name", {:literal, " "}, "last_name"]},
+
           ### we will always get a tuple of select + group_by_filter_select here
           group_by_format: fn {a, _id}, _def -> a end,
           group_by_filter: "actor_id",
