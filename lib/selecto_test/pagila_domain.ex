@@ -1,6 +1,7 @@
 defmodule SelectoTest.PagilaDomain do
 
   import Phoenix.Component
+  alias SelectoTestWeb.Router.Helpers, as: Routes
 
 
   def customer_domain() do
