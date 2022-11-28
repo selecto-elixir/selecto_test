@@ -2,17 +2,26 @@ defmodule SelectoTest.PagilaDomain do
 
   import Phoenix.Component
 
+
+  def customer_domain() do
+    ### customer info, payments and rentals
+
+
+  end
+
   def domain() do
     %{
       source: SelectoTest.Store.Actor,
       name: "Actors Selecto",
+
+      ### Will always be applied
       required_filters: [{"actor_id", {">=", 1}}],
 
+      ## Starting form params
       default_selected: ["first_name", "last_name"],
       default_order_by: ["last_name"],
       default_group_by: ["full_name"],
       default_aggregate: [{"actor_id", %{"format"=>"count"}}],
-
 
       # Custom filters that cannot be created automatically from the schema
       filters: %{
@@ -32,7 +41,6 @@ defmodule SelectoTest.PagilaDomain do
           name: "Full Name",
           ### concat_ws?
           select: {:concat, ["first_name", {:literal, " "}, "last_name"]},
-
           ### we will always get a tuple of select + group_by_filter_select here
           group_by_format: fn {a, _id}, _def -> a end,
           group_by_filter: "actor_id",
@@ -102,7 +110,7 @@ defmodule SelectoTest.PagilaDomain do
     }
   end
 
-  def actor_ratings_apply(selecto, f) do
+  def actor_ratings_apply(_selecto, f) do
     ratings = f["ratings"]
 
     {"actor_id",
@@ -130,7 +138,6 @@ defmodule SelectoTest.PagilaDomain do
 
   def film_link(row) do
     {id, title} = row
-
     {
       # ~p[/pagila/film/#{ row[ "film[film_id]" ]}],
       Routes.pagila_film_path(SelectoTestWeb.Endpoint, :index, id),
