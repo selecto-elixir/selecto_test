@@ -18,13 +18,13 @@ defmodule SelectoTestWeb.PagilaLive do
        ###
        executed: false,
        applied_view: nil,
+       page: 0,
 
        ### Build the view:
        view_config: %{
          view_mode: "aggregate",
          active_tab: "view",
          per_page: 30,
-         page: 0,
          aggregate: Map.get(selecto.domain, :default_aggregate, []) |> set_defaults(),
          group_by: Map.get(selecto.domain, :default_group_by, []) |> set_defaults(),
          order_by: Map.get(selecto.domain, :default_order_by, []) |> set_defaults(),
@@ -35,7 +35,12 @@ defmodule SelectoTestWeb.PagilaLive do
   end
 
   @impl true
-  def handle_params(_params, _uri, socket) do
+  def handle_params(params, _uri, socket) do
+
+    ### Handle page
+
+
+
     # socket =
     #   assign(socket,
     #     ### required for selecto components
