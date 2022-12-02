@@ -2,7 +2,6 @@ defmodule SelectoTestWeb.PagilaLive do
   use SelectoTestWeb, :live_view
 
   use Phoenix.Component
-  import Ecto.Query
 
   use SelectoComponents.ViewSelector
   ###
