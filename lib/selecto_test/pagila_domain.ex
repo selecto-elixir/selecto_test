@@ -1,8 +1,7 @@
 defmodule SelectoTest.PagilaDomain do
 
   import Phoenix.Component
-  alias SelectoTestWeb.Router.Helpers, as: Routes
-
+  use SelectoTestWeb, :verified_routes
 
   def customer_domain() do
     ### customer info, payments and rentals
@@ -140,8 +139,7 @@ defmodule SelectoTest.PagilaDomain do
   def film_link(row) do
     {id, title} = row
     {
-      # ~p[/pagila/film/#{ row[ "film[film_id]" ]}],
-      Routes.pagila_film_path(SelectoTestWeb.Endpoint, :index, id),
+      ~p[/pagila/film/#{ id }],
       title
     }
   end

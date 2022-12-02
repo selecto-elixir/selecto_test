@@ -24,7 +24,7 @@ defmodule SelectoTestWeb.ConnCase do
       import Phoenix.ConnTest
       import SelectoTestWeb.ConnCase
 
-      alias SelectoTestWeb.Router.Helpers, as: Routes
+      use SelectoTestWeb, :verified_routes
 
       # The default endpoint for testing
       @endpoint SelectoTestWeb.Endpoint

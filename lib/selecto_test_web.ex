@@ -17,13 +17,18 @@ defmodule SelectoTestWeb do
   and import those modules here.
   """
 
+  def static_paths do
+    ~w(assets fonts images favicon.ico robots.txt)
+  end
+
   def controller do
     quote do
       use Phoenix.Controller, namespace: SelectoTestWeb
 
       import Plug.Conn
       import SelectoTestWeb.Gettext
-      alias SelectoTestWeb.Router.Helpers, as: Routes
+      unquote(verified_routes())
+
     end
   end
 
@@ -82,8 +87,7 @@ defmodule SelectoTestWeb do
       use Phoenix.HTML
 
       # Import LiveView and .heex helpers (live_render, live_patch, <.form>, etc)
-      import Phoenix.LiveView.Helpers
-      use Phoenix.Component
+      import Phoenix.Component
 
       # Import basic rendering functionality (render, render_layout, etc)
       import Phoenix.View
@@ -104,6 +108,17 @@ defmodule SelectoTestWeb do
       }
 
       use PetalComponents
+      unquote(verified_routes())
+
+    end
+  end
+
+  def verified_routes do
+    quote do
+      use Phoenix.VerifiedRoutes,
+        endpoint: SelectoTestWeb.Endpoint,
+        router: SelectoTestWeb.Router,
+        statics: SelectoTestWeb.static_paths()
     end
   end
 
