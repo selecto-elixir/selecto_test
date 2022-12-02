@@ -1,6 +1,5 @@
 defmodule SelectoTest.Store.Category do
   use Ecto.Schema
-  import Ecto.Changeset
 
   @primary_key {:category_id, :id, autogenerate: true}
 

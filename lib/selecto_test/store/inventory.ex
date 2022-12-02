@@ -1,6 +1,5 @@
 defmodule SelectoTest.Store.Inventory do
   use Ecto.Schema
-  import Ecto.Changeset
 
   @primary_key {:inventory_id, :id, autogenerate: true}
 

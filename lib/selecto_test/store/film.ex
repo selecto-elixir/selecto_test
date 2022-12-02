@@ -1,6 +1,5 @@
 defmodule SelectoTest.Store.Film do
   use Ecto.Schema
-  import Ecto.Changeset
 
   @primary_key {:film_id, :id, autogenerate: true}
 

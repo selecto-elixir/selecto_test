@@ -1,6 +1,5 @@
 defmodule SelectoTest.Store.Payment do
   use Ecto.Schema
-  import Ecto.Changeset
 
   @primary_key {:payment_id, :id, autogenerate: true}
 

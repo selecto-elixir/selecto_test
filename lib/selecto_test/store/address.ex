@@ -1,6 +1,5 @@
 defmodule SelectoTest.Store.Address do
   use Ecto.Schema
-  import Ecto.Changeset
 
   @primary_key {:address_id, :id, autogenerate: true}
 

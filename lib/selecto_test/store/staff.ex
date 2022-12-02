@@ -1,6 +1,5 @@
 defmodule SelectoTest.Store.Staff do
   use Ecto.Schema
-  import Ecto.Changeset
 
   @primary_key {:staff_id, :id, autogenerate: true}
 

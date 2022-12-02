@@ -1,6 +1,5 @@
 defmodule SelectoTest.Store.FilmActor do
   use Ecto.Schema
-  import Ecto.Changeset
 
   @primary_key false
 
