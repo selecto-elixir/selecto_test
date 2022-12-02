@@ -100,7 +100,7 @@ defmodule SelectoTest.PagilaDomain do
                   name: "Film Link",
                   requires_select: ["film[film_id]", "film[title]"],
                   format: :link,
-                  link_parts: &film_link/1
+                  link_parts: fn ({id, title}) -> { ~p[/pagila/film/#{ id }], title } end
                 }
               }
             }
@@ -136,13 +136,7 @@ defmodule SelectoTest.PagilaDomain do
     """
   end
 
-  def film_link(row) do
-    {id, title} = row
-    {
-      ~p[/pagila/film/#{ id }],
-      title
-    }
-  end
+
 
   defp actor_card_config(assigns) do
     ~H"""
