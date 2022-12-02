@@ -1,38 +1,32 @@
-<.container max_width="full">
-  <.button phx-click="toggle_show_view">Toggle View Controller</.button>
-  <div :if={@show_view}>
-    <.live_component
-      module={SelectoComponents.ViewSelector}
-      id="config"
-      active_tab={@active_tab}
-      view_mode={@view_mode}
-      applied_view={@view_mode}
-      group_by={@group_by}
-      order_by={@order_by}
-      selected={@selected}
-      aggregate={@aggregate}
-      filters={@filters}
-      selecto={@selecto}
-      per_page={@per_page}
-      executed={@executed}
-    />
-  </div>
+<.button phx-click="toggle_show_view">Toggle View Controller</.button>
+<div :if={@show_view}>
+  <.live_component
+    module={SelectoComponents.ViewSelector}
+    id="config"
 
-  <%= if @executed do %>
-    <%= if @applied_view == "detail" do %>
-      <.live_component
-        module={SelectoComponents.Components.DetailTable}
-        id="results"
-        selecto={@selecto}
-        per_page={@per_page}
-        page={@page}
-      />
-    <% else %>
-      <.live_component
-        module={SelectoComponents.Components.AggregateTable}
-        id="results"
-        selecto={@selecto}
-      />
-    <% end %>
+    view_config={@view_config}
+
+    selecto={@selecto}
+    executed={@executed}
+    applied_view={nil}
+
+  />
+</div>
+
+<%= if @executed do %>
+  <%= if @applied_view == "detail" do %>
+    <.live_component
+      module={SelectoComponents.Components.DetailTable}
+      id="results"
+      selecto={@selecto}
+      view_config={@view_config}
+      page={@page}
+    />
+  <% else %>
+    <.live_component
+      module={SelectoComponents.Components.AggregateTable}
+      id="results"
+      selecto={@selecto}
+    />
   <% end %>
-</.container>
+<% end %>
