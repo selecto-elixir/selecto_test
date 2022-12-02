@@ -1,12 +1,9 @@
 defmodule SelectoTest.PagilaDomain do
-
   import Phoenix.Component
   use SelectoTestWeb, :verified_routes
 
   def customer_domain() do
     ### customer info, payments and rentals
-
-
   end
 
   def domain() do
@@ -21,7 +18,7 @@ defmodule SelectoTest.PagilaDomain do
       default_selected: ["first_name", "last_name"],
       default_order_by: ["last_name"],
       default_group_by: ["full_name"],
-      default_aggregate: [{"actor_id", %{"format"=>"count"}}],
+      default_aggregate: [{"actor_id", %{"format" => "count"}}],
 
       # Custom filters that cannot be created automatically from the schema
       filters: %{
@@ -35,7 +32,6 @@ defmodule SelectoTest.PagilaDomain do
 
       # Custom columns that cannot be created from the schema
       custom_columns: %{
-
         ### Example custom column with group-by and filter directives
         "full_name" => %{
           name: "Full Name",
@@ -100,7 +96,7 @@ defmodule SelectoTest.PagilaDomain do
                   name: "Film Link",
                   requires_select: ["film[film_id]", "film[title]"],
                   format: :link,
-                  link_parts: fn ({id, title}) -> { ~p[/pagila/film/#{ id }], title } end
+                  link_parts: fn {id, title} -> {~p[/pagila/film/#{id}], title} end
                 }
               }
             }
@@ -136,8 +132,6 @@ defmodule SelectoTest.PagilaDomain do
     """
   end
 
-
-
   defp actor_card_config(assigns) do
     ~H"""
     <div>
@@ -168,5 +162,4 @@ defmodule SelectoTest.PagilaDomain do
   def process_film_card(_selecto, _params) do
     # do we want to handle these in a batch or individually?
   end
-
 end

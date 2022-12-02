@@ -28,7 +28,6 @@ defmodule SelectoTestWeb do
       import Plug.Conn
       import SelectoTestWeb.Gettext
       unquote(verified_routes())
-
     end
   end
 
@@ -109,7 +108,6 @@ defmodule SelectoTestWeb do
 
       use PetalComponents
       unquote(verified_routes())
-
     end
   end
 
