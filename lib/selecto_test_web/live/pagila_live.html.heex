@@ -1,5 +1,6 @@
 <.button phx-click="toggle_show_view_configurator">Toggle View Controller</.button>
 <div :if={@show_view_configurator}>
+
   <.live_component
     module={SelectoComponents.ViewSelector}
     id="config"
@@ -8,6 +9,7 @@
     executed={@executed}
     applied_view={nil}
   />
+
 </div>
 
 <%= if @executed do %>

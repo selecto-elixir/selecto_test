@@ -6,36 +6,25 @@ defmodule SelectoTestWeb.PagilaLive do
   use SelectoComponents.ViewSelector
   ###
 
-  @impl true
-  def mount(_params, _session, socket) do
-    selecto = Selecto.configure(SelectoTest.Repo, SelectoTest.PagilaDomain.domain())
-
-    {:ok,
-     assign(socket,
-       selecto: selecto,
-       show_view_configurator: false,
-
-       ###
-       executed: false,
-       applied_view: nil,
-       page: 0,
-
-       ### Build the view:
-       view_config: %{
-         view_mode: "aggregate",
-         active_tab: "view",
-         per_page: 30,
-         aggregate: Map.get(selecto.domain, :default_aggregate, []) |> set_defaults(),
-         group_by: Map.get(selecto.domain, :default_group_by, []) |> set_defaults(),
-         order_by: Map.get(selecto.domain, :default_order_by, []) |> set_defaults(),
-         selected: Map.get(selecto.domain, :default_selected, []) |> set_defaults(),
-         filters: []
-       }
-     )}
+  def linker(t) do
+    IO.inspect(t)
+    ~p"/pagila"
   end
 
   @impl true
-  def handle_params(params, _uri, socket) do
+  def mount(_params, _session, socket) do
+    IO.inspect(socket)
+    selecto = Selecto.configure(SelectoTest.Repo, SelectoTest.PagilaDomain.domain())
+    state = get_initial_state(selecto)
+
+    socket = assign(socket, show_view_configurator: false )
+    {:ok, assign(socket, state)}
+  end
+
+
+
+  @impl true
+  def handle_params(_params, _uri, socket) do
 
     ### Handle page
 
