@@ -8,7 +8,6 @@ defmodule SelectoTestWeb.PagilaLive do
 
    @impl true
   def mount(_params, _session, socket) do
-    IO.inspect(socket)
     selecto = Selecto.configure(SelectoTest.Repo, SelectoTest.PagilaDomain.domain())
     state = get_initial_state(selecto)
 
