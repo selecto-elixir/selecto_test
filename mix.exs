@@ -55,8 +55,7 @@ defmodule SelectoTest.MixProject do
       {:selecto, path: "./vendor/selecto", override: true},
       {:selecto_components, path: "./vendor/selecto_components", override: true},
       {:uuid, "~> 1.1"},
-      {:kino, "~> 0.7.0"},
-      {:doumi_uri_query, "~> 0.1.0"} ### seems to be needed for a docker bug for fly.io due to deps in /vendor?
+      {:kino, "~> 0.7.0"}
     ]
   end
 
