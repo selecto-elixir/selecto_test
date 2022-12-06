@@ -5,9 +5,9 @@ defmodule SelectoTest.Store.Rental do
 
   schema "rental" do
     field :rental_date, :utc_datetime
-    # has_one inventory
-    # has_one customer
+    belongs_to :inventory, SelectoTest.Store.Inventory, foreign_key: :inventory_id, references: :inventory_id
+    belongs_to :customer, SelectoTest.Store.Customer, foreign_key: :customer_id, references: :customer_id
     field :return_date, :utc_datetime
-    # has_one staff
+    belongs_to :staff, SelectoTest.Store.Staff, foreign_key: :staff_id, references: :staff_id
   end
 end

@@ -11,5 +11,7 @@ defmodule SelectoTest.Store.Customer do
     field :activebool, :boolean
     has_one :store, SelectoTest.Store.Store, foreign_key: :store_id
     has_one :address, SelectoTest.Store.Address, foreign_key: :address_id
+
+    has_many :rentals, SelectoTest.Store.Rental, foreign_key: :customer_id
   end
 end
