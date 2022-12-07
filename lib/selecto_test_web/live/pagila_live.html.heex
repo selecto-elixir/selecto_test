@@ -18,8 +18,8 @@
       module={SelectoComponents.Components.DetailTable}
       id="results"
       selecto={@selecto}
-      view_config={@view_config}
       page={@page}
+      per_page={@view_config.per_page}
     />
   <% else %>
     <.live_component
