@@ -1,6 +1,6 @@
 # Selecto Demo
 
-## Selecto, a query builder for Ecto
+## Selecto, a query builder
 
 TODO
 
