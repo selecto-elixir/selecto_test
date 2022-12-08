@@ -1,12 +1,10 @@
 defmodule SelectoTestWeb.PagilaLive do
   use SelectoTestWeb, :live_view
 
-  use Phoenix.Component
-
   use SelectoComponents.ViewSelector
   ###
 
-   @impl true
+  @impl true
   def mount(_params, _session, socket) do
     selecto = Selecto.configure(SelectoTest.Repo, SelectoTest.PagilaDomain.domain())
     state = get_initial_state(selecto)
