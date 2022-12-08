@@ -1,4 +1,5 @@
 <.button phx-click="toggle_show_view_configurator">Toggle View Controller</.button>
+
 <div :if={@show_view_configurator}>
 
   <.live_component
@@ -12,7 +13,6 @@
 
 </div>
 
-<%= if @executed do %>
  <.live_component
     module={SelectoComponents.Results}
     selecto={@selecto}
@@ -21,4 +21,3 @@
     executed={@executed}
     per_page={@view_config.per_page}
     id="results"/>
-<% end %>
