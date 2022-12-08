@@ -1,7 +1,7 @@
 defmodule SelectoTestWeb.PagilaLive do
   use SelectoTestWeb, :live_view
 
-  use SelectoComponents.ViewSelector
+  use SelectoComponents.Form
   ###
 
   @impl true

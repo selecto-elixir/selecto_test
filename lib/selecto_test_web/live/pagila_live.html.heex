@@ -2,7 +2,7 @@
 <div :if={@show_view_configurator}>
 
   <.live_component
-    module={SelectoComponents.ViewSelector}
+    module={SelectoComponents.Form}
     id="config"
     view_config={@view_config}
     selecto={@selecto}
@@ -13,19 +13,11 @@
 </div>
 
 <%= if @executed do %>
-  <%= if @applied_view == "detail" do %>
-    <.live_component
-      module={SelectoComponents.Components.DetailTable}
-      id="results"
-      selecto={@selecto}
-      page={@page}
-      per_page={@view_config.per_page}
-    />
-  <% else %>
-    <.live_component
-      module={SelectoComponents.Components.AggregateTable}
-      id="results"
-      selecto={@selecto}
-    />
-  <% end %>
+ <.live_component
+    module={SelectoComponents.Results}
+    selecto={@selecto}
+    page={@page}
+    applied_view={@applied_view}
+    per_page={@view_config.per_page}
+    id="results"/>
 <% end %>
