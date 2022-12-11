@@ -7,13 +7,13 @@ defmodule SelectoTestWeb.PagilaLive do
   @impl true
   def mount(_params, _session, socket) do
     selecto = Selecto.configure(SelectoTest.Repo, SelectoTest.PagilaDomain.domain())
-    state = get_initial_state(selecto)
-
 
     views = %{
       detail: {SelectoComponents.Views.Detail, "Detail View"},
       aggregate: {SelectoComponents.Views.Aggregate, "Aggregate View"},
     }
+    state = get_initial_state(views, selecto)
+
 
 
     socket = assign(socket,
