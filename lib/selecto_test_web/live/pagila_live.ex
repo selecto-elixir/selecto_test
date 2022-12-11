@@ -9,8 +9,16 @@ defmodule SelectoTestWeb.PagilaLive do
     selecto = Selecto.configure(SelectoTest.Repo, SelectoTest.PagilaDomain.domain())
     state = get_initial_state(selecto)
 
+
+    views = %{
+      detail: {SelectoComponents.Views.Detail, "Detail View"},
+      aggregate: {SelectoComponents.Views.Aggregate, "Aggregate View"},
+    }
+
+
     socket = assign(socket,
       show_view_configurator: false,
+      views: views,
       my_path: "/pagila"
     )
     {:ok, assign(socket, state)}
