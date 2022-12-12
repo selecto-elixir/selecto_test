@@ -9,9 +9,8 @@ defmodule SelectoTestWeb.PagilaLive do
     selecto = Selecto.configure(SelectoTest.Repo, SelectoTest.PagilaDomain.domain())
 
     views = [
-      {:aggregate, SelectoComponents.Views.Aggregate, "Aggregate View"},
-      {:detail, SelectoComponents.Views.Detail, "Detail View"},
-
+      {:aggregate, SelectoComponents.Views.Aggregate, "Aggregate View", %{}},
+      {:detail, SelectoComponents.Views.Detail, "Detail View", %{}},
     ]
     state = get_initial_state(views, selecto)
 
