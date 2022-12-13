@@ -1,6 +1,7 @@
 defmodule SelectoTest.PagilaDomain do
   import Phoenix.Component
   use SelectoTestWeb, :verified_routes
+  import SelectoComponents.Components.Common
 
   ### TODO - fix agg filter appluy for film ratings
 
@@ -174,8 +175,8 @@ defmodule SelectoTest.PagilaDomain do
   defp actor_card_config(assigns) do
     ~H"""
     <div>
-      Actor Card Show # of Most Recent Films:
-      <input type="number" name={"#{@prefix}[limit]"} value={Map.get(@config, "limit", 5)} />
+      Show # of Most Recent Films:
+      <.input type="number" name={"#{@prefix}[limit]"} value={Map.get(@config, "limit", 5)} />
     </div>
     """
   end

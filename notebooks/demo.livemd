@@ -13,7 +13,7 @@ Selecto lets you compose queries functionally, rather than through the Ecto DSL.
 To use Selecto, you first create a domain:
 
 ```elixir
-domain = SelectoTest.PagilaDomain.domain()
+domain = SelectoTest.PagilaDomain.actors_domain()
 ```
 
 Next, configure a Selecto struct
@@ -25,14 +25,14 @@ selecto = Selecto.configure(SelectoTest.Repo, domain)
 ## Example Queries
 
 ```elixir
-Selecto.configure(SelectoTest.Repo, SelectoTest.PagilaDomain.domain())
+Selecto.configure(SelectoTest.Repo, domain)
 |> Selecto.select([1, 1.1, true, {:literal, "string"}, {:count}])
 |> Selecto.filter({"actor_id", 1})
 |> Selecto.execute([])
 ```
 
 ```elixir
-Selecto.configure(SelectoTest.Repo, SelectoTest.PagilaDomain.domain())
+Selecto.configure(SelectoTest.Repo, domain)
 |> Selecto.select(["first_name", "last_name", "actor_id"])
 |> Selecto.filter([
   {:not,
@@ -47,25 +47,25 @@ Selecto.configure(SelectoTest.Repo, SelectoTest.PagilaDomain.domain())
 ```
 
 ```elixir
-Selecto.configure(SelectoTest.Repo, SelectoTest.PagilaDomain.domain())
+Selecto.configure(SelectoTest.Repo, domain)
 |> Selecto.select({:count, "*", {"first_name", {"!=", "DAN"}}})
 |> Selecto.execute([])
 ```
 
 ```elixir
-Selecto.configure(SelectoTest.Repo, SelectoTest.PagilaDomain.domain())
+Selecto.configure(SelectoTest.Repo, domain)
 |> Selecto.select({:concat, ["first_name", {:literal, " "}, "last_name"]})
 |> Selecto.execute([])
 ```
 
 ```elixir
-Selecto.configure(SelectoTest.Repo, SelectoTest.PagilaDomain.domain())
+Selecto.configure(SelectoTest.Repo, domain)
 |> Selecto.select({:coalesce, ["language[name]", {:literal, "[Nil]"}]})
 |> Selecto.execute([])
 ```
 
 ```elixir
-Selecto.configure(SelectoTest.Repo, SelectoTest.PagilaDomain.domain())
+Selecto.configure(SelectoTest.Repo, domain)
 |> Selecto.select(
   {:case,
    [
