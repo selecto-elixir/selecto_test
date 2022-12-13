@@ -9,6 +9,7 @@ module.exports = {
   ],
   theme: {
     extend: {
+      backgroundColor: ['even'],
       colors: {
         primary: colors.blue,
         secondary: colors.pink,
