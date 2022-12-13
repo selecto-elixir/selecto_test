@@ -176,7 +176,7 @@ defmodule SelectoTest.PagilaDomain do
     ~H"""
     <div>
       Show # of Most Recent Films:
-      <.input type="number" name={"#{@prefix}[limit]"} value={Map.get(@config, "limit", 5)} />
+      <.sc_input type="number" name={"#{@prefix}[limit]"} value={Map.get(@config, "limit", 5)} />
     </div>
     """
   end
