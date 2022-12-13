@@ -6,8 +6,19 @@ defmodule SelectoTest.PagilaDomain do
     ### customer info, payments and rentals
     %{
       source: SelectoTest.Store.Film,
-      name: "Film Selecto",
-      joins: %{}
+      name: "Film",
+      joins: %{
+        language: %{
+          name: "Film Language",
+          ## TODO Lookup type means that local table as an ID to a table that provides a 'lookup_value' that is
+          type: :lookup,
+          # the interesting data. So in this case, film has language[name], we will never care about language_id
+          # We do not want to give 2 language ID columns to pick from, so will skip the remote, and skip date/update
+          # info from the remote table. Lookup_value is the only col we will add from remote table (can be List to add more than one)
+          lookup_value: :name,
+          lookup: {:select, :language_id, :language_id, :name}
+        }
+      }
 
 
     }
@@ -20,7 +31,7 @@ defmodule SelectoTest.PagilaDomain do
   def actors_domain() do
     %{
       source: SelectoTest.Store.Actor,
-      name: "Actors Selecto",
+      name: "Actor",
 
       ### Will always be applied
       required_filters: [{"actor_id", {">=", 1}}],
