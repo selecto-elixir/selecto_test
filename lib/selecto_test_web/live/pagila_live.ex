@@ -6,7 +6,16 @@ defmodule SelectoTestWeb.PagilaLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    selecto = Selecto.configure(SelectoTest.Repo, SelectoTest.PagilaDomain.domain())
+
+
+
+    domain = case socket.assigns.live_action do
+      :index -> SelectoTest.PagilaDomain.actors_domain()
+      :stores -> SelectoTest.PagilaDomain.stores_domain()
+      :films -> SelectoTest.PagilaDomain.films_domain()
+    end
+
+    selecto = Selecto.configure(SelectoTest.Repo, domain )
 
     views = [
       {:aggregate, SelectoComponents.Views.Aggregate, "Aggregate View", %{ drill_down: :detail }},

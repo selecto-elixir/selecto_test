@@ -19,6 +19,9 @@ defmodule SelectoTestWeb.Router do
 
     live "/", PagilaLive, :index
     live "/pagila", PagilaLive, :index
+    live "/pagila_stores", PagilaLive, :stores
+    live "/pagila_films", PagilaLive, :films
+
     live "/pagila/film/:film_id", PagilaFilmLive, :index
 
   end

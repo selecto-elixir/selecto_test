@@ -2,11 +2,22 @@ defmodule SelectoTest.PagilaDomain do
   import Phoenix.Component
   use SelectoTestWeb, :verified_routes
 
-  def customer_domain() do
+  def films_domain() do
+    ### customer info, payments and rentals
+    %{
+      source: SelectoTest.Store.Film,
+      name: "Film Selecto",
+      joins: %{}
+
+
+    }
+  end
+
+  def stores_domain() do
     ### customer info, payments and rentals
   end
 
-  def domain() do
+  def actors_domain() do
     %{
       source: SelectoTest.Store.Actor,
       name: "Actors Selecto",
