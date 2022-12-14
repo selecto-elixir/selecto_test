@@ -56,8 +56,8 @@ defmodule SelectoTest.MixProject do
       {:selecto_components, path: "./vendor/selecto_components", override: true},
       {:uuid, "~> 1.1"},
       {:kino, "~> 0.7.0"},
-      {:vega_lite, "~> 0.1.6"} #### D:
-
+      #### D:
+      {:vega_lite, "~> 0.1.6"}
     ]
   end
 

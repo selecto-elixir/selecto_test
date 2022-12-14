@@ -8,7 +8,9 @@ defmodule SelectoTest.Store.Film do
     field :description, :string
     field :release_year, :integer
 
-    belongs_to :language, SelectoTest.Store.Language, foreign_key: :language_id, references: :language_id
+    belongs_to :language, SelectoTest.Store.Language,
+      foreign_key: :language_id,
+      references: :language_id
 
     field :rental_duration, :integer
     field :rental_rate, :decimal

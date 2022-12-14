@@ -23,7 +23,6 @@ defmodule SelectoTestWeb.Router do
     live "/pagila_films", PagilaLive, :films
 
     live "/pagila/film/:film_id", PagilaFilmLive, :index
-
   end
 
   # Other scopes may use custom stacks.

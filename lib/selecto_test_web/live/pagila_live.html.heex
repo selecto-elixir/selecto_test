@@ -1,7 +1,6 @@
 <.button phx-click="toggle_show_view_configurator">Toggle View Controller</.button>
 
 <div :if={@show_view_configurator}>
-
   <.live_component
     module={SelectoComponents.Form}
     id="config"
@@ -12,15 +11,15 @@
     active_tab={@active_tab}
     views={@views}
   />
-
 </div>
 
- <.live_component
-    module={SelectoComponents.Results}
-    selecto={@selecto}
-    query_results={@query_results}
-    applied_view={@applied_view}
-    executed={@executed}
-    views={@views}
-    view_meta={@view_meta}
-    id="results"/>
+<.live_component
+  module={SelectoComponents.Results}
+  selecto={@selecto}
+  query_results={@query_results}
+  applied_view={@applied_view}
+  executed={@executed}
+  views={@views}
+  view_meta={@view_meta}
+  id="results"
+/>

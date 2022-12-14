@@ -6,27 +6,30 @@ defmodule SelectoTestWeb.PagilaLive do
 
   @impl true
   def mount(_params, _session, socket) do
+    {domain, path} =
+      case socket.assigns.live_action do
+        :index -> {SelectoTest.PagilaDomain.actors_domain(), "/pagila"}
+        :stores -> {SelectoTest.PagilaDomain.stores_domain(), "/pagila_stores"}
+        :films -> {SelectoTest.PagilaDomain.films_domain(), "/pagila_films"}
+      end
 
-    {domain, path} = case socket.assigns.live_action do
-      :index -> {SelectoTest.PagilaDomain.actors_domain(), "/pagila"}
-      :stores -> {SelectoTest.PagilaDomain.stores_domain(), "/pagila_stores"}
-      :films -> {SelectoTest.PagilaDomain.films_domain(), "/pagila_films"}
-    end
-
-    selecto = Selecto.configure(SelectoTest.Repo, domain )
+    selecto = Selecto.configure(SelectoTest.Repo, domain)
 
     views = [
-      {:aggregate, SelectoComponents.Views.Aggregate, "Aggregate View", %{ drill_down: :detail }},
-      {:detail, SelectoComponents.Views.Detail, "Detail View", %{}},
-      #{:graph, SelectoComponents.Views.Graph, "Graph View", %{}},
+      {:aggregate, SelectoComponents.Views.Aggregate, "Aggregate View", %{drill_down: :detail}},
+      {:detail, SelectoComponents.Views.Detail, "Detail View", %{}}
+      # {:graph, SelectoComponents.Views.Graph, "Graph View", %{}},
     ]
+
     state = get_initial_state(views, selecto)
 
-    socket = assign(socket,
-      show_view_configurator: false,
-      views: views,
-      my_path: path
-    )
+    socket =
+      assign(socket,
+        show_view_configurator: false,
+        views: views,
+        my_path: path
+      )
+
     {:ok, assign(socket, state)}
   end
 

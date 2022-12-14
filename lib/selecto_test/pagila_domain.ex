@@ -5,18 +5,15 @@ defmodule SelectoTest.PagilaDomain do
 
   ### TODO - fix agg filter appluy for film ratings
 
-
   def films_domain() do
     ### customer info, payments and rentals
     %{
       source: SelectoTest.Store.Film,
       name: "Film",
-
       default_selected: ["title"],
       default_order_by: ["title"],
       default_group_by: ["release_year"],
       default_aggregate: [{"film_id", %{"format" => "count"}}],
-
       custom_columns: %{
         "film_link" => %{
           name: "Film Link",
@@ -37,8 +34,6 @@ defmodule SelectoTest.PagilaDomain do
           lookup: {:select, :language_id, :language_id, :name}
         }
       }
-
-
     }
   end
 
@@ -52,7 +47,7 @@ defmodule SelectoTest.PagilaDomain do
       name: "Actor",
 
       ### Will always be applied
-      #required_filters: [{"actor_id", {">=", 1}}],
+      # required_filters: [{"actor_id", {">=", 1}}],
 
       ## Starting form params
       default_selected: ["first_name", "last_name"],
