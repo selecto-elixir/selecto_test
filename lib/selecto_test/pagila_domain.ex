@@ -23,6 +23,10 @@ defmodule SelectoTest.PagilaDomain do
         }
       },
       joins: %{
+        # categories: %{
+        #   name: "Categories",
+        #   type: :tag
+        # },
         language: %{
           name: "Film Language",
           ## TODO Lookup type means that local table as an ID to a table that provides a 'dimension_value' that is
