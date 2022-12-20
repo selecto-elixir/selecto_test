@@ -14,11 +14,10 @@ defmodule SelectoTest.PagilaDomain do
       default_order_by: ["title"],
       default_group_by: ["release_year"],
       default_aggregate: [{"film_id", %{"format" => "count"}}],
-      filters: %{
+      filters: %{   ### TODO make this from the col config below
         "fulltext" => %{
           type: :tsvector,
           name: "Title and Description Search",
-
         }
       },
       custom_columns: %{
