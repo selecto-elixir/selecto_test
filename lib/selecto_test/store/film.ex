@@ -29,5 +29,8 @@ defmodule SelectoTest.Store.Film do
 
     has_many :film_category, SelectoTest.Store.FilmCategory, foreign_key: :film_id
     has_many :categories, through: [:film_category, :category]
+
+    #field :fulltext,
+
   end
 end

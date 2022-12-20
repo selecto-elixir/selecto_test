@@ -14,12 +14,24 @@ defmodule SelectoTest.PagilaDomain do
       default_order_by: ["title"],
       default_group_by: ["release_year"],
       default_aggregate: [{"film_id", %{"format" => "count"}}],
+      filters: %{
+        "fulltext" => %{
+          type: :tsvector,
+          name: "Title and Description Search",
+
+        }
+      },
       custom_columns: %{
         "film_link" => %{
           name: "Film Link",
           requires_select: ["film_id", "title"],
           format: :link,
           link_parts: fn {id, title} -> {~p[/pagila/film/#{id}], title} end
+        },
+        "fulltext" => %{
+          field: "fulltext",
+          type: :tsvector,
+          name: "Title and Description Search"
         }
       },
       joins: %{
