@@ -2,8 +2,32 @@ defmodule SelectoTest.PagilaDomain do
   import Phoenix.Component
   use SelectoTestWeb, :verified_routes
   import SelectoComponents.Components.Common
+  @behaviour SelectoComponents.SavedViews
 
   ### TODO - fix agg filter appluy for film ratings
+  import Ecto.Query
+
+  def get_view(name, context) do
+    %{}
+  end
+
+  def save_view(name, context, params) do
+    %{}
+  end
+
+  def update_view(name, context, params) do
+    %{}
+  end
+
+  def get_names(context) do
+    q = from v in SelectoTest.SavedView,
+      select: v.name,
+      where: ^context == v.context
+
+    SelectoTest.Repo.all( q )
+  end
+
+
 
   def films_domain() do
     ### customer info, payments and rentals

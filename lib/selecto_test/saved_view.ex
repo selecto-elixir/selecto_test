@@ -15,5 +15,7 @@ defmodule SelectoTest.SavedView do
     saved_view
     |> cast(attrs, [:name, :context, :params])
     |> validate_required([:name, :context, :params])
+    |> unique_constraint([:name, :context], name: :index_for_saved_view_name_context)
   end
+
 end

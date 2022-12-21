@@ -9,5 +9,14 @@ defmodule SelectoTest.Repo.Migrations.CreateSavedViews do
 
       timestamps()
     end
+
+    create(
+      unique_index(
+      :saved_views,
+        ~w(name context)a,
+        name: :index_for_saved_view_name_context
+      )
+    )
   end
+
 end
