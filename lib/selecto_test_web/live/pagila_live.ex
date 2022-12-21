@@ -27,7 +27,8 @@ defmodule SelectoTestWeb.PagilaLive do
       assign(socket,
         show_view_configurator: false,
         views: views,
-        my_path: path
+        my_path: path,
+        saved_views: SelectoTest.SavedView,
       )
 
     {:ok, assign(socket, state)}
