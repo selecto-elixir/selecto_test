@@ -1,4 +1,5 @@
 defmodule SelectoTest.PagilaDomain do
+  alias SelectoTest.SavedView
   import Phoenix.Component
   use SelectoTestWeb, :verified_routes
   import SelectoComponents.Components.Common
@@ -8,15 +9,22 @@ defmodule SelectoTest.PagilaDomain do
   import Ecto.Query
 
   def get_view(name, context) do
-    %{}
+    q = from v in SelectoTest.SavedView,
+      where: ^context == v.context,
+      where:  ^name == v.name
+    SelectoTest.Repo.one( q )
   end
 
   def save_view(name, context, params) do
-    SelectoTest.Repo.insert!(%SelectoTest.SavedView{name: name, context: context, params: params})
+    case get_view(name, context) do
+      nil -> SelectoTest.Repo.insert!(%SelectoTest.SavedView{name: name, context: context, params: params})
+      v -> update_view(v, params)
+    end
   end
 
-  def update_view(name, context, params) do
-    %{}
+  def update_view(v, params) do
+      SelectoTest.SavedView.changeset(v, %{params: params})
+      |> SelectoTest.Repo.update()
   end
 
   def get_names(context) do
