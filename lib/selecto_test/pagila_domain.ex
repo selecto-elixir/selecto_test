@@ -18,13 +18,14 @@ defmodule SelectoTest.PagilaDomain do
   def save_view(name, context, params) do
     case get_view(name, context) do
       nil -> SelectoTest.Repo.insert!(%SelectoTest.SavedView{name: name, context: context, params: params})
-      v -> update_view(v, params)
+      view -> update_view(view, params)
     end
   end
 
-  def update_view(v, params) do
-      SelectoTest.SavedView.changeset(v, %{params: params})
+  def update_view(view, params) do
+    {:ok, view} = SelectoTest.SavedView.changeset(view, %{params: params})
       |> SelectoTest.Repo.update()
+    view
   end
 
   def get_names(context) do
@@ -35,6 +36,10 @@ defmodule SelectoTest.PagilaDomain do
     SelectoTest.Repo.all( q )
   end
 
+  def decode_view(view) do
+    ### give params to use for view
+    view.params
+  end
 
 
   def films_domain() do

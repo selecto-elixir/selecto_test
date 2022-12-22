@@ -12,8 +12,6 @@ defmodule SelectoTest.SavedView do
 
   @doc false
   def changeset(saved_view, attrs) do
-    IO.inspect(saved_view)
-    IO.inspect(attrs)
     saved_view
     |> cast(attrs, [:name, :context, :params])
     |> validate_required([:name, :context, :params])
