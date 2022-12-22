@@ -12,7 +12,7 @@ defmodule SelectoTest.PagilaDomain do
   end
 
   def save_view(name, context, params) do
-    %{}
+    SelectoTest.Repo.insert!(%SelectoTest.SavedView{name: name, context: context, params: params})
   end
 
   def update_view(name, context, params) do

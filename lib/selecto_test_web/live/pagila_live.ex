@@ -28,7 +28,7 @@ defmodule SelectoTestWeb.PagilaLive do
         show_view_configurator: false,
         views: views,
         my_path: path,
-        saved_views: __MODULE__,
+        saved_views: SelectoTest.PagilaDomain,
         saved_view_context: path
       )
 
