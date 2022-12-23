@@ -28,7 +28,7 @@ defmodule SelectoTest.PagilaDomain do
     view
   end
 
-  def get_names(context) do
+  def get_view_names(context) do
     q = from v in SelectoTest.SavedView,
       select: v.name,
       where: ^context == v.context
