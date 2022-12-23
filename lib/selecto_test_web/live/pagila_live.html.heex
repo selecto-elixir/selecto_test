@@ -1,5 +1,8 @@
 <.button phx-click="toggle_show_view_configurator">Toggle View Controller</.button>
 
+<.link :for={ v <- @available_saved_views } href={"#{@path}?saved_view=#{v}"} > <%= v %> </.link>
+
+
 <div :if={@show_view_configurator}>
   <.live_component
     module={SelectoComponents.Form}

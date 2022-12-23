@@ -23,13 +23,19 @@ defmodule SelectoTestWeb.PagilaLive do
 
     state = get_initial_state(views, selecto)
 
+    saved_views = SelectoTest.PagilaDomain.get_view_names( path )
+
     socket =
       assign(socket,
         show_view_configurator: false,
         views: views,
         my_path: path,
-        saved_views: SelectoTest.PagilaDomain,
-        saved_view_context: path
+        saved_view_module: SelectoTest.PagilaDomain,
+        saved_view_context: path,
+
+        ### For saved view links
+        path: path,
+        available_saved_views: saved_views
       )
 
     {:ok, assign(socket, state)}
