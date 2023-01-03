@@ -2,14 +2,12 @@
 
 This project is a test/development project for Selecto and SelectoComponents modules. 
 
-This project uses git checkouts to [selecto](https://github.com/seeken/selecto) and [selecto_components](https://github.com/seeken/selecto_components) which it expects to find in the vendor subdir.
+This project uses git checkouts to [selecto](https://github.com/selecto-elixir/selecto) and [selecto_components](https://github.com/selecto-elixir/selecto_components) which it expects to find in the vendor subdir.
 
 This app provides live views:
 
-- / the component interface
-- /pagila component interface targeted to [pagila database](https://github.com/devrimgunduz/pagila)
-- /aggregates a test view only of aggregates
-- /detail a test detail view
+- / and /pagila component interface targeted to [pagila database](https://github.com/devrimgunduz/pagila)
+- /pagila_films same DB, films table
 
 There is also the beginnings of a livebook in the notebooks dir.
 
