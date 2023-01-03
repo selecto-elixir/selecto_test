@@ -1,5 +1,4 @@
 defmodule SelectoTest.PagilaDomain do
-  alias SelectoTest.SavedView
   import Phoenix.Component
   use SelectoTestWeb, :verified_routes
   import SelectoComponents.Components.Common
@@ -52,10 +51,7 @@ defmodule SelectoTest.PagilaDomain do
       default_group_by: ["release_year"],
       default_aggregate: [{"film_id", %{"format" => "count"}}],
       filters: %{   ### TODO make this from the col config below
-        "fulltext" => %{
-          type: :tsvector,
-          name: "Title and Description Search",
-        }
+
       },
       custom_columns: %{
         "film_link" => %{
@@ -67,7 +63,8 @@ defmodule SelectoTest.PagilaDomain do
         "fulltext" => %{
           field: "fulltext",
           type: :tsvector,
-          name: "Title and Description Search"
+          name: "Title and Description Search",
+          make_filter: true
         }
       },
       joins: %{
