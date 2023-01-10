@@ -194,9 +194,15 @@ defmodule SelectoTest.PagilaDomain do
     ratings = f["ratings"]
 
     {"actor_id",
-     {:subquery, :in,
-      "(select actor_id from film_actor fa join film f on fa.film_id = f.film_id where f.rating = ANY(^SelectoParam^))",
-      [ratings]}}
+     {
+        :in,
+        {
+          :subquery,
+          "(select actor_id from film_actor fa join film f on fa.film_id = f.film_id where f.rating = ANY(^SelectoParam^))",
+          [ratings]
+        }
+      }
+    }
   end
 
   def actor_ratings(assigns) do
