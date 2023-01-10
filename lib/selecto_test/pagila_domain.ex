@@ -170,7 +170,6 @@ defmodule SelectoTest.PagilaDomain do
                   # We do not want to give 2 language ID columns to pick from, so will skip the remote, and skip date/update
                   # info from the remote table. Lookup_value is the only col we will add from remote table (can be List to add more than one)
                   dimension: :name,
-                  dimension: {:select, :language_id, :language_id, :name}
                 }
               ],
               name: "Film",
