@@ -74,13 +74,12 @@ defmodule SelectoTest.PagilaDomain do
         # },
         language: %{
           name: "Film Language",
-          ## TODO Lookup type means that local table as an ID to a table that provides a 'dimension_value' that is
+          ## TODO Lookup type means that local table as an ID to a table that provides a 'dimension' that is
           type: :dimension,
           # the interesting data. So in this case, film has language[name], we will never care about language_id
           # We do not want to give 2 language ID columns to pick from, so will skip the remote, and skip date/update
           # info from the remote table. Lookup_value is the only col we will add from remote table (can be List to add more than one)
-          dimension_value: :name,
-          dimension: {:select, :language_id, :language_id, :name}
+          dimension: :name
         }
       }
     }
@@ -165,12 +164,12 @@ defmodule SelectoTest.PagilaDomain do
               joins: [
                 language: %{
                   name: "Film Language",
-                  ## TODO Lookup type means that local table as an ID to a table that provides a 'dimension_value' that is
+                  ## TODO Lookup type means that local table as an ID to a table that provides a 'dimension' that is
                   type: :dimension,
                   # the interesting data. So in this case, film has language[name], we will never care about language_id
                   # We do not want to give 2 language ID columns to pick from, so will skip the remote, and skip date/update
                   # info from the remote table. Lookup_value is the only col we will add from remote table (can be List to add more than one)
-                  dimension_value: :name,
+                  dimension: :name,
                   dimension: {:select, :language_id, :language_id, :name}
                 }
               ],
