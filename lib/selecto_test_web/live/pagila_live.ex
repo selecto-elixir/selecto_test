@@ -9,8 +9,8 @@ defmodule SelectoTestWeb.PagilaLive do
     {domain, path} =
       case socket.assigns.live_action do
         :index -> {SelectoTest.PagilaDomain.actors_domain(), "/pagila"}
-        :stores -> {SelectoTest.PagilaDomain.stores_domain(), "/pagila_stores"}
-        :films -> {SelectoTest.PagilaDomain.films_domain(), "/pagila_films"}
+        #:stores -> {SelectoTest.PagilaDomain.stores_domain(), "/pagila_stores"}
+        :films -> {SelectoTest.PagilaDomainFilms.domain(), "/pagila_films"}
       end
 
     selecto = Selecto.configure(SelectoTest.Repo, domain)

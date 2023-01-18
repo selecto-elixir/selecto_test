@@ -58,7 +58,7 @@ defmodule SelectoTest.MixProject do
       {:uuid, "~> 1.1"},
       {:kino, "~> 0.7.0"},
       #### D:
-      {:vega_lite, "~> 0.1.6"}
+      #{:vega_lite, "~> 0.1.6"}
     ]
   end
 
