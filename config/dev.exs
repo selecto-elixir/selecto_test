@@ -4,8 +4,9 @@ import Config
 config :selecto_test, SelectoTest.Repo,
   username: "postgres",
   password: "postgres",
-  database: "selecto_test_dev",
   hostname: "localhost",
+  database: "selecto_test_dev",
+  stacktrace: true,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10
 
@@ -21,9 +22,8 @@ config :selecto_test, SelectoTestWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4000],
   check_origin: false,
   code_reloader: true,
-  reloadable_apps: [:selecto, :selecto_test, :selecto_components],
   debug_errors: true,
-  secret_key_base: "47TFd8fpLTZROcN4Lxz/OQ5fz4hVFMNCsSxHKwSrRGZGxDcWKyGH+1uxAtGYn1/Q",
+  secret_key_base: "4xyQrAJRsWJmArSEYwo+PwmHnw5QY4Eql4hZJY0afyaQJJO/u18C700d4nR/U7uZ",
   watchers: [
     esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch)]},
     tailwind: {Tailwind, :install_and_run, [:default, ~w(--watch)]}
@@ -37,7 +37,6 @@ config :selecto_test, SelectoTestWeb.Endpoint,
 #
 #     mix phx.gen.cert
 #
-# Note that this task requires Erlang/OTP 20 or later.
 # Run `mix help phx.gen.cert` for more information.
 #
 # The `http:` config above can be replaced with:
@@ -59,10 +58,12 @@ config :selecto_test, SelectoTestWeb.Endpoint,
     patterns: [
       ~r"priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$",
       ~r"priv/gettext/.*(po)$",
-      ~r"lib/selecto_test_web/(live|views)/.*(ex)$",
-      ~r"lib/selecto_test_web/templates/.*(eex)$"
+      ~r"lib/selecto_test_web/(controllers|live|components)/.*(ex|heex)$"
     ]
   ]
+
+# Enable dev routes for dashboard and mailbox
+config :selecto_test, dev_routes: true
 
 # Do not include metadata nor timestamps in development logs
 config :logger, :console, format: "[$level] $message\n"
@@ -73,3 +74,6 @@ config :phoenix, :stacktrace_depth, 20
 
 # Initialize plugs at runtime for faster development compilation
 config :phoenix, :plug_init_mode, :runtime
+
+# Disable swoosh api client as it is only required for production adapters.
+config :swoosh, :api_client, false

@@ -1,26 +1,27 @@
-const colors = require("tailwindcss/colors");
+// See the Tailwind configuration guide for advanced usage
+// https://tailwindcss.com/docs/configuration
+
+const plugin = require("tailwindcss/plugin")
 
 module.exports = {
   content: [
-    "../lib/*_web/**/*.*ex",
     "./js/**/*.js",
-    "../deps/petal_components/**/*.*ex",
+    "../lib/*_web.ex",
+    "../lib/*_web/**/*.*ex",
     "../vendor/selecto_components/**/*.*ex",
   ],
   theme: {
     extend: {
-      backgroundColor: ['even'],
       colors: {
-        primary: colors.blue,
-        secondary: colors.pink,
-      },
+        brand: "#FD4F00",
+      }
     },
   },
   plugins: [
-    require("@tailwindcss/typography"),
     require("@tailwindcss/forms"),
-    require("@tailwindcss/line-clamp"),
-    require("@tailwindcss/aspect-ratio"),
-  ],
-  darkMode: "class",
-};
+    plugin(({addVariant}) => addVariant("phx-no-feedback", [".phx-no-feedback&", ".phx-no-feedback &"])),
+    plugin(({addVariant}) => addVariant("phx-click-loading", [".phx-click-loading&", ".phx-click-loading &"])),
+    plugin(({addVariant}) => addVariant("phx-submit-loading", [".phx-submit-loading&", ".phx-submit-loading &"])),
+    plugin(({addVariant}) => addVariant("phx-change-loading", [".phx-change-loading&", ".phx-change-loading &"]))
+  ]
+}

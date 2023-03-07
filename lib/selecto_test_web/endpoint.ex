@@ -7,7 +7,8 @@ defmodule SelectoTestWeb.Endpoint do
   @session_options [
     store: :cookie,
     key: "_selecto_test_key",
-    signing_salt: "S+qhbMV3"
+    signing_salt: "0/c3FSt4",
+    same_site: "Lax"
   ]
 
   socket "/live", Phoenix.LiveView.Socket, websocket: [connect_info: [session: @session_options]]

@@ -9,7 +9,4 @@
 #
 # We recommend using the bang functions (`insert!`, `update!`
 # and so on) as they will fail if something goes wrong.
-
-## Aside from our solar system this is all made up.
-
 SelectoTest.Seed.init()

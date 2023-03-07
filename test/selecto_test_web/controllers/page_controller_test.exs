@@ -2,7 +2,7 @@ defmodule SelectoTestWeb.PageControllerTest do
   use SelectoTestWeb.ConnCase
 
   test "GET /", %{conn: conn} do
-    conn = get(conn, "/")
-    assert html_response(conn, 200) =~ "Petal"
+    conn = get(conn, ~p"/")
+    assert html_response(conn, 200) =~ "Peace of mind from prototype to production"
   end
 end
