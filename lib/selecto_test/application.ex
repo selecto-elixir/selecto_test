@@ -8,12 +8,14 @@ defmodule SelectoTest.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      # Start the Ecto repository
-      SelectoTest.Repo,
       # Start the Telemetry supervisor
       SelectoTestWeb.Telemetry,
+      # Start the Ecto repository
+      SelectoTest.Repo,
       # Start the PubSub system
       {Phoenix.PubSub, name: SelectoTest.PubSub},
+      # Start Finch
+      {Finch, name: SelectoTest.Finch},
       # Start the Endpoint (http/https)
       SelectoTestWeb.Endpoint
       # Start a worker by calling: SelectoTest.Worker.start_link(arg)

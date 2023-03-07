@@ -7,8 +7,6 @@
 # The directory Mix downloads your dependencies sources to.
 /deps/
 
-/vendor/
-
 # Where 3rd-party dependencies like ExDoc output generated docs.
 /doc/
 
@@ -20,6 +18,9 @@ erl_crash.dump
 
 # Also ignore archive artifacts (built via "mix archive.build").
 *.ez
+
+# Temporary files, for example, from tests.
+/tmp/
 
 # Ignore package tarball (built via "mix hex.build").
 selecto_test-*.tar
@@ -34,8 +35,3 @@ selecto_test-*.tar
 npm-debug.log
 /assets/node_modules/
 
-.vscode
-.elixir_ls
-
-selecto_test.code-workspace
-.DS_Store
