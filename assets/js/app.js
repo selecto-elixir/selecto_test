@@ -22,12 +22,16 @@ import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
 import hooks from "./hooks";
+import selecto_components from "selecto_components"
 
-
+let myHooks = {
+    ...hooks,
+    ...selecto_components
+}
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
     params: {_csrf_token: csrfToken},
-    hooks,
+    hooks: myHooks,
     dom: {
         onBeforeElUpdated(from, to) {
         if (from._x_dataStack) {
