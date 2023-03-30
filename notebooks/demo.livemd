@@ -84,14 +84,14 @@ Selecto.configure(SelectoTest.Repo, domain)
 
 ```elixir
 Selecto.configure(SelectoTest.Repo, domain)
-|> Selecto.filter({"actor_id", ">", {:any, {:subquery, "select 190", []}}})
+|> Selecto.filter({"actor_id", ">", {:subquery, :any, "select 190", []}})
 |> Selecto.select({:concat, ["first_name", {:literal, " "}, "last_name"]})
 |> Selecto.execute()
 ```
 
 ```elixir
 Selecto.configure(SelectoTest.Repo, domain)
-|> Selecto.filter({:exists, {:subquery, "select 1", []}})
+|> Selecto.filter({:exists, "select 1", []})
 |> Selecto.select({:concat, ["first_name", {:literal, " "}, "last_name"]})
 |> Selecto.execute()
 ```
