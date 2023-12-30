@@ -1,7 +1,5 @@
 defmodule SelectoTest.PagilaDomainFilms do
-  import Phoenix.Component
   use SelectoTestWeb, :verified_routes
-  import SelectoComponents.Components.Common
   @behaviour SelectoComponents.SavedViews
 
   ### TODO - fix agg filter appluy for film ratings
