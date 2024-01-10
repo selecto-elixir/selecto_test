@@ -32,7 +32,7 @@ defmodule SelectoTest.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:phoenix, "~> 1.7.7", override: true},
+      {:phoenix, "~> 1.7.10", override: true},
       {:phoenix_ecto, "~> 4.4"},
       {:postgrex, ">= 0.0.0"},
       {:phoenix_html, "~> 3.0"},
@@ -44,8 +44,8 @@ defmodule SelectoTest.MixProject do
       {:heroicons, "~> 0.5"},
       {:floki, ">= 0.30.0", only: :test},
       {:phoenix_live_dashboard, " ~> 0.8"},
-      {:esbuild, "~> 0.5", runtime: Mix.env() == :dev},
-      {:tailwind, "~> 0.1.8", runtime: Mix.env() == :dev},
+      {:esbuild, "~> 0.8", runtime: Mix.env() == :dev},
+      {:tailwind, "~> 0.2.0", runtime: Mix.env() == :dev},
       {:swoosh, "~> 1.3"},
       {:finch, "~> 0.13"},
       {:telemetry_metrics, "~> 0.6"},
