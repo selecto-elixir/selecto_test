@@ -6,11 +6,11 @@ defmodule SelectoTestWeb.PagilaLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    {domain, path} =
+    {module, domain, path} =
       case socket.assigns.live_action do
-        :index -> {SelectoTest.PagilaDomain.actors_domain(), "/pagila"}
+        :index -> {SelectoTest.PagilaDomain, SelectoTest.PagilaDomain.actors_domain(), "/pagila"}
         #:stores -> {SelectoTest.PagilaDomain.stores_domain(), "/pagila_stores"}
-        :films -> {SelectoTest.PagilaDomainFilms.domain(), "/pagila_films"}
+        :films -> {SelectoTest.PagilaDomainFilms, SelectoTest.PagilaDomainFilms.domain(), "/pagila_films"}
       end
 
     selecto = Selecto.configure(SelectoTest.Repo, domain)
@@ -23,7 +23,7 @@ defmodule SelectoTestWeb.PagilaLive do
 
     state = get_initial_state(views, selecto)
 
-    saved_views = SelectoTest.PagilaDomain.get_view_names( path )
+    saved_views = module.get_view_names( path )
 
     socket =
       assign(socket,
