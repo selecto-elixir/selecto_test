@@ -2,37 +2,96 @@
 
 ## Selecto, a query builder
 
-TODO
-
-* setup instructions
-* more examples
-* domain details
-
 Selecto lets you compose queries functionally, rather than through the Ecto DSL. This makes some types of queries vastly simpler to write.
 
-To use Selecto, you first create a domain:
+### Prerequisites
+
+Before running this notebook, make sure you have:
+
+1. A running PostgreSQL database with the Pagila sample database
+2. The Selecto test application running with the correct configuration
+3. Connection to the named node: `iex --sname selecto --cookie COOKIE -S mix phx.server`
+
+This notebook demonstrates various Selecto query patterns using the Actor table from the Pagila database.
+
+## Setup
+
+First, let's set up the domain and connection:
 
 ```elixir
-domain = SelectoTest.PagilaDomain.actors_domain()
+# Create a simplified domain for the actor table
+# Note: This is a minimal configuration to work with the current Selecto API
+domain = %{
+  source: %{
+    source_table: "actor",
+    primary_key: :actor_id,
+    fields: [:actor_id, :first_name, :last_name, :last_update],
+    redact_fields: [],
+    columns: %{
+      actor_id: %{type: :integer},
+      first_name: %{type: :string},
+      last_name: %{type: :string},
+      last_update: %{type: :utc_datetime}
+    },
+    associations: %{}
+  },
+  name: "Actor",
+  joins: %{},
+  schemas: %{}
+}
+
+# Get database connection options from the repo configuration
+repo_config = SelectoTest.Repo.config()
+postgrex_opts = [
+  username: repo_config[:username],
+  password: repo_config[:password],
+  hostname: repo_config[:hostname], 
+  database: repo_config[:database],
+  port: repo_config[:port] || 5432
+]
+
+# Start a Postgrex connection process
+{:ok, db_conn} = Postgrex.start_link(postgrex_opts)
+
+# Create a configured Selecto struct with the connection process
+selecto = Selecto.configure(domain, db_conn)
 ```
 
-Next, configure a Selecto struct
+Now you can use `selecto` in all the examples below. The domain defines the Actor table structure (without complex joins for simplicity), and we've established a direct Postgrex database connection.
 
-```elixir
-selecto = Selecto.configure(SelectoTest.Repo, domain)
-```
+**Important Notes**:
+
+* This notebook uses a simplified domain configuration to work with the current Selecto API
+* We start a dedicated database connection (`db_conn`) for the Livebook session
+* Some advanced features like complex joins are not included in this basic setup
+* If queries fail, check that the Pagila database is properly set up with actor data
 
 ## Example Queries
 
+### Basic Field Selection
+
 ```elixir
-Selecto.configure(SelectoTest.Repo, domain)
-|> Selecto.select([1, 1.1, true, {:literal, "string"}, {:count}])
+# Simple field selection with a filter
+selecto
+|> Selecto.select(["first_name", "last_name"])
 |> Selecto.filter({"actor_id", 1})
 |> Selecto.execute()
 ```
 
+### Mixed Data Types Selection
+
 ```elixir
-Selecto.configure(SelectoTest.Repo, domain)
+# Note: This example demonstrates literal values and aggregates
+selecto
+|> Selecto.select([{:literal, "Hello"}, {:literal, 42}, {:count, "*"}])
+|> Selecto.filter({"actor_id", {">", 0}})
+|> Selecto.execute()
+```
+
+### Complex Filtering with Logical Operators
+
+```elixir
+selecto
 |> Selecto.select(["first_name", "last_name", "actor_id"])
 |> Selecto.filter([
   {:not,
@@ -46,26 +105,34 @@ Selecto.configure(SelectoTest.Repo, domain)
 |> Selecto.execute()
 ```
 
+### Conditional Counting
+
 ```elixir
-Selecto.configure(SelectoTest.Repo, domain)
+selecto
 |> Selecto.select({:count, "*", {"first_name", {"!=", "DAN"}}})
 |> Selecto.execute()
 ```
 
+### String Concatenation
+
 ```elixir
-Selecto.configure(SelectoTest.Repo, domain)
+selecto
 |> Selecto.select({:concat, ["first_name", {:literal, " "}, "last_name"]})
 |> Selecto.execute()
 ```
 
+### Using Coalesce (Note: Join examples removed due to simplified domain)
+
 ```elixir
-Selecto.configure(SelectoTest.Repo, domain)
-|> Selecto.select({:coalesce, ["language[name]", {:literal, "[Nil]"}]})
+selecto
+|> Selecto.select({:coalesce, ["first_name", {:literal, "[No Name]"}]})
 |> Selecto.execute()
 ```
 
+### Case Expressions
+
 ```elixir
-Selecto.configure(SelectoTest.Repo, domain)
+selecto
 |> Selecto.select(
   {:case,
    [
@@ -82,15 +149,19 @@ Selecto.configure(SelectoTest.Repo, domain)
 |> Selecto.execute()
 ```
 
+### Subquery Filtering
+
 ```elixir
-Selecto.configure(SelectoTest.Repo, domain)
+selecto
 |> Selecto.filter({"actor_id", ">", {:subquery, :any, "select 190", []}})
 |> Selecto.select({:concat, ["first_name", {:literal, " "}, "last_name"]})
 |> Selecto.execute()
 ```
 
+### Exists Conditions
+
 ```elixir
-Selecto.configure(SelectoTest.Repo, domain)
+selecto
 |> Selecto.filter({:exists, "select 1", []})
 |> Selecto.select({:concat, ["first_name", {:literal, " "}, "last_name"]})
 |> Selecto.execute()
