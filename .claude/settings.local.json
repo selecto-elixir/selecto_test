@@ -9,7 +9,8 @@
       "Bash(find:*)",
       "Bash(curl:*)",
       "Bash(mix run:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(mix phx.server:*)"
     ],
     "deny": []
   }

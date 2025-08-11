@@ -1,0 +1,18 @@
+╭───────────────────────────────────────────────────╮
+│ ✻ Welcome to Claude Code!                         │
+│                                                   │
+│   /help for help, /status for your current setup  │
+│                                                   │
+│   cwd: /Users/chris/es/selecto_test               │
+╰───────────────────────────────────────────────────╯
+⏺ Compact summary (ctrl+r to expand)
+  ⎿  Read vendor/selecto_components/lib/selecto_components/form.ex (485 lines)
+  ⎿  Read test/selecto_test_web/controllers/page_controller_test.exs (27 lines)
+  ⎿  Read lib/selecto_test_web/live/pagila_live.ex (66 lines)
+  ⎿  Read vendor/selecto/lib/selecto.ex (510 lines)
+  ⎿  Read vendor/selecto_components/lib/selecto_components/views/detail/component.ex (109 lines)
+  ⎿  Todo list read (9 items)
+  ⎿  Claude usage limit reached. Your limit will reset at 2am (America/Denver).
+
+      • /upgrade to increase your usage limit.
+
