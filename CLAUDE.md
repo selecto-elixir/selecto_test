@@ -52,12 +52,19 @@ mix test
 
 ## Architecture Overview
 
-This is a Phoenix LiveView application that serves as a test/development environment for the Selecto and SelectoComponents libraries. The app provides dynamic data visualization interfaces for the Pagila sample database.
+This is a Phoenix LiveView application that serves as a test/development environment for the Selecto ecosystem. The app provides dynamic data visualization interfaces for the Pagila sample database.
 
-**Important:** This project encompasses both the `selecto_test` application and the related projects in the `vendor/` directory (`selecto` and `selecto_components`). When making changes, you may need to modify code across multiple projects to maintain compatibility.
+**Important:** This project encompasses the `selecto_test` application and the related projects in the `vendor/` directory:
+- `selecto` - Core query builder library
+- `selecto_components` - Phoenix LiveView components for Selecto
+- `selecto_mix` - Mix tasks and tooling for Selecto configuration generation
+
+When making changes, you may need to modify code across multiple projects to maintain compatibility.
 
 ### Key Dependencies
-- **Selecto & SelectoComponents**: Main libraries being tested, located in `vendor/` directory as git checkouts
+- **Selecto**: Core query builder library, located in `vendor/selecto/`
+- **SelectoComponents**: Phoenix LiveView components, located in `vendor/selecto_components/`
+- **SelectoMix**: Mix tasks and tooling, located in `vendor/selecto_mix/`
 - **Phoenix LiveView**: Powers the reactive UI components
 - **Ecto**: Database operations with PostgreSQL
 - **Tailwind CSS + Alpine.js**: Required for SelectoComponents styling and interactivity
