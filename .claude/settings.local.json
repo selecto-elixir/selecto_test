@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mix test)",
+      "Bash(mix local.hex:*)",
+      "Bash(mix ecto.setup:*)",
+      "Bash(mix test:*)"
+    ],
+    "deny": []
+  }
+}
