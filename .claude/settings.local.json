@@ -4,7 +4,10 @@
       "Bash(mix test)",
       "Bash(mix local.hex:*)",
       "Bash(mix ecto.setup:*)",
-      "Bash(mix test:*)"
+      "Bash(mix test:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(curl:*)"
     ],
     "deny": []
   }
