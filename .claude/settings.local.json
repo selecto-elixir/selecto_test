@@ -7,7 +7,9 @@
       "Bash(mix test:*)",
       "Bash(grep:*)",
       "Bash(find:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(mix run:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }
