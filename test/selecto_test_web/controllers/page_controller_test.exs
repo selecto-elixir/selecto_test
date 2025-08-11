@@ -4,7 +4,7 @@ defmodule SelectoTestWeb.PageControllerTest do
 
   setup_all do
     domain = SelectoTest.PagilaDomainFilms.domain()
-    selecto = Selecto.configure(SelectoTest.Repo, domain)
+    selecto = Selecto.configure(domain, SelectoTest.Repo)
     {:ok, domain: domain, selecto: selecto}
   end
 

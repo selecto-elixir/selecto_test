@@ -8,7 +8,83 @@ defmodule SelectoTest.PagilaDomain do
 
   def actors_domain() do
     %{
-      source: SelectoTest.Store.Actor,
+      source: %{
+        source_table: "actor",
+        primary_key: :actor_id,
+        fields: [:actor_id, :first_name, :last_name],
+        redact_fields: [],
+        columns: %{
+          actor_id: %{type: :integer},
+          first_name: %{type: :string},
+          last_name: %{type: :string}
+        },
+        associations: %{
+          film_actors: %{
+            queryable: :film_actors,
+            field: :film_actors,
+            owner_key: :actor_id,
+            related_key: :actor_id
+          }
+        }
+      },
+      schemas: %{
+        film_actors: %{
+          source_table: "film_actor",
+          primary_key: :film_id,
+          fields: [:film_id, :actor_id],
+          redact_fields: [],
+          columns: %{
+            film_id: %{type: :integer},
+            actor_id: %{type: :integer}
+          },
+          associations: %{
+            film: %{
+              queryable: :film,
+              field: :film,
+              owner_key: :film_id,
+              related_key: :film_id
+            }
+          }
+        },
+        film: %{
+          source_table: "film",
+          primary_key: :film_id,
+          fields: [:film_id, :title, :description, :release_year, :language_id, :rental_duration, :rental_rate, :length, :replacement_cost, :rating, :special_features],
+          redact_fields: [],
+          columns: %{
+            film_id: %{type: :integer},
+            title: %{type: :string},
+            description: %{type: :string},
+            release_year: %{type: :integer},
+            language_id: %{type: :integer},
+            rental_duration: %{type: :integer},
+            rental_rate: %{type: :decimal},
+            length: %{type: :integer},
+            replacement_cost: %{type: :decimal},
+            rating: %{type: :string},
+            special_features: %{type: {:array, :string}}
+          },
+          associations: %{
+            language: %{
+              queryable: :language,
+              field: :language,
+              owner_key: :language_id,
+              related_key: :language_id
+            }
+          }
+        },
+        language: %{
+          source_table: "language",
+          primary_key: :language_id,
+          fields: [:language_id, :name],
+          redact_fields: [],
+          columns: %{
+            language_id: %{type: :integer},
+            name: %{type: :string}
+          },
+          associations: %{}
+        }
+      },
       name: "Actor",
 
       ### Will always be applied
@@ -73,12 +149,15 @@ defmodule SelectoTest.PagilaDomain do
           process: &process_film_card/2
         }
       },
-      joins: [
+      joins: %{
         film_actors: %{
           name: "Actor-Film Join",
-          joins: [
+          type: :left,
+          joins: %{
             film: %{
-              joins: [
+              name: "Film",
+              type: :left,
+              joins: %{
                 language: %{
                   name: "Film Language",
                   ## TODO Lookup type means that local table as an ID to a table that provides a 'dimension' that is
@@ -86,10 +165,9 @@ defmodule SelectoTest.PagilaDomain do
                   # the interesting data. So in this case, film has language[name], we will never care about language_id
                   # We do not want to give 2 language ID columns to pick from, so will skip the remote, and skip date/update
                   # info from the remote table. Lookup_value is the only col we will add from remote table (can be List to add more than one)
-                  dimension: :name,
+                  dimension: :name
                 }
-              ],
-              name: "Film",
+              },
               custom_columns: %{
                 "film_link" => %{
                   name: "Film Link",
@@ -99,9 +177,9 @@ defmodule SelectoTest.PagilaDomain do
                 }
               }
             }
-          ]
+          }
         }
-      ]
+      }
     }
   end
 

@@ -13,7 +13,7 @@ defmodule SelectoTestWeb.PagilaLive do
         :films -> {SelectoTest.PagilaDomainFilms, SelectoTest.PagilaDomainFilms.domain(), "/pagila_films"}
       end
 
-    selecto = Selecto.configure(SelectoTest.Repo, domain)
+    selecto = Selecto.configure(domain, SelectoTest.Repo)
 
     views = [
       {:aggregate, SelectoComponents.Views.Aggregate, "Aggregate View", %{drill_down: :detail}},
