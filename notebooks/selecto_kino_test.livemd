@@ -1,0 +1,29 @@
+# Selecto Kino Test
+
+## Setup
+
+First, let's install the necessary dependencies.
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.7.0"},
+  {:postgrex, ">= 0.0.0"},
+  {:selecto_kino, path: "../vendor/selecto_kino"}
+])
+```
+
+## Connect to the Database
+
+Now, let's connect to the `selecto_test_dev` database. The form below will prompt you for the connection details.
+
+```elixir
+connection_data = SelectoKino.start()
+```
+
+## Build a Query
+
+Once you have connected to the database, you can use the form below to build and run a query.
+
+```elixir
+SelectoKino.query(connection_data)
+```
