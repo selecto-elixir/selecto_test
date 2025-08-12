@@ -21,7 +21,8 @@
       "Bash(mix selecto.gen.domain:*)",
       "Bash(sed:*)",
       "Bash(cp:*)",
-      "Bash(iex:*)"
+      "Bash(iex:*)",
+      "Bash(mix deps.compile:*)"
     ],
     "deny": []
   }
