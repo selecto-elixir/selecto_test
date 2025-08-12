@@ -1,5 +1,5 @@
 defmodule SelectoDomeSimpleTest do
-  use SelectoTest.DataCase
+  use SelectoTest.SelectoCase, async: false
   
   alias SelectoTest.{Repo, PagilaDomain}
   alias SelectoTest.Store.{Actor, Language}
@@ -9,16 +9,19 @@ defmodule SelectoDomeSimpleTest do
 
   describe "SelectoDome basic operations" do
     test "basic insert operation works" do
+      # Insert test data
+      _test_data = insert_test_data!()
+      
       # Create a simple actor domain
       domain = PagilaDomain.actors_domain()
-      selecto = Selecto.configure(domain, Repo)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       |> Selecto.select(["first_name", "last_name", "actor_id"])
 
       # Execute query
       {:ok, result} = Selecto.execute(selecto)
       
       # Create dome
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
       
       # Verify dome was created
       assert dome.selecto == selecto
@@ -52,11 +55,11 @@ defmodule SelectoDomeSimpleTest do
       {:ok, actor} = %Actor{first_name: "Update", last_name: "Test"} |> Repo.insert()
 
       domain = PagilaDomain.actors_domain()
-      selecto = Selecto.configure(domain, Repo)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       |> Selecto.select(["first_name", "last_name", "actor_id"])
 
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       # Update the actor
       {:ok, dome} = SelectoDome.update(dome, actor.actor_id, %{
@@ -78,11 +81,11 @@ defmodule SelectoDomeSimpleTest do
       {:ok, actor} = %Actor{first_name: "Delete", last_name: "Test"} |> Repo.insert()
 
       domain = PagilaDomain.actors_domain()
-      selecto = Selecto.configure(domain, Repo)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       |> Selecto.select(["first_name", "last_name", "actor_id"])
 
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       # Delete the actor
       {:ok, dome} = SelectoDome.delete(dome, actor.actor_id)
@@ -101,11 +104,11 @@ defmodule SelectoDomeSimpleTest do
       {:ok, actor2} = %Actor{first_name: "Multi2", last_name: "Test"} |> Repo.insert()
 
       domain = PagilaDomain.actors_domain()
-      selecto = Selecto.configure(domain, Repo)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       |> Selecto.select(["first_name", "last_name", "actor_id"])
 
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       # Perform multiple operations
       {:ok, dome} = SelectoDome.insert(dome, %{first_name: "New", last_name: "Actor"})

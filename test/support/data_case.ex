@@ -28,7 +28,7 @@ defmodule SelectoTest.DataCase do
   end
 
   setup tags do
-    SelectoTest.DataCase.setup_sandbox(tags)
+    setup_sandbox(tags)
     :ok
   end
 

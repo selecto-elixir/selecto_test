@@ -1,27 +1,15 @@
 defmodule SelectoJoinsTest do
-  use ExUnit.Case, async: false
+  use SelectoTest.SelectoCase, async: false
   
   # Tests for Selecto join operations
   # Covers basic joins, dimension joins, and complex join scenarios
 
-  setup_all do
-    # Set up database connection
-    repo_config = SelectoTest.Repo.config()
-    postgrex_opts = [
-      username: repo_config[:username],
-      password: repo_config[:password],
-      hostname: repo_config[:hostname], 
-      database: repo_config[:database],
-      port: repo_config[:port] || 5432
-    ]
-    
-    {:ok, db_conn} = Postgrex.start_link(postgrex_opts)
-    
-    {:ok, db_conn: db_conn}
-  end
-
   describe "Basic Join Types" do
-    test "LEFT JOIN - Actor to Film Actor", %{db_conn: db_conn} do
+    setup do
+      _test_data = insert_test_data!()
+      :ok
+    end
+    test "LEFT JOIN - Actor to Film Actor" do
       # Domain with LEFT JOIN to film_actor
       domain = %{
         source: %{
@@ -65,7 +53,7 @@ defmodule SelectoJoinsTest do
         }
       }
       
-      selecto = Selecto.configure(domain, db_conn)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       
       result = selecto
       |> Selecto.select(["first_name", "last_name", "film_actors[film_id]"])
@@ -83,7 +71,7 @@ defmodule SelectoJoinsTest do
       end)
     end
 
-    test "INNER JOIN - Actor to Film through Film Actor", %{db_conn: db_conn} do
+    test "INNER JOIN - Actor to Film through Film Actor" do
       # Domain with INNER JOIN chain
       domain = %{
         source: %{
@@ -152,7 +140,7 @@ defmodule SelectoJoinsTest do
         }
       }
       
-      selecto = Selecto.configure(domain, db_conn)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       
       result = selecto
       |> Selecto.select(["first_name", "film[title]", "film[rating]"])
@@ -177,7 +165,11 @@ defmodule SelectoJoinsTest do
   end
 
   describe "Dimension Joins" do
-    test "dimension join for lookup values", %{db_conn: db_conn} do
+    setup do
+      _test_data = insert_test_data!()
+      :ok
+    end
+    test "dimension join for lookup values" do
       # Film domain with dimension join to language
       domain = %{
         source: %{
@@ -222,7 +214,7 @@ defmodule SelectoJoinsTest do
         }
       }
       
-      selecto = Selecto.configure(domain, db_conn)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       
       result = selecto
       |> Selecto.select(["title", "language[name]"])
@@ -239,7 +231,7 @@ defmodule SelectoJoinsTest do
       end)
     end
 
-    test "dimension join with filtering on dimension value", %{db_conn: db_conn} do
+    test "dimension join with filtering on dimension value" do
       # Filter films by language name
       domain = %{
         source: %{
@@ -284,7 +276,7 @@ defmodule SelectoJoinsTest do
         }
       }
       
-      selecto = Selecto.configure(domain, db_conn)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       
       result = selecto
       |> Selecto.select(["title", "language[name]"])
@@ -304,7 +296,11 @@ defmodule SelectoJoinsTest do
   end
 
   describe "Multi-Level Joins" do
-    test "three-level join chain", %{db_conn: db_conn} do
+    setup do
+      _test_data = insert_test_data!()
+      :ok
+    end
+    test "three-level join chain" do
       # Actor -> Film Actor -> Film -> Language
       domain = %{
         source: %{
@@ -398,7 +394,7 @@ defmodule SelectoJoinsTest do
         }
       }
       
-      selecto = Selecto.configure(domain, db_conn)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       
       result = selecto
       |> Selecto.select([
@@ -427,7 +423,7 @@ defmodule SelectoJoinsTest do
       end
     end
 
-    test "complex join with aggregation", %{db_conn: db_conn} do
+    test "complex join with aggregation" do
       # Count films per actor with language breakdown
       domain = %{
         source: %{
@@ -521,7 +517,7 @@ defmodule SelectoJoinsTest do
         }
       }
       
-      selecto = Selecto.configure(domain, db_conn)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       
       result = selecto
       |> Selecto.select([
@@ -555,7 +551,11 @@ defmodule SelectoJoinsTest do
   end
 
   describe "Join with Filtering" do
-    test "filter on joined table", %{db_conn: db_conn} do
+    setup do
+      _test_data = insert_test_data!()
+      :ok
+    end
+    test "filter on joined table" do
       # Find actors who appear in G-rated films
       domain = %{
         source: %{
@@ -624,7 +624,7 @@ defmodule SelectoJoinsTest do
         }
       }
       
-      selecto = Selecto.configure(domain, db_conn)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       
       result = selecto
       |> Selecto.select([
@@ -653,7 +653,7 @@ defmodule SelectoJoinsTest do
       end
     end
 
-    test "complex filtering across multiple joins", %{db_conn: db_conn} do
+    test "complex filtering across multiple joins" do
       # Find actors in English G-rated films
       domain = %{
         source: %{
@@ -748,7 +748,7 @@ defmodule SelectoJoinsTest do
         }
       }
       
-      selecto = Selecto.configure(domain, db_conn)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       
       result = selecto
       |> Selecto.select([
@@ -783,7 +783,11 @@ defmodule SelectoJoinsTest do
   end
 
   describe "Join Performance and Edge Cases" do
-    test "left join with no matches", %{db_conn: db_conn} do
+    setup do
+      _test_data = insert_test_data!()
+      :ok
+    end
+    test "left join with no matches" do
       # Create a scenario where some actors might not have films (hypothetically)
       domain = %{
         source: %{
@@ -827,7 +831,7 @@ defmodule SelectoJoinsTest do
         }
       }
       
-      selecto = Selecto.configure(domain, db_conn)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       
       result = selecto
       |> Selecto.select(["first_name", "last_name", "film_actors[film_id]"])
@@ -846,7 +850,7 @@ defmodule SelectoJoinsTest do
       end)
     end
 
-    test "join with large result set", %{db_conn: db_conn} do
+    test "join with large result set" do
       # Test performance with joins that produce many rows
       domain = %{
         source: %{
@@ -890,7 +894,7 @@ defmodule SelectoJoinsTest do
         }
       }
       
-      selecto = Selecto.configure(domain, db_conn)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       
       result = selecto
       |> Selecto.select(["first_name", "film_actors[film_id]"])
@@ -909,7 +913,7 @@ defmodule SelectoJoinsTest do
       end)
     end
 
-    test "join with ordering and limiting", %{db_conn: db_conn} do
+    test "join with ordering and limiting" do
       domain = %{
         source: %{
           source_table: "actor",
@@ -976,7 +980,7 @@ defmodule SelectoJoinsTest do
         }
       }
       
-      selecto = Selecto.configure(domain, db_conn)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       
       result = selecto
       |> Selecto.select(["first_name", "last_name", "film[title]"])

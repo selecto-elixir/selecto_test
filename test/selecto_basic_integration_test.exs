@@ -1,21 +1,12 @@
 defmodule SelectoBasicIntegrationTest do
-  use ExUnit.Case, async: false
+  use SelectoTest.SelectoCase, async: false
   
   # Comprehensive integration tests for Selecto with Pagila database
   # Tests all filter operations, select variations, and edge cases
 
-  setup_all do
-    # Set up database connection
-    repo_config = SelectoTest.Repo.config()
-    postgrex_opts = [
-      username: repo_config[:username],
-      password: repo_config[:password],
-      hostname: repo_config[:hostname], 
-      database: repo_config[:database],
-      port: repo_config[:port] || 5432
-    ]
-    
-    {:ok, db_conn} = Postgrex.start_link(postgrex_opts)
+  setup do
+    # Insert test data
+    _test_data = insert_test_data!()
     
     # Define actor domain for testing
     domain = %{
@@ -37,9 +28,9 @@ defmodule SelectoBasicIntegrationTest do
       schemas: %{}
     }
     
-    selecto = Selecto.configure(domain, db_conn)
+    selecto = Selecto.configure(domain, SelectoTest.Repo)
     
-    {:ok, selecto: selecto, db_conn: db_conn}
+    {:ok, selecto: selecto}
   end
 
   describe "Basic Functionality" do

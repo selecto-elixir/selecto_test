@@ -22,7 +22,19 @@
       "Bash(sed:*)",
       "Bash(cp:*)",
       "Bash(iex:*)",
-      "Bash(mix deps.compile:*)"
+      "Bash(mix deps.compile:*)",
+      "Bash(mix format:*)",
+      "Bash(MIX_ENV=test mix ecto.create)",
+      "Bash(MIX_ENV=test mix ecto.migrate)",
+      "Bash(mv:*)",
+      "Bash(MIX_ENV=test mix ecto.reset)",
+      "Bash(for file in test/selecto_dome_concept_test.exs test/selecto_dome_integration_simple_test.exs test/selecto_basic_integration_test.exs test/selecto_dome_debug_test.exs test/selecto_dome_films_test.exs test/selecto_column_types_test.exs test/selecto_dome_repo_test.exs test/selecto_ecto_integration_test.exs test/selecto_ecto_advanced_integration_test.exs test/selecto_dome_no_sandbox_test.exs test/selecto_joins_test.exs test/selecto_edge_cases_test.exs test/selecto_advanced_select_test.exs)",
+      "Bash(do)",
+      "Bash(echo:*)",
+      "Bash(done)",
+      "Bash(timeout 30 mix test test/selecto_joins_test.exs:\"test LEFT JOIN - Actor to Film Actor\" --max-cases 1)",
+      "Bash(timeout 30 mix test test/selecto_joins_test.exs --max-cases 1)",
+      "Bash(timeout 15 mix test test/selecto_joins_test.exs --max-cases 1)"
     ],
     "deny": []
   }

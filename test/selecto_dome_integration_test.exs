@@ -1,5 +1,5 @@
 defmodule SelectoDomeIntegrationTest do
-  use SelectoTest.DataCase
+  use SelectoTest.SelectoCase, async: false
   
   alias SelectoTest.{Repo, PagilaDomain}
   alias SelectoTest.Store.{Actor, Film, Language}
@@ -7,36 +7,18 @@ defmodule SelectoDomeIntegrationTest do
 
   describe "SelectoDome with Pagila Actor domain" do
     setup do
-      # Create some test data
-      {:ok, english} = %Language{name: "English"} |> Repo.insert()
-      
-      {:ok, actor1} = %Actor{first_name: "John", last_name: "Doe"} |> Repo.insert()
-      {:ok, actor2} = %Actor{first_name: "Jane", last_name: "Smith"} |> Repo.insert()
-      
-      {:ok, film1} = %Film{
-        title: "Test Film 1",
-        description: "A test film",
-        release_year: 2023,
-        language_id: english.language_id,
-        rental_duration: 3,
-        rental_rate: Decimal.new("4.99"),
-        length: 120,
-        replacement_cost: Decimal.new("19.99"),
-        rating: :PG
-      } |> Repo.insert()
+      # Create test data using Ecto (will be visible to Postgrex due to transaction commits)
+      test_data = insert_test_data!()
 
-      # Set up Selecto with Pagila actor domain
+      # Set up Selecto with direct Postgrex connection
       domain = PagilaDomain.actors_domain()
-      selecto = Selecto.configure(domain, Repo)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       |> Selecto.select(["first_name", "last_name", "actor_id"])
 
       %{
         selecto: selecto,
         domain: domain,
-        actor1: actor1,
-        actor2: actor2,
-        film1: film1,
-        english: english
+        test_data: test_data
       }
     end
 
@@ -51,7 +33,7 @@ defmodule SelectoDomeIntegrationTest do
       assert "actor_id" in columns
 
       # Create SelectoDome
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
       
       assert dome.selecto == selecto
       assert dome.repo == Repo
@@ -61,7 +43,7 @@ defmodule SelectoDomeIntegrationTest do
 
     test "inserts new actor that satisfies query constraints", %{selecto: selecto} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       # Insert a new actor
       new_actor_attrs = %{
@@ -89,7 +71,7 @@ defmodule SelectoDomeIntegrationTest do
 
     test "commits insert operation to database", %{selecto: selecto} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       initial_count = length(elem(result, 0))
 
@@ -115,7 +97,7 @@ defmodule SelectoDomeIntegrationTest do
 
     test "updates existing actor", %{selecto: selecto, actor1: actor1} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       # Update actor1's name
       update_attrs = %{first_name: "Johnny"}
@@ -136,7 +118,7 @@ defmodule SelectoDomeIntegrationTest do
 
     test "commits update operation to database", %{selecto: selecto, actor1: actor1} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       # Update and commit
       {:ok, dome_with_update} = SelectoDome.update(dome, actor1.actor_id, %{
@@ -163,7 +145,7 @@ defmodule SelectoDomeIntegrationTest do
 
     test "deletes existing actor", %{selecto: selecto, actor2: actor2} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       initial_count = length(elem(result, 0))
 
@@ -184,7 +166,7 @@ defmodule SelectoDomeIntegrationTest do
 
     test "commits delete operation to database", %{selecto: selecto, actor2: actor2} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       initial_count = length(elem(result, 0))
 
@@ -204,7 +186,7 @@ defmodule SelectoDomeIntegrationTest do
 
     test "handles multiple operations in sequence", %{selecto: selecto, actor1: actor1} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       initial_count = length(elem(result, 0))
 
@@ -244,7 +226,7 @@ defmodule SelectoDomeIntegrationTest do
       
       # Create a filtered query - only actors whose names start with 'J'
       domain = PagilaDomain.actors_domain()
-      selecto = Selecto.configure(domain, Repo)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       |> Selecto.select(["first_name", "last_name", "actor_id"])
       |> Selecto.filter([{"first_name", {:like, "J%"}}])
 
@@ -257,7 +239,7 @@ defmodule SelectoDomeIntegrationTest do
       {:ok, jane} = %Actor{first_name: "Jane", last_name: "Smith"} |> Repo.insert()
 
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       # This should work - name starts with 'J'
       {:ok, _dome} = SelectoDome.insert(dome, %{
@@ -273,7 +255,7 @@ defmodule SelectoDomeIntegrationTest do
       {:ok, john} = %Actor{first_name: "John", last_name: "Doe"} |> Repo.insert()
 
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       # Update to another name starting with 'J' - should be fine
       {:ok, dome} = SelectoDome.update(dome, john.actor_id, %{first_name: "James"})
@@ -287,8 +269,8 @@ defmodule SelectoDomeIntegrationTest do
 
   describe "SelectoDome with complex joins" do
     setup do
-      {:ok, english} = %Language{name: "English"} |> Repo.insert()
-      {:ok, spanish} = %Language{name: "Spanish"} |> Repo.insert()
+      # Create test data using Ecto
+      test_data = insert_test_data!()
       
       {:ok, actor} = %Actor{first_name: "Tom", last_name: "Hanks"} |> Repo.insert()
       
@@ -296,7 +278,7 @@ defmodule SelectoDomeIntegrationTest do
         title: "Test Movie",
         description: "A great film",
         release_year: 2023,
-        language_id: english.language_id,
+        language_id: test_data.languages.english.language_id,
         rental_duration: 5,
         rental_rate: Decimal.new("3.99"),
         length: 150,
@@ -304,9 +286,9 @@ defmodule SelectoDomeIntegrationTest do
         rating: :PG
       } |> Repo.insert()
 
-      # Create join query that includes film information
+      # Create join query that includes film information using Postgrex connection
       domain = PagilaDomain.actors_domain()
-      selecto = Selecto.configure(domain, Repo)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       |> Selecto.select(["first_name", "last_name", "film[title]", "film[rating]"])
       |> Selecto.join(:film_actors, %{film: %{}})
 
@@ -314,14 +296,13 @@ defmodule SelectoDomeIntegrationTest do
         selecto: selecto,
         actor: actor,
         film: film,
-        english: english,
-        spanish: spanish
+        test_data: test_data
       }
     end
 
     test "analyzes joined query structure", %{selecto: selecto} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       metadata = SelectoDome.metadata(dome)
       assert metadata.source_table == "actor"
@@ -333,7 +314,7 @@ defmodule SelectoDomeIntegrationTest do
 
     test "handles operations with joins present", %{selecto: selecto} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       # Insert a new actor (should work even with joins in the query)
       {:ok, dome} = SelectoDome.insert(dome, %{
@@ -357,7 +338,7 @@ defmodule SelectoDomeIntegrationTest do
   describe "SelectoDome error handling" do
     setup do
       domain = PagilaDomain.actors_domain()
-      selecto = Selecto.configure(domain, Repo)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       |> Selecto.select(["first_name", "last_name", "actor_id"])
 
       %{selecto: selecto}
@@ -367,7 +348,7 @@ defmodule SelectoDomeIntegrationTest do
       {:ok, actor} = %Actor{first_name: "Test", last_name: "Actor"} |> Repo.insert()
       
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       # Try to insert with invalid data types - should be handled gracefully
       # Note: The current implementation is permissive, but we can test basic validation
@@ -384,7 +365,7 @@ defmodule SelectoDomeIntegrationTest do
 
     test "handles non-existent record updates", %{selecto: selecto} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       # Try to update a non-existent actor
       {:ok, dome} = SelectoDome.update(dome, 99999, %{first_name: "Ghost"})
@@ -405,11 +386,11 @@ defmodule SelectoDomeIntegrationTest do
       {:ok, actor} = %Actor{first_name: "Track", last_name: "Changes"} |> Repo.insert()
 
       domain = PagilaDomain.actors_domain()
-      selecto = Selecto.configure(domain, Repo)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       |> Selecto.select(["first_name", "last_name", "actor_id"])
 
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       %{dome: dome, actor: actor}
     end

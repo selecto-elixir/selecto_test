@@ -1,5 +1,5 @@
 defmodule SelectoDomeAdvancedTest do
-  use SelectoTest.DataCase
+  use SelectoTest.SelectoCase, async: false
   
   alias SelectoTest.{Repo, PagilaDomain}
   alias SelectoTest.Store.{Actor, Film, Language, FilmActor}
@@ -17,7 +17,7 @@ defmodule SelectoDomeAdvancedTest do
 
       # Create a filtered query - only actors whose names start with 'J'
       domain = PagilaDomain.actors_domain()
-      selecto = Selecto.configure(domain, Repo)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       |> Selecto.select(["first_name", "last_name", "actor_id"])
       |> Selecto.filter([{"first_name", {:like, "J%"}}])
 
@@ -35,7 +35,7 @@ defmodule SelectoDomeAdvancedTest do
       # Should only include John and Jane (names starting with 'J')
       assert length(rows) == 2
       
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
       
       # Insert an actor whose name starts with 'J' - should be included
       {:ok, dome} = SelectoDome.insert(dome, %{
@@ -57,7 +57,7 @@ defmodule SelectoDomeAdvancedTest do
 
     test "handles updates that might change filter eligibility", %{selecto: selecto, actors: actors} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       # Update John's name to start with a different letter
       {:ok, dome} = SelectoDome.update(dome, actors.john.actor_id, %{
@@ -84,7 +84,7 @@ defmodule SelectoDomeAdvancedTest do
   describe "SelectoDome transaction handling" do
     setup do
       domain = PagilaDomain.actors_domain()
-      selecto = Selecto.configure(domain, Repo)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       |> Selecto.select(["first_name", "last_name", "actor_id"])
 
       {:ok, actor} = %Actor{first_name: "Transaction", last_name: "Test"} |> Repo.insert()
@@ -94,7 +94,7 @@ defmodule SelectoDomeAdvancedTest do
 
     test "rolls back all changes on error", %{selecto: selecto, actor: actor} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       initial_count = Repo.aggregate(Actor, :count)
 
@@ -149,7 +149,7 @@ defmodule SelectoDomeAdvancedTest do
 
     test "analyzes domain constraints correctly", %{selecto: selecto} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       metadata = SelectoDome.metadata(dome)
       
@@ -160,7 +160,7 @@ defmodule SelectoDomeAdvancedTest do
 
     test "validates inserts against domain constraints", %{selecto: selecto} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       # Insert should work (the constraint actor_id >= 1 will be satisfied by auto-increment)
       {:ok, dome} = SelectoDome.insert(dome, %{
@@ -180,7 +180,7 @@ defmodule SelectoDomeAdvancedTest do
   describe "SelectoDome performance and batching" do
     setup do
       domain = PagilaDomain.actors_domain()
-      selecto = Selecto.configure(domain, Repo)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       |> Selecto.select(["first_name", "last_name", "actor_id"])
 
       %{selecto: selecto}
@@ -188,7 +188,7 @@ defmodule SelectoDomeAdvancedTest do
 
     test "handles multiple operations efficiently", %{selecto: selecto} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       # Add a few operations (reduced from 10 to 3 to avoid timeouts)
       dome = Enum.reduce(1..3, dome, fn i, acc_dome ->
@@ -224,7 +224,7 @@ defmodule SelectoDomeAdvancedTest do
       {:ok, actor} = %Actor{first_name: "Conflict", last_name: "Test"} |> Repo.insert()
 
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       # Multiple operations on the same record
       {:ok, dome} = SelectoDome.update(dome, actor.actor_id, %{first_name: "First"})
@@ -250,7 +250,7 @@ defmodule SelectoDomeAdvancedTest do
       {:ok, actor} = %Actor{first_name: "DeleteAfterUpdate", last_name: "Test"} |> Repo.insert()
 
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       # Update then delete
       {:ok, dome} = SelectoDome.update(dome, actor.actor_id, %{first_name: "WillBeDeleted"})
@@ -276,7 +276,7 @@ defmodule SelectoDomeAdvancedTest do
       
       # Create a complex query (without joins for now to avoid API issues)
       domain = PagilaDomain.actors_domain()
-      selecto = Selecto.configure(domain, Repo)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       |> Selecto.select(["first_name", "last_name", "actor_id"])
 
       %{selecto: selecto, english: english}
@@ -284,7 +284,7 @@ defmodule SelectoDomeAdvancedTest do
 
     test "extracts comprehensive metadata from queries", %{selecto: selecto} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       metadata = SelectoDome.metadata(dome)
 
@@ -309,7 +309,7 @@ defmodule SelectoDomeAdvancedTest do
 
     test "provides useful debugging information", %{selecto: selecto} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       # The dome should provide access to useful debugging info
       original_selecto = SelectoDome.selecto(dome)

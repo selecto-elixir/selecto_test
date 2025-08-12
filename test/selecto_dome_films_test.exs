@@ -1,5 +1,5 @@
 defmodule SelectoDomeFilmsTest do
-  use SelectoTest.DataCase
+  use SelectoTest.SelectoCase, async: false
   
   alias SelectoTest.{Repo, PagilaDomainFilms}
   alias SelectoTest.Store.{Film, Language, Actor, FilmActor}
@@ -7,6 +7,8 @@ defmodule SelectoDomeFilmsTest do
 
   describe "SelectoDome with Pagila Film domain" do
     setup do
+    # Insert test data
+    _test_data = insert_test_data!()
       # Create test languages
       {:ok, english} = %Language{name: "English"} |> Repo.insert()
       {:ok, spanish} = %Language{name: "Spanish"} |> Repo.insert()
@@ -41,7 +43,7 @@ defmodule SelectoDomeFilmsTest do
 
       # Set up Selecto with Film domain
       domain = PagilaDomainFilms.domain()
-      selecto = Selecto.configure(domain, Repo)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       |> Selecto.select(["title", "rating", "release_year", "rental_rate"])
 
       %{
@@ -64,7 +66,7 @@ defmodule SelectoDomeFilmsTest do
       assert "rating" in columns
       assert "release_year" in columns
 
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
       
       assert dome.selecto == selecto
       assert dome.repo == Repo
@@ -74,7 +76,7 @@ defmodule SelectoDomeFilmsTest do
 
     test "inserts new film with proper data types", %{selecto: selecto, english: english} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       # Insert a new film with various data types
       new_film_attrs = %{
@@ -104,7 +106,7 @@ defmodule SelectoDomeFilmsTest do
 
     test "commits film insert with complex data types", %{selecto: selecto, french: french} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       initial_count = length(elem(result, 0))
 
@@ -140,7 +142,7 @@ defmodule SelectoDomeFilmsTest do
 
     test "updates film with decimal and array fields", %{selecto: selecto, film1: film1} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       # Update with different data types
       update_attrs = %{
@@ -164,7 +166,7 @@ defmodule SelectoDomeFilmsTest do
 
     test "handles film rating enum properly", %{selecto: selecto, film2: film2} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       # Test each rating value
       for rating <- [:G, :PG, :"PG-13", :R, :"NC-17"] do
@@ -178,7 +180,7 @@ defmodule SelectoDomeFilmsTest do
 
     test "performs batch operations on films", %{selecto: selecto, film1: film1, film2: film2, english: english} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       initial_count = length(elem(result, 0))
 
@@ -231,6 +233,8 @@ defmodule SelectoDomeFilmsTest do
 
   describe "SelectoDome with Film domain and Language joins" do
     setup do
+    # Insert test data
+    _test_data = insert_test_data!()
       {:ok, english} = %Language{name: "English"} |> Repo.insert()
       {:ok, spanish} = %Language{name: "Spanish"} |> Repo.insert()
 
@@ -249,7 +253,7 @@ defmodule SelectoDomeFilmsTest do
 
       # Create query with language join
       domain = PagilaDomainFilms.domain()
-      selecto = Selecto.configure(domain, Repo)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       |> Selecto.select(["title", "rating", "language_id"])
 
       %{
@@ -262,7 +266,7 @@ defmodule SelectoDomeFilmsTest do
 
     test "analyzes query with language dimension join", %{selecto: selecto} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       metadata = SelectoDome.metadata(dome)
       assert metadata.source_table == "film"
@@ -274,7 +278,7 @@ defmodule SelectoDomeFilmsTest do
 
     test "inserts film that would appear in joined query", %{selecto: selecto, spanish: spanish} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       # Insert film with Spanish language
       {:ok, dome} = SelectoDome.insert(dome, %{
@@ -311,7 +315,7 @@ defmodule SelectoDomeFilmsTest do
 
     test "updates film language reference", %{selecto: selecto, film: film, spanish: spanish} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       # Change the film's language
       {:ok, dome} = SelectoDome.update(dome, film.film_id, %{
@@ -338,10 +342,12 @@ defmodule SelectoDomeFilmsTest do
 
   describe "SelectoDome data type handling" do
     setup do
+    # Insert test data
+    _test_data = insert_test_data!()
       {:ok, english} = %Language{name: "English"} |> Repo.insert()
 
       domain = PagilaDomainFilms.domain()
-      selecto = Selecto.configure(domain, Repo)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       |> Selecto.select(["title", "rental_rate", "replacement_cost", "special_features"])
 
       %{selecto: selecto, english: english}
@@ -349,7 +355,7 @@ defmodule SelectoDomeFilmsTest do
 
     test "handles decimal precision correctly", %{selecto: selecto, english: english} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       # Test precise decimal values
       precise_rates = [
@@ -387,7 +393,7 @@ defmodule SelectoDomeFilmsTest do
 
     test "handles array fields correctly", %{selecto: selecto, english: english} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       # Test different array configurations
       test_cases = [
@@ -423,7 +429,7 @@ defmodule SelectoDomeFilmsTest do
 
     test "handles enum ratings properly", %{selecto: selecto, english: english} do
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       # Test all valid ratings
       ratings = [:G, :PG, :"PG-13", :R, :"NC-17"]

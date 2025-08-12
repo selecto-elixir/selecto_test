@@ -1,40 +1,15 @@
 defmodule SelectoDomeConceptTest do
-  use ExUnit.Case, async: false
+  use SelectoTest.SelectoCase, async: false
   
-  alias SelectoTest.{Repo, PagilaDomain}
-  alias SelectoTest.Store.{Actor}
   alias SelectoDome
 
   @moduletag timeout: 15_000
 
-  # Use setup_all to share one connection across all tests in this module
-  setup_all do
-    repo_config = SelectoTest.Repo.config()
-    postgrex_opts = [
-      username: repo_config[:username],
-      password: repo_config[:password],
-      hostname: repo_config[:hostname], 
-      database: repo_config[:database],
-      port: repo_config[:port] || 5432,
-      pool_size: 1,
-      pool_timeout: 10_000,
-      timeout: 10_000
-    ]
-    
-    {:ok, db_conn} = Postgrex.start_link(postgrex_opts)
-    
-    on_exit(fn -> 
-      if Process.alive?(db_conn) do
-        GenServer.stop(db_conn, :normal, 2000)
-      end
-    end)
-    
-    %{db_conn: db_conn}
-  end
-
   describe "SelectoDome concept validation" do
 
-    test "can create dome from selecto and result", %{db_conn: db_conn} do
+    test "can create dome from selecto and result" do
+      # Insert test data
+      _test_data = insert_test_data!()
       
       # Create simple domain
       domain = %{
@@ -56,7 +31,7 @@ defmodule SelectoDomeConceptTest do
       }
 
       # Configure Selecto with Postgrex connection
-      selecto = Selecto.configure(domain, db_conn)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       |> Selecto.select(["first_name", "last_name", "actor_id"])
       |> Selecto.filter({"actor_id", {"<", 10}})  # Limit to first 10 actors
 
@@ -72,7 +47,7 @@ defmodule SelectoDomeConceptTest do
       assert "actor_id" in columns
 
       # Create SelectoDome - this tests the core analysis functionality
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
       
       # Verify dome structure
       assert dome.selecto == selecto
@@ -110,7 +85,10 @@ defmodule SelectoDomeConceptTest do
 
     end
 
-    test "analyzes query metadata correctly", %{db_conn: db_conn} do
+    test "analyzes query metadata correctly" do
+      # Insert test data
+      _test_data = insert_test_data!()
+      
       # Simple test of query analysis without database operations
 
       domain = %{
@@ -131,11 +109,11 @@ defmodule SelectoDomeConceptTest do
         schemas: %{}
       }
 
-      selecto = Selecto.configure(domain, db_conn)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       |> Selecto.select(["first_name", "last_name"])
 
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       metadata = SelectoDome.metadata(dome)
       
@@ -154,7 +132,10 @@ defmodule SelectoDomeConceptTest do
 
     end
 
-    test "validates change tracking logic", %{db_conn: db_conn} do
+    test "validates change tracking logic" do
+      # Insert test data
+      _test_data = insert_test_data!()
+      
       # Test change tracking without database operations
       # This validates the core SelectoDome logic
 
@@ -176,12 +157,12 @@ defmodule SelectoDomeConceptTest do
         schemas: %{}
       }
 
-      selecto = Selecto.configure(domain, db_conn)
+      selecto = Selecto.configure(domain, SelectoTest.Repo)
       |> Selecto.select(["actor_id"])
       |> Selecto.filter({"actor_id", {"<", 5}})
 
       {:ok, result} = Selecto.execute(selecto)
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       # Test change overwriting logic
       {:ok, dome} = SelectoDome.update(dome, 1, %{first_name: "First"})

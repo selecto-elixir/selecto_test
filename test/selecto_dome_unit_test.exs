@@ -192,7 +192,7 @@ defmodule SelectoDomeUnitTest do
       IO.puts("   ✅ Row count: #{metadata.result_structure.row_count}")
 
       IO.puts("2. Creating SelectoDome...")
-      {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
       IO.puts("   ✅ Dome created successfully")
 
       IO.puts("3. Performing data operations...")

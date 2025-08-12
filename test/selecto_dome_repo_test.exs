@@ -1,18 +1,15 @@
 defmodule SelectoDomeRepoTest do
-  use ExUnit.Case, async: false
+  use SelectoTest.SelectoCase, async: false
 
   alias SelectoTest.Repo
   alias SelectoDome
 
   @moduletag timeout: 10_000
 
-  setup do
-    # Check out a sandbox connection for this test
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
-    :ok
-  end
-
   test "debug Selecto result structure using existing repo" do
+    # Insert test data
+    _test_data = insert_test_data!()
+    
     # Using the existing repository connection with proper sandbox setup
     
     # Create simple domain
@@ -35,7 +32,7 @@ defmodule SelectoDomeRepoTest do
     }
 
     # Use the existing repo connection
-    selecto = Selecto.configure(domain, Repo)
+    selecto = Selecto.configure(domain, SelectoTest.Repo)
     |> Selecto.select(["first_name"])
     |> Selecto.filter({"actor_id", 1})
 
@@ -51,7 +48,7 @@ defmodule SelectoDomeRepoTest do
         IO.puts("Aliases is list?: #{inspect(is_list(aliases))}")
         
         # Try to create a dome
-        case SelectoDome.from_result(selecto, result, Repo) do
+        case SelectoDome.from_result(selecto, result, SelectoTest.Repo) do
           {:ok, dome} ->
             IO.puts("✅ SelectoDome created successfully!")
             IO.puts("Source table: #{dome.result_metadata.source_table}")
@@ -90,12 +87,12 @@ defmodule SelectoDomeRepoTest do
     }
 
     # Use the existing repo connection
-    selecto = Selecto.configure(domain, Repo)
+    selecto = Selecto.configure(domain, SelectoTest.Repo)
     |> Selecto.select(["first_name", "last_name", "actor_id"])
     |> Selecto.filter({"actor_id", {"<", 10}})
 
     {:ok, result} = Selecto.execute(selecto)
-    {:ok, dome} = SelectoDome.from_result(selecto, result, Repo)
+    {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
     
     # Test basic operations without database commits
     {:ok, dome_with_insert} = SelectoDome.insert(dome, %{

@@ -1,18 +1,15 @@
 defmodule SelectoDomeIntegrationSimpleTest do
-  use ExUnit.Case, async: false
+  use SelectoTest.SelectoCase, async: false
 
   alias SelectoTest.Repo
   alias SelectoDome
 
   @moduletag timeout: 5_000
 
-  setup do
-    # Check out a sandbox connection for this test
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
-    :ok
-  end
-
   test "SelectoDome integrates with Selecto using simple domain" do
+    # Insert test data
+    _test_data = insert_test_data!()
+    
     # Create a very simple domain to avoid complex query issues
     domain = %{
       source: %{
@@ -32,7 +29,7 @@ defmodule SelectoDomeIntegrationSimpleTest do
     }
 
     # Build a very simple Selecto query
-    selecto = Selecto.configure(domain, Repo)
+    selecto = Selecto.configure(domain, SelectoTest.Repo)
     |> Selecto.select(["first_name"])
     |> Selecto.filter({"actor_id", {"<", 5}})  # Limit to first few actors
 
@@ -44,7 +41,7 @@ defmodule SelectoDomeIntegrationSimpleTest do
         IO.puts("Aliases: #{inspect(is_list(aliases))}")
         
         # Test SelectoDome creation
-        case SelectoDome.from_result(selecto, {rows, columns, aliases}, Repo) do
+        case SelectoDome.from_result(selecto, {rows, columns, aliases}, SelectoTest.Repo) do
           {:ok, dome} ->
             IO.puts("✅ SelectoDome created successfully!")
             

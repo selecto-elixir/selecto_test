@@ -1,21 +1,12 @@
 defmodule SelectoComplexFiltersTest do
-  use ExUnit.Case, async: false
+  use SelectoTest.SelectoCase, async: false
   
   # Tests for complex Selecto filter operations
   # Covers logical operations (AND/OR/NOT), subqueries, and advanced patterns
 
-  setup_all do
-    # Set up database connection
-    repo_config = SelectoTest.Repo.config()
-    postgrex_opts = [
-      username: repo_config[:username],
-      password: repo_config[:password],
-      hostname: repo_config[:hostname], 
-      database: repo_config[:database],
-      port: repo_config[:port] || 5432
-    ]
-    
-    {:ok, db_conn} = Postgrex.start_link(postgrex_opts)
+  setup do
+    # Insert test data
+    _test_data = insert_test_data!()
     
     # Actor domain with film associations for complex queries
     domain = %{
@@ -37,7 +28,7 @@ defmodule SelectoComplexFiltersTest do
       schemas: %{}
     }
     
-    selecto = Selecto.configure(domain, db_conn)
+    selecto = Selecto.configure(domain, SelectoTest.Repo)
     
     # Also set up a film domain for cross-table testing
     film_domain = %{
@@ -68,7 +59,7 @@ defmodule SelectoComplexFiltersTest do
       schemas: %{}
     }
     
-    film_selecto = Selecto.configure(film_domain, db_conn)
+    film_selecto = Selecto.configure(film_domain, SelectoTest.Repo)
     
     {:ok, selecto: selecto, film_selecto: film_selecto}
   end

@@ -15,7 +15,7 @@ defmodule SelectoDomeDatabaseIntegrationTest do
       username: "postgres",
       password: "postgres", 
       hostname: "localhost",
-      database: "selecto_test_dev",
+      database: "selecto_test_test",
       port: 5432,
       pool_size: 1,
       pool_timeout: 5000,
@@ -73,7 +73,7 @@ defmodule SelectoDomeDatabaseIntegrationTest do
     IO.puts("   ✅ Columns: #{inspect(columns)}")
 
     IO.puts("3. Creating SelectoDome from query result...")
-    {:ok, dome} = SelectoDome.from_result(selecto, {rows, columns, aliases}, SelectoTest.Repo)
+    {:ok, dome} = SelectoDome.from_result(selecto, {rows, columns, aliases}, db_conn)
     
     assert dome.selecto == selecto
     assert dome.result_metadata.source_table == "actor"
@@ -177,7 +177,7 @@ defmodule SelectoDomeDatabaseIntegrationTest do
     |> Selecto.filter({"film_id", {"<", 3}})
 
     {:ok, result} = Selecto.execute(selecto)
-    {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
+    {:ok, dome} = SelectoDome.from_result(selecto, result, db_conn)
 
     # Test that metadata is correctly extracted
     metadata = SelectoDome.metadata(dome)
@@ -219,7 +219,7 @@ defmodule SelectoDomeDatabaseIntegrationTest do
     |> Selecto.filter({"actor_id", {"<", 4}})
 
     {:ok, result} = Selecto.execute(selecto)
-    {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
+    {:ok, dome} = SelectoDome.from_result(selecto, result, db_conn)
 
     # Test change overwriting scenarios
     {:ok, dome} = SelectoDome.update(dome, 1, %{first_name: "First"})
