@@ -2,14 +2,19 @@
 
 ## Setup
 
+```elixir
+System.cmd("ls", ["-ld", "/data/chris/projects/selecto_test/vendor/selecto_kino"])
+```
+
 First, let's install the necessary dependencies.
 
 ```elixir
-Mix.install([
-  {:kino, "~> 0.7.0"},
-  {:postgrex, ">= 0.0.0"},
-  {:selecto_kino, path: "../vendor/selecto_kino"}
-])
+    Mix.install([
+      {:kino, "~> 0.7.0"},
+      {:postgrex, ">= 0.0.0"},
+      {:selecto, path: "/data/chris/projects/selecto_test/vendor/selecto"},
+      {:selecto_kino, path: "/data/chris/projects/selecto_test/vendor/selecto_kino"}
+    ])
 ```
 
 ## Connect to the Database
