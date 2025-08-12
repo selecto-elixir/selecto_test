@@ -11,6 +11,14 @@ defmodule SelectoDomeConceptTest do
       # Insert test data
       _test_data = insert_test_data!()
       
+      # Debug: Check if data was inserted
+      count_result = SelectoTest.Repo.query!("SELECT COUNT(*) FROM actor")
+      IO.puts("Actor count via Ecto: #{inspect(count_result)}")
+      
+      # Check what actor IDs we actually have
+      actors_result = SelectoTest.Repo.query!("SELECT actor_id, first_name, last_name FROM actor ORDER BY actor_id")
+      IO.puts("Actual actors: #{inspect(actors_result)}")
+      
       # Create simple domain
       domain = %{
         source: %{
@@ -36,8 +44,17 @@ defmodule SelectoDomeConceptTest do
       |> Selecto.filter({"actor_id", {"<", 10}})  # Limit to first 10 actors
 
       # Execute query
-      {:ok, result} = Selecto.execute(selecto)
-      {rows, columns, aliases} = result
+      result = Selecto.execute(selecto)
+      IO.puts("Selecto execute result: #{inspect(result)}")
+      
+      {rows, columns, aliases} = case result do
+        {:ok, {rows, columns, aliases}} -> 
+          IO.puts("Selecto found #{length(rows)} rows")
+          {rows, columns, aliases}
+        {:error, error} ->
+          IO.puts("Selecto error: #{inspect(error)}")
+          raise "Selecto query failed: #{inspect(error)}"
+      end
       
       # Verify we have results
       assert is_list(rows)
