@@ -10,7 +10,18 @@
       "Bash(curl:*)",
       "Bash(mix run:*)",
       "Bash(rm:*)",
-      "Bash(mix phx.server:*)"
+      "Bash(mix phx.server:*)",
+      "Bash(mix deps.get:*)",
+      "Bash(mix compile)",
+      "Bash(mix phx.gen:*)",
+      "Bash(mix ecto.gen.migration:*)",
+      "Bash(mkdir:*)",
+      "Bash(mix ecto.migrate:*)",
+      "Bash(mix help:*)",
+      "Bash(mix selecto.gen.domain:*)",
+      "Bash(sed:*)",
+      "Bash(cp:*)",
+      "Bash(iex:*)"
     ],
     "deny": []
   }
