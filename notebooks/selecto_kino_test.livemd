@@ -3,18 +3,28 @@
 ## Setup
 
 ```elixir
-System.cmd("ls", ["-ld", "/data/chris/projects/selecto_test/vendor/selecto_kino"])
+Mix.install([
+  {:kino, "~> 0.7.0"},
+  {:postgrex, ">= 0.0.0"},
+  {:selecto, path: "/home/chris/projects/selecto_test/vendor/selecto"},
+  {:selecto_kino, path: "/home/chris/projects/selecto_test/vendor/selecto_kino"}
+])
 ```
 
-First, let's install the necessary dependencies.
-
 ```elixir
-    Mix.install([
-      {:kino, "~> 0.7.0"},
-      {:postgrex, ">= 0.0.0"},
-      {:selecto, path: "/data/chris/projects/selecto_test/vendor/selecto"},
-      {:selecto_kino, path: "/data/chris/projects/selecto_test/vendor/selecto_kino"}
-    ])
+# Add vendor modules to the path
+Code.append_path("#{__DIR__}/../vendor/selecto_kino/lib")
+Code.append_path("#{__DIR__}/../vendor/selecto/lib")
+
+# Load the main SelectoKino module
+Code.compile_file("#{__DIR__}/../vendor/selecto_kino/lib/selecto_kino.ex")
+Code.compile_file("#{__DIR__}/../vendor/selecto_kino/lib/selecto_kino/connection.ex")
+Code.compile_file("#{__DIR__}/../vendor/selecto_kino/lib/selecto_kino/query_builder.ex")
+Code.compile_file("#{__DIR__}/../vendor/selecto_kino/lib/selecto_kino/selecto_query_builder.ex")
+Code.compile_file("#{__DIR__}/../vendor/selecto_kino/lib/selecto_kino/app_connection.ex")
+
+# No need to load store modules or domain modules - they're built into SelectoKino now
+IO.puts("SelectoKino loaded successfully!")
 ```
 
 ## Connect to the Database
@@ -29,6 +39,54 @@ SelectoKino.connect()
 
 Once you have connected to the database (submitted the form above), you can use the form below to build and run a query.
 
+### Simple SQL Query Builder
+
 ```elixir
 SelectoKino.query()
+```
+
+### Selecto Domain Query Builder
+
+For more advanced queries with joins, custom columns, and filters, use the pre-defined Selecto domains:
+
+```elixir
+SelectoKino.list_domains()
+```
+
+```elixir
+SelectoKino.selecto_query("actors")
+```
+
+```elixir
+SelectoKino.selecto_query("films")
+```
+
+## Connect to Running App (Recommended)
+
+This is the cleanest approach - connect to a running instance of the SelectoTest app to access the real domain configurations and run queries.
+
+First, start your app in one terminal:
+```bash
+# In your app directory
+iex --name selecto_test@127.0.0.1 --cookie selecto_test_cookie -S mix phx.server
+```
+
+Then connect from the livebook:
+
+```elixir
+SelectoKino.connect_app()
+```
+
+Once connected, you can access domains from the running app:
+
+```elixir
+SelectoKino.app_domains()
+```
+
+```elixir
+SelectoKino.app_query("actors")
+```
+
+```elixir
+SelectoKino.app_query("films")
 ```
