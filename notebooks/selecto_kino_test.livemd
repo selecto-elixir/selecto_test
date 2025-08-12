@@ -19,16 +19,16 @@ First, let's install the necessary dependencies.
 
 ## Connect to the Database
 
-Now, let's connect to the `selecto_test_dev` database. The form below will prompt you for the connection details.
+Now, let's connect to the `selecto_test_dev` database. The form below will prompt you for the connection details. Fill in the form and click "Connect".
 
 ```elixir
-connection_data = SelectoKino.start()
+SelectoKino.connect()
 ```
 
 ## Build a Query
 
-Once you have connected to the database, you can use the form below to build and run a query.
+Once you have connected to the database (submitted the form above), you can use the form below to build and run a query.
 
 ```elixir
-SelectoKino.query(connection_data)
+SelectoKino.query()
 ```
