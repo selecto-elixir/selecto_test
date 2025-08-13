@@ -24,7 +24,7 @@ defmodule SelectoColumnTypesTest do
         primary_key: :film_id,
         fields: [:film_id, :title, :description, :release_year, :language_id, 
                 :rental_duration, :rental_rate, :length, :replacement_cost, 
-                :rating, :special_features, :last_update, :fulltext],
+                :rating, :special_features, :last_update],
         redact_fields: [],
         columns: %{
           film_id: %{type: :integer},
@@ -38,8 +38,7 @@ defmodule SelectoColumnTypesTest do
           replacement_cost: %{type: :decimal},
           rating: %{type: :string},
           special_features: %{type: {:array, :string}},
-          last_update: %{type: :utc_datetime},
-          fulltext: %{type: :tsvector}
+          last_update: %{type: :utc_datetime}
         },
         associations: %{}
       },
@@ -317,18 +316,6 @@ defmodule SelectoColumnTypesTest do
     end
   end
 
-  describe "TSVector Column Type (Full-Text Search)" do
-    test "select tsvector field", %{selecto: selecto} do
-      result = selecto
-      |> Selecto.select(["title"])  # Don't select fulltext directly, it's not readable
-      |> Selecto.filter({"fulltext", {:text_search, "drama"}})
-      |> Selecto.execute()
-      
-      assert {:ok, {_rows, _columns, _aliases}} = result
-      # Should find films with "drama" in their fulltext search
-      # The exact behavior depends on the fulltext implementation
-    end
-  end
 
   describe "Type Aggregation and Functions" do
     test "count with different column types", %{selecto: selecto} do

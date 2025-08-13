@@ -75,31 +75,33 @@ defmodule SelectoTest.SelectoDomeHelpers do
     {:ok, french} = %Language{name: "French"} |> Repo.insert()
 
     # Create films
-    {:ok, action_film} = %Film{
-      title: "Action Hero",
-      description: "An action-packed adventure",
-      release_year: 2023,
-      language_id: english.language_id,
-      rental_duration: 3,
-      rental_rate: Decimal.new("4.99"),
-      length: 120,
-      replacement_cost: Decimal.new("19.99"),
-      rating: :PG,
-      special_features: ["Trailers", "Commentaries"]
-    } |> Repo.insert()
+    {:ok, action_film} = 
+      Film.changeset(%Film{}, %{
+        title: "Action Hero",
+        description: "An action-packed adventure",
+        release_year: 2023,
+        language_id: english.language_id,
+        rental_duration: 3,
+        rental_rate: Decimal.new("4.99"),
+        length: 120,
+        replacement_cost: Decimal.new("19.99"),
+        rating: :PG,
+        special_features: ["Trailers", "Commentaries"]
+      }) |> Repo.insert()
 
-    {:ok, drama_film} = %Film{
-      title: "Drama Queen",
-      description: "A dramatic story",
-      release_year: 2022,
-      language_id: spanish.language_id,
-      rental_duration: 5,
-      rental_rate: Decimal.new("3.99"),
-      length: 150,
-      replacement_cost: Decimal.new("24.99"),
-      rating: :"PG-13",
-      special_features: ["Behind the Scenes"]
-    } |> Repo.insert()
+    {:ok, drama_film} = 
+      Film.changeset(%Film{}, %{
+        title: "Drama Queen",
+        description: "A dramatic story",
+        release_year: 2022,
+        language_id: spanish.language_id,
+        rental_duration: 5,
+        rental_rate: Decimal.new("3.99"),
+        length: 150,
+        replacement_cost: Decimal.new("24.99"),
+        rating: :"PG-13",
+        special_features: ["Behind the Scenes"]
+      }) |> Repo.insert()
 
     # Configure Selecto
     domain = PagilaDomainFilms.domain()

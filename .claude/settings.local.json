@@ -34,7 +34,13 @@
       "Bash(done)",
       "Bash(timeout 30 mix test test/selecto_joins_test.exs:\"test LEFT JOIN - Actor to Film Actor\" --max-cases 1)",
       "Bash(timeout 30 mix test test/selecto_joins_test.exs --max-cases 1)",
-      "Bash(timeout 15 mix test test/selecto_joins_test.exs --max-cases 1)"
+      "Bash(timeout 15 mix test test/selecto_joins_test.exs --max-cases 1)",
+      "Bash(timeout 30 mix test test/selecto_dome_films_test.exs --max-cases 1)",
+      "Bash(timeout 15 mix test test/selecto_dome_films_test.exs --max-cases 1)",
+      "Bash(timeout 30 mix test test/selecto_dome_films_test.exs:\"handles enum ratings properly\" --max-cases 1)",
+      "Bash(elixir:*)",
+      "Bash(timeout 30 mix test test/selecto_dome_films_test.exs --max-cases 2 --trace)",
+      "Bash(mix compile:*)"
     ],
     "deny": []
   }

@@ -2,7 +2,7 @@ defmodule SelectoDomeFilmsTest do
   use SelectoTest.SelectoCase, async: false
   
   alias SelectoTest.{Repo, PagilaDomainFilms}
-  alias SelectoTest.Store.{Film, Language, Actor, FilmActor}
+  alias SelectoTest.Store.{Film, Language}
   alias SelectoDome
 
   describe "SelectoDome with Pagila Film domain" do
@@ -15,31 +15,33 @@ defmodule SelectoDomeFilmsTest do
       {:ok, french} = %Language{name: "French"} |> Repo.insert()
 
       # Create test films
-      {:ok, film1} = %Film{
-        title: "Action Hero",
-        description: "An action-packed adventure",
-        release_year: 2023,
-        language_id: english.language_id,
-        rental_duration: 3,
-        rental_rate: Decimal.new("4.99"),
-        length: 120,
-        replacement_cost: Decimal.new("19.99"),
-        rating: :PG,
-        special_features: ["Trailers", "Commentaries"]
-      } |> Repo.insert()
+      {:ok, film1} = 
+        Film.changeset(%Film{}, %{
+          title: "Action Hero",
+          description: "An action-packed adventure",
+          release_year: 2023,
+          language_id: english.language_id,
+          rental_duration: 3,
+          rental_rate: Decimal.new("4.99"),
+          length: 120,
+          replacement_cost: Decimal.new("19.99"),
+          rating: :PG,
+          special_features: ["Trailers", "Commentaries"]
+        }) |> Repo.insert()
 
-      {:ok, film2} = %Film{
-        title: "Drama Queen",
-        description: "A dramatic story",
-        release_year: 2022,
-        language_id: spanish.language_id,
-        rental_duration: 5,
-        rental_rate: Decimal.new("3.99"),
-        length: 150,
-        replacement_cost: Decimal.new("24.99"),
-        rating: :"PG-13",
-        special_features: ["Behind the Scenes"]
-      } |> Repo.insert()
+      {:ok, film2} = 
+        Film.changeset(%Film{}, %{
+          title: "Drama Queen",
+          description: "A dramatic story",
+          release_year: 2022,
+          language_id: spanish.language_id,
+          rental_duration: 5,
+          rental_rate: Decimal.new("3.99"),
+          length: 150,
+          replacement_cost: Decimal.new("24.99"),
+          rating: :"PG-13",
+          special_features: ["Behind the Scenes"]
+        }) |> Repo.insert()
 
       # Set up Selecto with Film domain
       domain = PagilaDomainFilms.domain()
@@ -366,8 +368,8 @@ defmodule SelectoDomeFilmsTest do
         Decimal.new("12.75")
       ]
 
-      for {rate, index} <- Enum.with_index(precise_rates) do
-        {:ok, dome} = SelectoDome.insert(dome, %{
+      dome = Enum.reduce(Enum.with_index(precise_rates), dome, fn {rate, index}, dome_acc ->
+        {:ok, dome} = SelectoDome.insert(dome_acc, %{
           title: "Decimal Test #{index}",
           description: "Testing decimal precision",
           release_year: 2024,
@@ -379,7 +381,8 @@ defmodule SelectoDomeFilmsTest do
           rating: :PG,
           special_features: []
         })
-      end
+        dome
+      end)
 
       {:ok, _updated_result} = SelectoDome.commit(dome)
 
@@ -403,8 +406,8 @@ defmodule SelectoDomeFilmsTest do
         ["Behind the Scenes", "Deleted Scenes", "Director's Commentary", "Cast Interviews"]  # Many elements
       ]
 
-      for {features, index} <- Enum.with_index(test_cases) do
-        {:ok, dome} = SelectoDome.insert(dome, %{
+      dome = Enum.reduce(Enum.with_index(test_cases), dome, fn {features, index}, dome_acc ->
+        {:ok, dome} = SelectoDome.insert(dome_acc, %{
           title: "Array Test #{index}",
           description: "Testing array handling",
           release_year: 2024,
@@ -416,7 +419,8 @@ defmodule SelectoDomeFilmsTest do
           rating: :PG,
           special_features: features
         })
-      end
+        dome
+      end)
 
       {:ok, _updated_result} = SelectoDome.commit(dome)
 
@@ -434,8 +438,8 @@ defmodule SelectoDomeFilmsTest do
       # Test all valid ratings
       ratings = [:G, :PG, :"PG-13", :R, :"NC-17"]
 
-      for rating <- ratings do
-        {:ok, dome} = SelectoDome.insert(dome, %{
+      dome = Enum.reduce(ratings, dome, fn rating, dome_acc ->
+        {:ok, dome} = SelectoDome.insert(dome_acc, %{
           title: "Rating Test #{rating}",
           description: "Testing rating #{rating}",
           release_year: 2024,
@@ -447,7 +451,8 @@ defmodule SelectoDomeFilmsTest do
           rating: rating,
           special_features: []
         })
-      end
+        dome
+      end)
 
       {:ok, _updated_result} = SelectoDome.commit(dome)
 

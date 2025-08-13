@@ -10,6 +10,7 @@ defmodule SelectoTest.PagilaDomainFilms do
       source: %{
         source_table: "film",
         primary_key: :film_id,
+        schema_module: SelectoTest.Store.Film,
         fields: [:film_id, :title, :description, :release_year, :language_id, :rental_duration, :rental_rate, :length, :replacement_cost, :rating, :special_features],
         redact_fields: [],
         columns: %{
@@ -38,6 +39,7 @@ defmodule SelectoTest.PagilaDomainFilms do
         language: %{
           source_table: "language",
           primary_key: :language_id,
+          schema_module: SelectoTest.Store.Language,
           fields: [:language_id, :name],
           redact_fields: [],
           columns: %{

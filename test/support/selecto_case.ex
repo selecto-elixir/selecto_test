@@ -20,7 +20,7 @@ defmodule SelectoTest.SelectoCase do
     end
   end
   
-  setup tags do
+  setup _tags do
     # Set up Ecto sandbox with shared mode for Selecto integration
     # This allows Selecto's separate connections to see test data
     pid = Ecto.Adapters.SQL.Sandbox.start_owner!(SelectoTest.Repo, shared: true)
