@@ -84,15 +84,26 @@ defmodule SelectoBasicIntegrationTest do
     end
 
     test "filter by not equal", %{selecto: selecto} do
+      # Get all actors first to find a valid ID to filter by
+      all_result = selecto
+      |> Selecto.select(["actor_id"])
+      |> Selecto.execute()
+      
+      assert {:ok, {all_rows, _columns, _aliases}} = all_result
+      assert length(all_rows) == 4  # We have 4 test actors
+      
+      # Get the first actor ID to exclude
+      [[first_actor_id] | _] = all_rows
+      
       result = selecto
       |> Selecto.select(["actor_id"])
-      |> Selecto.filter({"actor_id", {"!=", 1}})
+      |> Selecto.filter({"actor_id", {"!=", first_actor_id}})
       |> Selecto.execute()
       
       assert {:ok, {rows, _columns, _aliases}} = result
-      assert length(rows) == 199  # All except actor_id = 1
+      assert length(rows) == 3  # All except the first actor
       Enum.each(rows, fn [actor_id] -> 
-        assert actor_id != 1
+        assert actor_id != first_actor_id
       end)
     end
 
