@@ -1,5 +1,5 @@
 defmodule SelectoAdvancedSelectTest do
-  use ExUnit.Case, async: false
+  use SelectoTest.SelectoCase, async: false
   
   # Tests for advanced Selecto select variations
   # Covers functions, subqueries, custom SQL, and complex expressions

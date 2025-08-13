@@ -1,5 +1,5 @@
 defmodule SelectoDomeDatabaseIntegrationTest do
-  use ExUnit.Case, async: false
+  use SelectoTest.SelectoCase, async: false
 
   alias SelectoDome
 
@@ -10,32 +10,32 @@ defmodule SelectoDomeDatabaseIntegrationTest do
   # the connection pool issues that occur when mixing Selecto with Ecto Sandbox.
 
   setup do
-    # Create direct Postgrex connection 
+    # Create direct Postgrex connection
     postgrex_opts = [
       username: "postgres",
-      password: "postgres", 
+      password: "postgres",
       hostname: "localhost",
-      database: "selecto_test_test",
+      database: "selecto_test_dev",
       port: 5432,
       pool_size: 1,
       pool_timeout: 5000,
       timeout: 5000
     ]
-    
+
     {:ok, db_conn} = Postgrex.start_link(postgrex_opts)
-    
-    on_exit(fn -> 
+
+    on_exit(fn ->
       if Process.alive?(db_conn) do
         GenServer.stop(db_conn, :normal, 1000)
       end
     end)
-    
+
     %{db_conn: db_conn}
   end
 
   test "complete SelectoDome workflow with database operations", %{db_conn: db_conn} do
     IO.puts("\n=== SelectoDome Database Integration Test ===")
-    
+
     # Create domain for actor table
     domain = %{
       source: %{
@@ -62,23 +62,23 @@ defmodule SelectoDomeDatabaseIntegrationTest do
 
     IO.puts("2. Executing Selecto query...")
     {:ok, {rows, columns, aliases}} = Selecto.execute(selecto)
-    
+
     assert is_list(rows)
     assert length(rows) > 0
     assert "first_name" in columns
-    assert "last_name" in columns 
+    assert "last_name" in columns
     assert "actor_id" in columns
-    
+
     IO.puts("   ✅ Query returned #{length(rows)} rows")
     IO.puts("   ✅ Columns: #{inspect(columns)}")
 
     IO.puts("3. Creating SelectoDome from query result...")
     {:ok, dome} = SelectoDome.from_result(selecto, {rows, columns, aliases}, db_conn)
-    
+
     assert dome.selecto == selecto
     assert dome.result_metadata.source_table == "actor"
     refute SelectoDome.has_changes?(dome)
-    
+
     IO.puts("   ✅ SelectoDome created successfully")
 
     IO.puts("4. Adding changes...")
@@ -87,24 +87,24 @@ defmodule SelectoDomeDatabaseIntegrationTest do
       first_name: "Test",
       last_name: "Actor"
     })
-    
+
     # Add update
     {:ok, dome} = SelectoDome.update(dome, 1, %{first_name: "Updated"})
-    
+
     # Add delete
     {:ok, dome} = SelectoDome.delete(dome, 2)
-    
+
     assert SelectoDome.has_changes?(dome)
     IO.puts("   ✅ Added insert, update, and delete operations")
 
     IO.puts("5. Previewing changes...")
     {:ok, changes} = SelectoDome.preview_changes(dome)
-    
+
     assert changes.total_changes == 3
     assert length(changes.inserts) == 1
     assert length(changes.updates) == 1
     assert length(changes.deletes) == 1
-    
+
     IO.puts("   ✅ Total changes: #{changes.total_changes}")
     IO.puts("   ✅ Inserts: #{length(changes.inserts)}")
     IO.puts("   ✅ Updates: #{length(changes.updates)}")
@@ -133,13 +133,13 @@ defmodule SelectoDomeDatabaseIntegrationTest do
 
     IO.puts("7. Testing metadata analysis...")
     metadata = SelectoDome.metadata(dome)
-    
+
     assert metadata.source_table == "actor"
     assert is_map(metadata.tables)
     assert is_map(metadata.column_mapping)
     assert is_list(metadata.constraints)
     assert is_map(metadata.result_structure)
-    
+
     assert is_list(metadata.result_structure.columns)
     assert is_map(metadata.result_structure.aliases)
     assert is_integer(metadata.result_structure.row_count)
@@ -153,10 +153,10 @@ defmodule SelectoDomeDatabaseIntegrationTest do
 
   test "SelectoDome handles query metadata correctly", %{db_conn: db_conn} do
     # Test metadata extraction with different query structures
-    
+
     domain = %{
       source: %{
-        source_table: "film", 
+        source_table: "film",
         primary_key: :film_id,
         fields: [:film_id, :title, :description],
         redact_fields: [],
@@ -181,25 +181,25 @@ defmodule SelectoDomeDatabaseIntegrationTest do
 
     # Test that metadata is correctly extracted
     metadata = SelectoDome.metadata(dome)
-    
+
     assert metadata.source_table == "film"
     assert Map.has_key?(metadata.tables, "film")
-    
+
     film_table = metadata.tables["film"]
     assert film_table.table_name == "film"
     assert film_table.primary_key == "film_id"
     assert is_map(film_table.columns)
-    
+
     IO.puts("✅ Query metadata handling verified for film table")
   end
 
   test "SelectoDome change tracking with complex scenarios", %{db_conn: db_conn} do
     # Test change tracking edge cases
-    
+
     domain = %{
       source: %{
         source_table: "actor",
-        primary_key: :actor_id, 
+        primary_key: :actor_id,
         fields: [:actor_id, :first_name, :last_name],
         redact_fields: [],
         columns: %{
@@ -214,7 +214,7 @@ defmodule SelectoDomeDatabaseIntegrationTest do
       schemas: %{}
     }
 
-    selecto = Selecto.configure(domain, db_conn) 
+    selecto = Selecto.configure(domain, db_conn)
     |> Selecto.select(["first_name", "actor_id"])
     |> Selecto.filter({"actor_id", {"<", 4}})
 

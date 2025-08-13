@@ -41,7 +41,17 @@
       "Bash(elixir:*)",
       "Bash(timeout 30 mix test test/selecto_dome_films_test.exs --max-cases 2 --trace)",
       "Bash(mix compile:*)",
-      "Bash(timeout 30 mix test test/selecto_group_order_test.exs --max-cases 1)"
+      "Bash(timeout 30 mix test test/selecto_group_order_test.exs --max-cases 1)",
+      "Bash(timeout 30 mix test test/selecto_column_types_test.exs:\"Integer Column Type\" --max-cases 1)",
+      "Bash(timeout 30 mix test test/selecto_column_types_test.exs --max-cases 1 --trace)",
+      "Bash(timeout 30 mix test --failed --max-cases 1)",
+      "Bash(timeout 30 mix test test/selecto_ecto_integration_test.exs --max-cases 1)",
+      "Bash(timeout 30 mix test test/selecto_ecto_advanced_integration_test.exs --max-cases 1 --trace)",
+      "Bash(timeout 30 mix test test/selecto_dome_advanced_test.exs:\"validates inserts against domain constraints\" --max-cases 1)",
+      "Bash(timeout 30 mix test test/selecto_dome_advanced_test.exs --max-cases 1)",
+      "Bash(timeout 10 mix test:*)",
+      "Bash(timeout 20 mix test test/selecto_basic_integration_test.exs:\"filter with greater than or equal operator\" --max-cases 1)",
+      "Bash(timeout 20 mix test test/selecto_basic_integration_test.exs --max-cases 1)"
     ],
     "deny": []
   }

@@ -1,5 +1,5 @@
 defmodule SelectoDomeDebugTest do
-  use ExUnit.Case, async: false
+  use SelectoTest.SelectoCase, async: false
 
   test "debug Selecto result structure" do
     # Use the existing repo connection to avoid pool issues

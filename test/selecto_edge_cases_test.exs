@@ -1,5 +1,5 @@
 defmodule SelectoEdgeCasesTest do
-  use ExUnit.Case, async: false
+  use SelectoTest.SelectoCase, async: false
   
   # Tests for Selecto edge cases, error handling, and boundary conditions
   # Covers null handling, empty results, type conversions, and error scenarios

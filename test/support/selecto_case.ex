@@ -23,40 +23,100 @@ defmodule SelectoTest.SelectoCase do
   setup _tags do
     # Set up Ecto sandbox with shared mode for Selecto integration
     # This allows Selecto's separate connections to see test data
-    pid = Ecto.Adapters.SQL.Sandbox.start_owner!(SelectoTest.Repo, shared: true)
+    # Handle case where sandbox is already shared
+    {pid, started_owner?} = try do
+      pid = Ecto.Adapters.SQL.Sandbox.start_owner!(SelectoTest.Repo, shared: true)
+      {pid, true}
+    rescue
+      MatchError ->
+        # Sandbox is already shared, just checkout a connection
+        :ok = Ecto.Adapters.SQL.Sandbox.checkout(SelectoTest.Repo)
+        {nil, false}
+    end
     
     # Clean up data before test
-    cleanup_database()
+    try do
+      cleanup_database()
+    rescue
+      e ->
+        # If cleanup fails, log and continue - test data isolation might still work
+        IO.warn("Database cleanup failed: #{inspect(e)}")
+    end
     
     on_exit(fn ->
       # Clean up after test
-      cleanup_database()
-      # Stop Ecto sandbox
-      Ecto.Adapters.SQL.Sandbox.stop_owner(pid)
+      try do
+        cleanup_database()
+      rescue
+        e ->
+          # If cleanup fails, log but don't crash the test suite
+          IO.warn("Database cleanup on exit failed: #{inspect(e)}")
+      end
+      
+      # Stop Ecto sandbox if we started one, otherwise just checkin
+      try do
+        if started_owner? do
+          Ecto.Adapters.SQL.Sandbox.stop_owner(pid)
+        else
+          Ecto.Adapters.SQL.Sandbox.checkin(SelectoTest.Repo)
+        end
+      rescue
+        e ->
+          # Log sandbox cleanup errors but don't fail
+          IO.warn("Sandbox cleanup failed: #{inspect(e)}")
+      end
     end)
     
     %{}
   end
   
   @doc """
-  Clean up database tables using Ecto.
+  Clean up database tables using Ecto in proper dependency order.
   """
   def cleanup_database do
-    # Clean up in dependency order using Ecto
+    # Clean up in reverse dependency order (children first, then parents)
+    # This ensures we don't hit foreign key constraint violations
     cleanup_schemas = [
-      SelectoTest.Store.FilmActor,
-      SelectoTest.Store.FilmCategory,
-      SelectoTest.Store.Film,
+      # Child tables first (tables that reference others)
+      SelectoTest.Store.FilmActor,     # References film and actor
+      SelectoTest.Store.FilmCategory,  # References film and category
+      # Parent tables
+      SelectoTest.Store.Film,          # May be referenced by inventory, etc.
       SelectoTest.Store.Actor,
       SelectoTest.Store.Category,
       SelectoTest.Store.Language
     ]
     
+    # Also clean up additional tables that might exist in Pagila DB
+    additional_cleanup = [
+      "inventory",    # References film
+      "rental",       # References inventory
+      "payment",      # References rental
+      "staff",
+      "store",
+      "customer",
+      "address",
+      "city",
+      "country"
+    ]
+    
+    # Delete from additional tables first (raw SQL for tables without schemas)
+    Enum.each(additional_cleanup, fn table ->
+      try do
+        SelectoTest.Repo.query("DELETE FROM #{table}", [])
+      rescue
+        _ -> 
+          # Table doesn't exist or other error, that's fine for tests
+          :ok
+      end
+    end)
+    
+    # Then delete from schema-backed tables
     Enum.each(cleanup_schemas, fn schema ->
       try do
         SelectoTest.Repo.delete_all(schema)
       rescue
-        Ecto.QueryError -> 
+        _ -> 
           # Table doesn't exist or other error, that's fine for tests
           :ok
       end

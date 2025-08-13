@@ -1,5 +1,5 @@
 defmodule SelectoEctoIntegrationTest do
-  use ExUnit.Case
+  use SelectoTest.SelectoCase, async: false
   import Ecto.Query, warn: false
 
   alias SelectoTest.Repo
