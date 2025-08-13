@@ -112,7 +112,7 @@ defmodule SelectoTest.PagilaDomain do
         "full_name" => %{
           name: "Full Name",
           ### concat_ws?
-          select: {:concat, ["first_name", {:literal, " "}, "last_name"]},
+          select: {:concat, ["first_name", {:literal_string, " "}, "last_name"]},
           ### we will always get a tuple of select + group_by_filter_select here
           group_by_format: fn {a, _id}, _def -> a end,
           group_by_filter: "actor_id",

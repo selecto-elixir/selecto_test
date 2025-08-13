@@ -40,7 +40,8 @@
       "Bash(timeout 30 mix test test/selecto_dome_films_test.exs:\"handles enum ratings properly\" --max-cases 1)",
       "Bash(elixir:*)",
       "Bash(timeout 30 mix test test/selecto_dome_films_test.exs --max-cases 2 --trace)",
-      "Bash(mix compile:*)"
+      "Bash(mix compile:*)",
+      "Bash(timeout 30 mix test test/selecto_group_order_test.exs --max-cases 1)"
     ],
     "deny": []
   }
