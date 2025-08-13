@@ -145,7 +145,7 @@ defmodule SelectoTest.SelectoCase do
       rental_rate: Decimal.new("4.99"),
       length: 120,
       replacement_cost: Decimal.new("19.99"),
-      rating: :PG
+      rating: :G  # Changed to G rating for join filter tests
     } |> SelectoTest.Repo.insert()
     
     {:ok, film2} = %SelectoTest.Store.Film{
@@ -160,10 +160,32 @@ defmodule SelectoTest.SelectoCase do
       rating: :PG
     } |> SelectoTest.Repo.insert()
     
+    # Create film_actor relationships for join tests
+    {:ok, film_actor1} = %SelectoTest.Store.FilmActor{
+      actor_id: actor1.actor_id,
+      film_id: film1.film_id
+    } |> SelectoTest.Repo.insert()
+    
+    {:ok, film_actor2} = %SelectoTest.Store.FilmActor{
+      actor_id: actor1.actor_id,  # Alice appears in both films
+      film_id: film2.film_id
+    } |> SelectoTest.Repo.insert()
+    
+    {:ok, film_actor3} = %SelectoTest.Store.FilmActor{
+      actor_id: actor2.actor_id,  # John appears in film1
+      film_id: film1.film_id
+    } |> SelectoTest.Repo.insert()
+    
+    {:ok, film_actor4} = %SelectoTest.Store.FilmActor{
+      actor_id: actor3.actor_id,  # Jane appears in film2
+      film_id: film2.film_id
+    } |> SelectoTest.Repo.insert()
+    
     %{
       languages: %{english: english, spanish: spanish},
       actors: %{actor1: actor1, actor2: actor2, actor3: actor3, actor4: actor4},
-      films: %{film1: film1, film2: film2}
+      films: %{film1: film1, film2: film2},
+      film_actors: %{film_actor1: film_actor1, film_actor2: film_actor2, film_actor3: film_actor3, film_actor4: film_actor4}
     }
   end
 end
