@@ -51,7 +51,20 @@
       "Bash(timeout 30 mix test test/selecto_dome_advanced_test.exs --max-cases 1)",
       "Bash(timeout 10 mix test:*)",
       "Bash(timeout 20 mix test test/selecto_basic_integration_test.exs:\"filter with greater than or equal operator\" --max-cases 1)",
-      "Bash(timeout 20 mix test test/selecto_basic_integration_test.exs --max-cases 1)"
+      "Bash(timeout 20 mix test test/selecto_basic_integration_test.exs --max-cases 1)",
+      "Bash(timeout 30 mix test test/selecto_dome_concept_test.exs --max-cases 1 --trace)",
+      "Bash(timeout 20 mix test test/selecto_ecto_integration_test.exs --max-cases 1)",
+      "Bash(timeout 15 mix test test/selecto_dome_concept_test.exs --max-cases 1)",
+      "Bash(timeout 30 mix test test/selecto_basic_integration_test.exs:\"select single field with filter\" --max-cases 1 --trace)",
+      "Bash(timeout 30 mix test test/selecto_basic_integration_test.exs:37 --max-cases 1 --trace)",
+      "Bash(timeout 30 mix test test/selecto_basic_integration_test.exs:61 --max-cases 1 --trace)",
+      "Bash(timeout 30 mix test test/selecto_basic_integration_test.exs:37 --max-cases 1)",
+      "Bash(timeout 30 mix test test/selecto_basic_integration_test.exs:61 --max-cases 1)",
+      "Bash(timeout 60 mix test test/selecto_basic_integration_test.exs)",
+      "Bash(timeout 30 mix test test/selecto_dome_integration_test.exs:98 --max-cases 1)",
+      "Bash(timeout 30 mix test test/selecto_dome_integration_test.exs:72 --max-cases 1)",
+      "Bash(timeout 30 mix test test/selecto_dome_integration_test.exs:303 --max-cases 1)",
+      "Bash(timeout 60 mix test test/selecto_dome_integration_test.exs)"
     ],
     "deny": []
   }

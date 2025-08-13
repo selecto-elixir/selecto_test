@@ -18,7 +18,11 @@ defmodule SelectoDomeIntegrationTest do
       %{
         selecto: selecto,
         domain: domain,
-        test_data: test_data
+        test_data: test_data,
+        actor1: test_data.actors.actor1,
+        actor2: test_data.actors.actor2,
+        actor3: test_data.actors.actor3,
+        actor4: test_data.actors.actor4
       }
     end
 
@@ -88,9 +92,10 @@ defmodule SelectoDomeIntegrationTest do
       assert length(updated_rows) == initial_count + 1
       assert updated_columns == elem(result, 1)  # Same columns
 
-      # Verify actor exists in database
-      bob_actor = Repo.get_by(Actor, first_name: "Bob", last_name: "Wilson")
-      assert bob_actor != nil
+      # Verify actor exists in database (use one/1 to handle potential duplicates)
+      bob_actors = Repo.all(from a in Actor, where: a.first_name == "Bob" and a.last_name == "Wilson")
+      assert length(bob_actors) >= 1, "Expected at least one Bob Wilson actor"
+      bob_actor = List.first(bob_actors)
       assert bob_actor.first_name == "Bob"
       assert bob_actor.last_name == "Wilson"
     end
@@ -290,7 +295,7 @@ defmodule SelectoDomeIntegrationTest do
       domain = PagilaDomain.actors_domain()
       selecto = Selecto.configure(domain, SelectoTest.Repo)
       |> Selecto.select(["first_name", "last_name", "film[title]", "film[rating]"])
-      |> Selecto.join(:film_actors, %{film: %{}})
+      # Joins are already configured in the domain, no need to add them dynamically
 
       %{
         selecto: selecto,

@@ -42,6 +42,9 @@ defmodule SelectoEctoIntegrationTest do
   
   describe "basic queries with Actor schema" do
     test "can execute simple select query" do
+      # Ensure we have test data
+      _test_data = insert_test_data!()
+      
       selecto = Selecto.from_ecto(Repo, Actor)
       |> Selecto.select(["first_name", "last_name"])
       
@@ -62,13 +65,16 @@ defmodule SelectoEctoIntegrationTest do
     end
     
     test "can filter by actor fields" do
+      # Ensure we have test data
+      _test_data = insert_test_data!()
+      
       selecto = Selecto.from_ecto(Repo, Actor)
       |> Selecto.select(["first_name", "last_name"])
-      |> Selecto.filter({"first_name", "PENELOPE"})
+      |> Selecto.filter({"first_name", "John"})
       
       case Selecto.execute(selecto) do
         {:ok, {rows, _columns, _aliases}} ->
-          # Should get some results with PENELOPE (common name in sample data)
+          # Should get some results with John (name from test data)
           assert length(rows) >= 1
           # Verify SQL structure
           {sql, _params} = Selecto.to_sql(selecto)
@@ -81,6 +87,9 @@ defmodule SelectoEctoIntegrationTest do
     end
     
     test "can order by actor fields" do
+      # Ensure we have test data  
+      _test_data = insert_test_data!()
+      
       selecto = Selecto.from_ecto(Repo, Actor)
       |> Selecto.select(["first_name", "last_name"])
       |> Selecto.order_by([{"last_name", :asc}])

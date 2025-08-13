@@ -41,7 +41,6 @@ defmodule SelectoDomeConceptTest do
       # Configure Selecto with Postgrex connection
       selecto = Selecto.configure(domain, SelectoTest.Repo)
       |> Selecto.select(["first_name", "last_name", "actor_id"])
-      |> Selecto.filter({"actor_id", {"<", 10}})  # Limit to first 10 actors
 
       # Execute query
       result = Selecto.execute(selecto)
@@ -64,7 +63,7 @@ defmodule SelectoDomeConceptTest do
       assert "actor_id" in columns
 
       # Create SelectoDome - this tests the core analysis functionality
-      {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
+      {:ok, dome} = SelectoDome.from_result(selecto, {rows, columns, aliases}, SelectoTest.Repo)
       
       # Verify dome structure
       assert dome.selecto == selecto

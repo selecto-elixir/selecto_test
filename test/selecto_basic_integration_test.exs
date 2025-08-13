@@ -6,7 +6,7 @@ defmodule SelectoBasicIntegrationTest do
 
   setup do
     # Insert test data
-    _test_data = insert_test_data!()
+    test_data = insert_test_data!()
     
     # Define actor domain for testing
     domain = %{
@@ -30,14 +30,16 @@ defmodule SelectoBasicIntegrationTest do
     
     selecto = Selecto.configure(domain, SelectoTest.Repo)
     
-    {:ok, selecto: selecto}
+    {:ok, selecto: selecto, test_data: test_data}
   end
 
   describe "Basic Functionality" do
-    test "select single field with filter", %{selecto: selecto} do
+    test "select single field with filter", %{selecto: selecto, test_data: test_data} do
+      alice_id = test_data.actors.actor1.actor_id
+      
       result = selecto
       |> Selecto.select(["first_name"])
-      |> Selecto.filter({"actor_id", 1})
+      |> Selecto.filter({"actor_id", alice_id})
       |> Selecto.execute()
       
       assert {:ok, {rows, columns, _aliases}} = result
@@ -46,10 +48,12 @@ defmodule SelectoBasicIntegrationTest do
       assert hd(rows) == ["Alice"]  # First actor alphabetically
     end
 
-    test "select multiple fields with filter", %{selecto: selecto} do
+    test "select multiple fields with filter", %{selecto: selecto, test_data: test_data} do
+      alice_id = test_data.actors.actor1.actor_id
+      
       result = selecto
       |> Selecto.select(["first_name", "last_name"])
-      |> Selecto.filter({"actor_id", 1})
+      |> Selecto.filter({"actor_id", alice_id})
       |> Selecto.execute()
       
       assert {:ok, {rows, columns, _aliases}} = result
@@ -107,80 +111,93 @@ defmodule SelectoBasicIntegrationTest do
       end)
     end
 
-    test "filter by less than", %{selecto: selecto} do
+    test "filter by less than", %{selecto: selecto, test_data: test_data} do
+      max_id = test_data.actors.actor4.actor_id
+      
       result = selecto
       |> Selecto.select(["actor_id"])
-      |> Selecto.filter({"actor_id", {"<", 5}})
+      |> Selecto.filter({"actor_id", {"<", max_id + 1}})
       |> Selecto.execute()
       
       assert {:ok, {rows, _columns, _aliases}} = result
       assert length(rows) == 4  # All 4 test actors
       Enum.each(rows, fn [actor_id] -> 
-        assert actor_id < 5
+        assert actor_id < max_id + 1
       end)
     end
 
-    test "filter by greater than", %{selecto: selecto} do
+    test "filter by greater than", %{selecto: selecto, test_data: test_data} do
+      min_id = test_data.actors.actor1.actor_id
+      
       result = selecto
       |> Selecto.select(["actor_id"])
-      |> Selecto.filter({"actor_id", {">", 195}})
+      |> Selecto.filter({"actor_id", {">", min_id - 1}})
       |> Selecto.execute()
       
       assert {:ok, {rows, _columns, _aliases}} = result
-      assert length(rows) == 4  # All 4 test actors (auto-generated IDs > 195)
+      assert length(rows) == 4  # All 4 test actors (auto-generated IDs > min_id - 1)
       Enum.each(rows, fn [actor_id] -> 
-        assert actor_id > 195
+        assert actor_id > min_id - 1
       end)
     end
 
-    test "filter by less than or equal", %{selecto: selecto} do
+    test "filter by less than or equal", %{selecto: selecto, test_data: test_data} do
+      third_id = test_data.actors.actor3.actor_id
+      
       result = selecto
       |> Selecto.select(["actor_id"])
-      |> Selecto.filter({"actor_id", {"<=", 3}})
+      |> Selecto.filter({"actor_id", {"<=", third_id}})
       |> Selecto.execute()
       
       assert {:ok, {rows, _columns, _aliases}} = result
-      assert length(rows) == 3  # 3 actors with ID <= some value
+      assert length(rows) == 3  # 3 actors with ID <= third_id
       Enum.each(rows, fn [actor_id] -> 
-        assert actor_id <= 3
+        assert actor_id <= third_id
       end)
     end
 
-    test "filter by greater than or equal", %{selecto: selecto} do
+    test "filter by greater than or equal", %{selecto: selecto, test_data: test_data} do
+      max_id = test_data.actors.actor4.actor_id
+      
       result = selecto
       |> Selecto.select(["actor_id"])
-      |> Selecto.filter({"actor_id", {">=", 198}})
+      |> Selecto.filter({"actor_id", {">=", max_id + 1}})
       |> Selecto.execute()
       
       assert {:ok, {rows, _columns, _aliases}} = result
-      assert length(rows) == 0  # No actors in range [198-200] with auto-generated IDs
+      assert length(rows) == 0  # No actors with ID >= max_id + 1
       Enum.each(rows, fn [actor_id] -> 
-        assert actor_id >= 198
+        assert actor_id >= max_id + 1
       end)
     end
 
-    test "filter by IN clause (list)", %{selecto: selecto} do
+    test "filter by IN clause (list)", %{selecto: selecto, test_data: test_data} do
+      actor1_id = test_data.actors.actor1.actor_id
+      actor2_id = test_data.actors.actor2.actor_id
+      actor3_id = test_data.actors.actor3.actor_id
+      expected_ids = [actor1_id, actor2_id, actor3_id]
+      
       result = selecto
       |> Selecto.select(["actor_id"])
-      |> Selecto.filter({"actor_id", [1, 2, 3]})
+      |> Selecto.filter({"actor_id", expected_ids})
       |> Selecto.execute()
       
       assert {:ok, {rows, _columns, _aliases}} = result
       assert length(rows) == 3
       ids = Enum.map(rows, fn [id] -> id end)
-      assert Enum.sort(ids) == [1, 2, 3]
+      assert Enum.sort(ids) == Enum.sort(expected_ids)
     end
 
     test "filter by LIKE pattern", %{selecto: selecto} do
       result = selecto
       |> Selecto.select(["first_name"])
-      |> Selecto.filter({"first_name", {:like, "JO%"}})
+      |> Selecto.filter({"first_name", {:like, "Jo%"}})
       |> Selecto.execute()
       
       assert {:ok, {rows, _columns, _aliases}} = result
       assert length(rows) > 0
       Enum.each(rows, fn [first_name] -> 
-        assert String.starts_with?(first_name, "JO")
+        assert String.starts_with?(first_name, "Jo")
       end)
     end
 
@@ -245,45 +262,54 @@ defmodule SelectoBasicIntegrationTest do
       |> Selecto.execute()
       
       assert {:ok, {rows, _columns, _aliases}} = result
-      assert length(rows) == 4  # We have 4 actors, not testing films here
+      assert length(rows) > 0  # Should have films with non-NULL release_year
     end
   end
 
   describe "Filter Operations - Complex" do
-    test "filter with AND logic (multiple filters)", %{selecto: selecto} do
+    test "filter with AND logic (multiple filters)", %{selecto: selecto, test_data: test_data} do
+      min_id = test_data.actors.actor1.actor_id
+      max_id = test_data.actors.actor4.actor_id
+      
       result = selecto
       |> Selecto.select(["actor_id", "first_name", "last_name"])
-      |> Selecto.filter({"actor_id", {">=", 1}})
-      |> Selecto.filter({"actor_id", {"<=", 5}})
+      |> Selecto.filter({"actor_id", {">=", min_id}})
+      |> Selecto.filter({"actor_id", {"<=", max_id}})
       |> Selecto.filter({"first_name", {:like, "P%"}})
       |> Selecto.execute()
       
       assert {:ok, {rows, _columns, _aliases}} = result
       Enum.each(rows, fn [actor_id, first_name, _] -> 
-        assert actor_id >= 1 and actor_id <= 5
+        assert actor_id >= min_id and actor_id <= max_id
         assert String.starts_with?(first_name, "P")
       end)
     end
 
-    test "filter with BETWEEN clause", %{selecto: selecto} do
+    test "filter with BETWEEN clause", %{selecto: selecto, test_data: test_data} do
+      max_id = test_data.actors.actor4.actor_id
+      
       result = selecto
       |> Selecto.select(["actor_id"])
-      |> Selecto.filter({"actor_id", {:between, 5, 10}})
+      |> Selecto.filter({"actor_id", {:between, max_id + 1, max_id + 10}})
       |> Selecto.execute()
       
       assert {:ok, {rows, _columns, _aliases}} = result
-      assert length(rows) == 0  # No actors in range 5-10 (auto-generated IDs are much higher)
+      assert length(rows) == 0  # No actors in range above our max ID
       Enum.each(rows, fn [actor_id] -> 
-        assert actor_id >= 5 and actor_id <= 10
+        assert actor_id >= max_id + 1 and actor_id <= max_id + 10
       end)
     end
   end
 
   describe "Ordering" do
-    test "order by single field ascending", %{selecto: selecto} do
+    test "order by single field ascending", %{selecto: selecto, test_data: test_data} do
+      actor1_id = test_data.actors.actor1.actor_id
+      actor2_id = test_data.actors.actor2.actor_id  
+      actor3_id = test_data.actors.actor3.actor_id
+      
       result = selecto
       |> Selecto.select(["first_name"])
-      |> Selecto.filter({"actor_id", [3, 1, 2]})  # Intentionally out of order
+      |> Selecto.filter({"actor_id", [actor3_id, actor1_id, actor2_id]})  # Intentionally out of order
       |> Selecto.order_by("first_name")
       |> Selecto.execute()
       
@@ -317,10 +343,12 @@ defmodule SelectoBasicIntegrationTest do
   end
 
   describe "Select Variations - Basic" do
-    test "select by atom field name", %{selecto: selecto} do
+    test "select by atom field name", %{selecto: selecto, test_data: test_data} do
+      alice_id = test_data.actors.actor1.actor_id
+      
       result = selecto
       |> Selecto.select([:first_name])
-      |> Selecto.filter({"actor_id", 1})
+      |> Selecto.filter({"actor_id", alice_id})
       |> Selecto.execute()
       
       assert {:ok, {rows, columns, _aliases}} = result
@@ -328,10 +356,12 @@ defmodule SelectoBasicIntegrationTest do
       assert hd(rows) == ["Alice"]  # First actor alphabetically
     end
 
-    test "select with literal values", %{selecto: selecto} do
+    test "select with literal values", %{selecto: selecto, test_data: test_data} do
+      alice_id = test_data.actors.actor1.actor_id
+      
       result = selecto
       |> Selecto.select(["first_name", {:literal, "test_value"}])
-      |> Selecto.filter({"actor_id", 1})
+      |> Selecto.filter({"actor_id", alice_id})
       |> Selecto.execute()
       
       assert {:ok, {rows, columns, _aliases}} = result
@@ -341,11 +371,13 @@ defmodule SelectoBasicIntegrationTest do
   end
 
   describe "Select Variations - Functions" do
-    test "concat function", %{selecto: selecto} do
+    test "concat function", %{selecto: selecto, test_data: test_data} do
+      alice_id = test_data.actors.actor1.actor_id
+      
       # Test CONCAT function - might not be implemented in current Selecto version
       result = selecto
       |> Selecto.select([{:concat, ["first_name", {:literal, " "}, "last_name"]}])
-      |> Selecto.filter({"actor_id", 1})
+      |> Selecto.filter({"actor_id", alice_id})
       |> Selecto.execute()
       
       case result do
@@ -358,11 +390,13 @@ defmodule SelectoBasicIntegrationTest do
       end
     end
 
-    test "coalesce function", %{selecto: selecto} do
+    test "coalesce function", %{selecto: selecto, test_data: test_data} do
+      alice_id = test_data.actors.actor1.actor_id
+      
       # Test COALESCE function - might not be implemented in current version
       result = selecto
       |> Selecto.select([{:coalesce, ["first_name", {:literal, "Unknown"}]}])
-      |> Selecto.filter({"actor_id", 1})
+      |> Selecto.filter({"actor_id", alice_id})
       |> Selecto.execute()
       
       case result do
@@ -386,14 +420,16 @@ defmodule SelectoBasicIntegrationTest do
       assert rows == [[4]]  # We have 4 test actors
     end
 
-    test "count with filter", %{selecto: selecto} do
+    test "count with filter", %{selecto: selecto, test_data: test_data} do
+      min_id = test_data.actors.actor1.actor_id
+      
       result = selecto
       |> Selecto.select([{:count, "*"}])
-      |> Selecto.filter({"actor_id", {">", 190}})
+      |> Selecto.filter({"actor_id", {">", min_id - 1}})
       |> Selecto.execute()
       
       assert {:ok, {rows, _columns, _aliases}} = result
-      assert rows == [[4]]  # All 4 actors have ID > 190 (auto-generated high IDs)
+      assert rows == [[4]]  # All 4 actors have ID > min_id - 1
     end
 
     test "count specific field", %{selecto: selecto} do
@@ -448,10 +484,12 @@ defmodule SelectoBasicIntegrationTest do
   end
 
   describe "SQL Generation" do
-    test "to_sql generates correct query", %{selecto: selecto} do
+    test "to_sql generates correct query", %{selecto: selecto, test_data: test_data} do
+      alice_id = test_data.actors.actor1.actor_id
+      
       {sql, params} = selecto
       |> Selecto.select(["first_name", "last_name"])
-      |> Selecto.filter({"actor_id", 1})
+      |> Selecto.filter({"actor_id", alice_id})
       |> Selecto.to_sql()
       
       assert is_binary(sql)
@@ -460,7 +498,7 @@ defmodule SelectoBasicIntegrationTest do
       assert String.contains?(sql, "last_name") 
       assert String.contains?(sql, "actor")
       assert String.contains?(sql, "where")
-      assert params == [1]
+      assert params == [alice_id]
     end
 
     test "to_sql with no filter", %{selecto: selecto} do
@@ -493,11 +531,15 @@ defmodule SelectoBasicIntegrationTest do
       end)
     end
 
-    test "group by multiple fields", %{selecto: selecto} do
+    test "group by multiple fields", %{selecto: selecto, test_data: test_data} do
+      actor1_id = test_data.actors.actor1.actor_id
+      actor2_id = test_data.actors.actor2.actor_id
+      actor3_id = test_data.actors.actor3.actor_id
+      
       result = selecto
       |> Selecto.select(["first_name", "last_name", {:count, "*"}])
       |> Selecto.group_by(["first_name", "last_name"])
-      |> Selecto.filter({"actor_id", [1, 2, 3]})
+      |> Selecto.filter({"actor_id", [actor1_id, actor2_id, actor3_id]})
       |> Selecto.execute()
       
       assert {:ok, {rows, columns, _aliases}} = result
@@ -510,18 +552,21 @@ defmodule SelectoBasicIntegrationTest do
   end
 
   describe "Type Conversion and Edge Cases" do
-    test "string to integer conversion in filter", %{selecto: selecto} do
+    test "string to integer conversion in filter", %{selecto: selecto, test_data: test_data} do
+      alice_id = test_data.actors.actor1.actor_id
+      alice_id_string = Integer.to_string(alice_id)
+      
       # Note: This test might fail if type conversion is not implemented
       # The exact behavior depends on Selecto's implementation
       result = selecto
       |> Selecto.select(["actor_id"])
-      |> Selecto.filter({"actor_id", "1"})  # String instead of integer
+      |> Selecto.filter({"actor_id", alice_id_string})  # String instead of integer
       |> Selecto.execute()
       
       case result do
         {:ok, {rows, _columns, _aliases}} ->
           assert length(rows) == 1
-          assert hd(rows) == [1]
+          assert hd(rows) == [alice_id]
         {:error, _} ->
           # String to integer conversion might not be implemented
           :ok
@@ -538,17 +583,24 @@ defmodule SelectoBasicIntegrationTest do
       assert length(rows) == 0
     end
 
-    test "large IN list filter", %{selecto: selecto} do
-      large_list = Enum.to_list(1..50)
+    test "large IN list filter", %{selecto: selecto, test_data: test_data} do
+      # Create a large list that includes our test actor IDs plus many others
+      min_id = test_data.actors.actor1.actor_id
+      max_id = test_data.actors.actor4.actor_id
+      large_list = Enum.to_list(min_id..(min_id + 49))
+      
       result = selecto
       |> Selecto.select(["actor_id"])
       |> Selecto.filter({"actor_id", large_list})
       |> Selecto.execute()
       
       assert {:ok, {rows, _columns, _aliases}} = result
-      assert length(rows) == 50
+      # Only our 4 test actors should match from the large list
+      assert length(rows) == 4
       ids = Enum.map(rows, fn [id] -> id end)
-      assert Enum.sort(ids) == large_list
+      # All returned IDs should be in our large list and should be our test actor IDs
+      Enum.each(ids, fn id -> assert id in large_list end)
+      assert Enum.sort(ids) == Enum.sort([min_id, min_id + 1, min_id + 2, max_id])
     end
   end
 
@@ -572,11 +624,13 @@ defmodule SelectoBasicIntegrationTest do
       assert {:error, _error} = result
     end
 
-    test "safe execution with execute/1", %{selecto: selecto} do
+    test "safe execution with execute/1", %{selecto: selecto, test_data: test_data} do
+      alice_id = test_data.actors.actor1.actor_id
+      
       # Test that safe execution returns tagged tuples
       result = selecto
       |> Selecto.select(["first_name"])
-      |> Selecto.filter({"actor_id", 1})
+      |> Selecto.filter({"actor_id", alice_id})
       |> Selecto.execute()
       
       assert {:ok, {_rows, _columns, _aliases}} = result

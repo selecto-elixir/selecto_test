@@ -131,10 +131,10 @@ defmodule SelectoTest.SelectoCase do
     {:ok, english} = %SelectoTest.Store.Language{name: "English"} |> SelectoTest.Repo.insert()
     {:ok, spanish} = %SelectoTest.Store.Language{name: "Spanish"} |> SelectoTest.Repo.insert()
     
-    {:ok, actor1} = %SelectoTest.Store.Actor{first_name: "John", last_name: "Doe"} |> SelectoTest.Repo.insert()
-    {:ok, actor2} = %SelectoTest.Store.Actor{first_name: "Jane", last_name: "Smith"} |> SelectoTest.Repo.insert() 
-    {:ok, actor3} = %SelectoTest.Store.Actor{first_name: "Bob", last_name: "Wilson"} |> SelectoTest.Repo.insert()
-    {:ok, actor4} = %SelectoTest.Store.Actor{first_name: "Alice", last_name: "Johnson"} |> SelectoTest.Repo.insert()
+    {:ok, actor1} = %SelectoTest.Store.Actor{first_name: "Alice", last_name: "Johnson"} |> SelectoTest.Repo.insert()
+    {:ok, actor2} = %SelectoTest.Store.Actor{first_name: "John", last_name: "Doe"} |> SelectoTest.Repo.insert()
+    {:ok, actor3} = %SelectoTest.Store.Actor{first_name: "Jane", last_name: "Smith"} |> SelectoTest.Repo.insert() 
+    {:ok, actor4} = %SelectoTest.Store.Actor{first_name: "Bob", last_name: "Wilson"} |> SelectoTest.Repo.insert()
     
     {:ok, film1} = %SelectoTest.Store.Film{
       title: "Test Film 1",
