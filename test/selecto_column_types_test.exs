@@ -1,21 +1,61 @@
 defmodule SelectoColumnTypesTest do
-  use ExUnit.Case, async: false
+  use SelectoTest.SelectoCase, async: false
   
   # Tests for all Selecto column types using Pagila database tables
   # Tests type handling, conversions, and type-specific operations
 
-  setup_all do
-    # Set up database connection
-    repo_config = SelectoTest.Repo.config()
-    postgrex_opts = [
-      username: repo_config[:username],
-      password: repo_config[:password],
-      hostname: repo_config[:hostname], 
-      database: repo_config[:database],
-      port: repo_config[:port] || 5432
+  setup do
+    # Ensure films exist for testing
+    alias SelectoTest.{Repo, Store.Film, Store.Language}
+    
+    {:ok, english} = case Repo.get_by(Language, name: "English") do
+      nil -> Language.changeset(%Language{}, %{name: "English"}) |> Repo.insert()
+      lang -> {:ok, lang}
+    end
+    
+    # Create diverse test films for comprehensive testing
+    films_data = [
+      %{
+        title: "Academy Dinosaur",
+        description: "A Epic Drama",
+        release_year: 2006,
+        language_id: english.language_id,
+        rental_duration: 6,
+        rental_rate: Decimal.new("0.99"),
+        length: 86,
+        replacement_cost: Decimal.new("20.99"),
+        rating: :PG,
+        special_features: ["Deleted Scenes", "Behind the Scenes"]
+      },
+      %{
+        title: "Ace Goldfinger",
+        description: "A Astounding Action Adventure",
+        release_year: 2006,
+        language_id: english.language_id,
+        rental_duration: 3,
+        rental_rate: Decimal.new("4.99"),
+        length: 48,
+        replacement_cost: Decimal.new("12.99"),
+        rating: :G,
+        special_features: ["Trailers"]
+      },
+      %{
+        title: "Adventure Drama",
+        description: "A thrilling adventure story",
+        release_year: 2005,
+        language_id: english.language_id,
+        rental_duration: 7,
+        rental_rate: Decimal.new("2.99"),
+        length: 120,
+        replacement_cost: Decimal.new("15.99"),
+        rating: :"NC-17",
+        special_features: []
+      }
     ]
     
-    {:ok, db_conn} = Postgrex.start_link(postgrex_opts)
+    Enum.each(films_data, fn film_data ->
+      Film.changeset(%Film{}, film_data) |> Repo.insert!()
+    end)
     
     # Define comprehensive domain with all column types from Pagila
     domain = %{
@@ -47,9 +87,9 @@ defmodule SelectoColumnTypesTest do
       schemas: %{}
     }
     
-    selecto = Selecto.configure(domain, db_conn)
+    selecto = Selecto.configure(domain, SelectoTest.Repo)
     
-    {:ok, selecto: selecto, db_conn: db_conn}
+    {:ok, selecto: selecto}
   end
 
   describe "Integer Column Type" do
