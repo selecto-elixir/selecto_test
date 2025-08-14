@@ -67,7 +67,17 @@
       "Bash(timeout 60 mix test test/selecto_dome_integration_test.exs)",
       "Bash(timeout 60 mix test test/selecto_joins_test.exs)",
       "WebSearch",
-      "Bash(timeout 5 mix phx.server --no-halt)"
+      "Bash(timeout 5 mix phx.server --no-halt)",
+      "WebFetch(domain:hexdocs.pm)",
+      "Bash(mix assets.build:*)",
+      "Bash(mix tailwind:*)",
+      "Bash(mix esbuild:*)",
+      "Bash(timeout 10 mix phx.server --no-halt)",
+      "Bash(cat:*)",
+      "Bash(node:*)",
+      "Bash(npx esbuild:*)",
+      "Bash(pkill:*)",
+      "Bash(PORT=4001 timeout 5 mix phx.server --no-halt)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

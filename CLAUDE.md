@@ -37,11 +37,14 @@ BIND_ALL_INTERFACES=true iex --sname selecto --cookie COOKIE -S mix phx.server
 # Setup assets (Tailwind + esbuild)
 mix assets.setup
 
-# Build assets for development
+# Build assets for development (includes colocated hook extraction)
 mix assets.build
 
-# Build and minify for production
+# Build and minify for production (includes colocated hook extraction)
 mix assets.deploy
+
+# Manual colocated hook extraction (happens automatically during assets.build/deploy)
+mix compile
 ```
 
 **Testing:**
@@ -68,7 +71,7 @@ When making changes, you may need to modify code across multiple projects to mai
 
 ### Key Dependencies
 - **Selecto** (v0.2.6): Advanced query builder with comprehensive join support, CTEs, hierarchical queries, and OLAP functions
-- **SelectoComponents** (v0.2.8): LiveView components for aggregate, detail, and graph views with drill-down navigation
+- **SelectoComponents** (v0.2.8): LiveView components with colocated hooks for aggregate, detail, and graph views with drill-down navigation
 - **SelectoDome** (v0.1.0): Data manipulation and change tracking interface
 - **SelectoMix**: Code generation tools for domains and schemas
 - **Phoenix LiveView**: Powers the reactive UI components (v1.1+)
@@ -111,10 +114,11 @@ When making changes, you may need to modify code across multiple projects to mai
 ### Asset Pipeline
 - **Tailwind CSS**: Custom configuration including SelectoComponents content paths
 - **JavaScript Integration**: 
-  - Push event hooks for SelectoComponents interactivity
-  - Color scheme management (`assets/js/hooks/color-scheme-hook.js`)
+  - **Colocated Hooks**: Phoenix LiveView 1.1+ colocated hooks for SelectoComponents (replaces standalone JS files)
+  - **Legacy Hooks**: Color scheme management in `assets/js/hooks/` for app-level functionality
   - Alpine.js integration required for SelectoComponents functionality
 - **Build Process**: esbuild + Tailwind with development and production targets
+- **Colocated Hook Compilation**: Hooks are automatically extracted during `mix compile` to `_build/{env}/phoenix-colocated/`
 
 ### Routes & Navigation
 - `/` and `/pagila`: Actor domain interface with film relationships

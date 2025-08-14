@@ -22,11 +22,22 @@ import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
 import hooks from "./hooks";
-import selecto_components from "selecto_components"
+// import {hooks as colocatedHooks} from "phoenix-colocated/selecto_components"
+
+// Simple TreeBuilderHook for drag and drop functionality
+const TreeBuilderHook = {
+  mounted() {
+    window.PushEventHook = this
+  },
+  destroyed() {
+    window.PushEventHook = null
+  }
+}
 
 let myHooks = {
     ...hooks,
-    ...selecto_components
+    TreeBuilderHook
+    // ...colocatedHooks
 }
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
