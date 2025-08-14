@@ -65,7 +65,9 @@
       "Bash(timeout 30 mix test test/selecto_dome_integration_test.exs:72 --max-cases 1)",
       "Bash(timeout 30 mix test test/selecto_dome_integration_test.exs:303 --max-cases 1)",
       "Bash(timeout 60 mix test test/selecto_dome_integration_test.exs)",
-      "Bash(timeout 60 mix test test/selecto_joins_test.exs)"
+      "Bash(timeout 60 mix test test/selecto_joins_test.exs)",
+      "WebSearch",
+      "Bash(timeout 5 mix phx.server --no-halt)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
