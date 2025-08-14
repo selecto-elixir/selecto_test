@@ -67,6 +67,7 @@
       "Bash(timeout 60 mix test test/selecto_dome_integration_test.exs)",
       "Bash(timeout 60 mix test test/selecto_joins_test.exs)"
     ],
-    "deny": []
+    "deny": [],
+    "defaultMode": "acceptEdits"
   }
 }
