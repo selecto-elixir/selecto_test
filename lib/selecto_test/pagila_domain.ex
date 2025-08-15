@@ -104,8 +104,8 @@ defmodule SelectoTest.PagilaDomain do
           type: :component,
           apply: &actor_ratings_apply/2
         },
-        "film[rating]" => %{
-          name: "Film Rating",
+        "film_rating_select" => %{
+          name: "Film Rating (Multiple)",
           type: :select_options,
           option_provider: %{
             type: :enum,
