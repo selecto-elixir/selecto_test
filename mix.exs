@@ -62,6 +62,7 @@ defmodule SelectoTest.MixProject do
       {:timex, "~> 3.7.9"},
       {:uuid, "~> 1.1"},
       {:kino, "~> 0.7.0"},
+      {:tidewave, "~> 0.2", only: :dev},
     ]
   end
 

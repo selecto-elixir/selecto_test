@@ -80,7 +80,9 @@
       "Bash(PORT=4001 timeout 5 mix phx.server --no-halt)",
       "Bash(PORT=4001 timeout 10 mix phx.server --no-halt)",
       "Bash(PORT=4001 timeout 15 mix phx.server --no-halt)",
-      "Bash(PORT=4003 timeout 15 mix phx.server --no-halt)"
+      "Bash(PORT=4003 timeout 15 mix phx.server --no-halt)",
+      "WebFetch(domain:github.com)",
+      "Bash(timeout 15 mix phx.server --no-halt)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

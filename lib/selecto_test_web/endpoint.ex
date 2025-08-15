@@ -36,6 +36,10 @@ defmodule SelectoTestWeb.Endpoint do
     param_key: "request_logger",
     cookie_key: "request_logger"
 
+  if Code.ensure_loaded?(Tidewave) do
+    plug Tidewave
+  end
+
   plug Plug.RequestId
   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
 
