@@ -103,6 +103,20 @@ defmodule SelectoTest.PagilaDomain do
           component: &actor_ratings/1,
           type: :component,
           apply: &actor_ratings_apply/2
+        },
+        "film[rating]" => %{
+          name: "Film Rating",
+          type: :select_options,
+          option_provider: %{
+            type: :enum,
+            schema: SelectoTest.Store.Film,
+            field: :rating
+          },
+          multiple: true,
+          searchable: false,
+          apply: fn _selecto, filter ->
+            {"film[rating]", filter["value"]}
+          end
         }
       },
 

@@ -87,7 +87,18 @@
       "Bash(timeout 30 mix test test/selecto_kino_ui_test.exs --max-cases 1)",
       "Bash(timeout 60 mix test)",
       "Bash(timeout 15 iex:*)",
-      "Bash(timeout 10 iex:*)"
+      "Bash(timeout 10 iex:*)",
+      "Bash(timeout 30 mix test test/select_options_integration_test.exs --max-cases 1)",
+      "Bash(timeout 30 mix test vendor/selecto/test/option_provider_test.exs --max-cases 1)",
+      "Bash(timeout 30 mix test vendor/selecto_mix/test/schema_analyzer_test.exs --max-cases 1)",
+      "Bash(timeout 30 mix run test_select_options.exs)",
+      "Bash(timeout 30 mix run demo_film_ratings.exs)",
+      "Bash(PORT=4002 timeout 10 mix phx.server --no-halt)",
+      "Bash(timeout 30 mix run test_rating_filters.exs)",
+      "Bash(PORT=4002 timeout 15 mix phx.server --no-halt)",
+      "Bash(PORT=4002 timeout 30 mix phx.server --no-halt)",
+      "Bash(timeout 30 mix run debug_selecto_columns.exs)",
+      "mcp__tidewave__project_eval"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

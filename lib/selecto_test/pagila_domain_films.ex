@@ -2,7 +2,7 @@ defmodule SelectoTest.PagilaDomainFilms do
   use SelectoTestWeb, :verified_routes
   use SelectoTest.SavedViewContext
 
-  ### TODO - fix agg filter appluy for film ratings
+  # Fixed: rating filter configured in filters section for dropdown UI
 
   def domain() do
     ### customer info, payments and rentals
@@ -55,7 +55,20 @@ defmodule SelectoTest.PagilaDomainFilms do
       default_group_by: ["release_year"],
       default_aggregate: [{"film_id", %{"format" => "count"}}],
       filters: %{
-
+        "rating" => %{
+          name: "Film Rating",
+          type: :select_options,
+          option_provider: %{
+            type: :enum,
+            schema: SelectoTest.Store.Film,
+            field: :rating
+          },
+          multiple: true,
+          searchable: false,
+          apply: fn _selecto, filter ->
+            {"rating", filter["value"]}
+          end
+        }
       },
       custom_columns: %{
         "film_link" => %{
