@@ -98,7 +98,10 @@
       "Bash(PORT=4002 timeout 15 mix phx.server --no-halt)",
       "Bash(PORT=4002 timeout 30 mix phx.server --no-halt)",
       "Bash(timeout 30 mix run debug_selecto_columns.exs)",
-      "mcp__tidewave__project_eval"
+      "mcp__tidewave__project_eval",
+      "Bash(timeout 30 mix test test/selecto_test_web/live/selecto_components_ui_test.exs --max-cases 1)",
+      "Bash(timeout 30 mix test test/selecto_test_web/live/rating_filter_ui_test.exs --max-cases 1)",
+      "Bash(timeout 30 mix test test/selecto_test_web/live/selecto_ui_integration_test.exs --max-cases 1)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
