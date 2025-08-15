@@ -83,7 +83,11 @@
       "Bash(PORT=4003 timeout 15 mix phx.server --no-halt)",
       "WebFetch(domain:github.com)",
       "Bash(timeout 15 mix phx.server --no-halt)",
-      "WebFetch(domain:docs.anthropic.com)"
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(timeout 30 mix test test/selecto_kino_ui_test.exs --max-cases 1)",
+      "Bash(timeout 60 mix test)",
+      "Bash(timeout 15 iex:*)",
+      "Bash(timeout 10 iex:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
