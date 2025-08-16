@@ -104,7 +104,8 @@
       "Bash(timeout 30 mix test test/selecto_test_web/live/selecto_ui_integration_test.exs --max-cases 1)",
       "Bash(timeout 30 mix test test/select_options_integration_test.exs:8 --max-cases 1)",
       "Bash(timeout 30 mix test test/select_options_integration_test.exs:56 --max-cases 1)",
-      "Bash(timeout 30 mix test test/select_options_integration_test.exs:71 --max-cases 1)"
+      "Bash(timeout 30 mix test test/select_options_integration_test.exs:71 --max-cases 1)",
+      "Bash(timeout 30 mix test test/selecto_edge_cases_test.exs --max-cases 1)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

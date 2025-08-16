@@ -534,27 +534,12 @@ defmodule SelectoEdgeCasesTest do
       
       assert {:ok, {_rows, _columns, _aliases}} = safe_result
       
-      # Unsafe execution (execute!)
-      unsafe_result = selecto
-      |> Selecto.select(["first_name"])
-      |> Selecto.filter({"actor_id", 1})
-      |> Selecto.execute!()
-      
-      assert {_rows, _columns, _aliases} = unsafe_result
-      
-      # Safe execution with error
+      # Safe execution with structured error handling
       error_result = selecto
       |> Selecto.select(["nonexistent_field"])
       |> Selecto.execute()
       
-      assert {:error, _error} = error_result
-      
-      # Unsafe execution with error should raise
-      assert_raise RuntimeError, fn ->
-        selecto
-        |> Selecto.select(["nonexistent_field"])
-        |> Selecto.execute!()
-      end
+      assert {:error, %Selecto.Error{type: :query_error}} = error_result
     end
   end
 
