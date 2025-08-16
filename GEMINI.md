@@ -60,7 +60,7 @@ The project is structured as a standard Phoenix application. The main components
     iex -S mix phx.server
     ```
 
-The application will be available at `http://localhost:4000`.
+The application will be available at `http://localhost:4080`.
 
 **Available Routes:**
 

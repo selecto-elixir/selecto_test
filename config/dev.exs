@@ -22,7 +22,7 @@ config :selecto_test, SelectoTestWeb.Endpoint,
   # Use BIND_ALL_INTERFACES=true to bind to all interfaces (0.0.0.0)
   http: [
     ip: if(System.get_env("BIND_ALL_INTERFACES") in ~w(true 1), do: {0, 0, 0, 0}, else: {127, 0, 0, 1}), 
-    port: String.to_integer(System.get_env("PORT") || "4000")
+    port: String.to_integer(System.get_env("PORT") || "4080")
   ],
   check_origin: false,
   code_reloader: true,
