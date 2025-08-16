@@ -59,7 +59,7 @@ defmodule SelectoTest.MixProject do
       {:selecto, path: "./vendor/selecto", override: true},
       {:selecto_components, path: "./vendor/selecto_components", override: true},
       {:selecto_dome, path: "./vendor/selecto_dome"},
-      {:selecto_mix, path: "./vendor/selecto_mix", only: :dev},
+      {:selecto_mix, path: "./vendor/selecto_mix", only: [:dev, :test]},
       {:timex, "~> 3.7.9"},
       {:uuid, "~> 1.1"},
       {:kino, "~> 0.7.0"},
