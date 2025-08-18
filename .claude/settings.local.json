@@ -106,7 +106,12 @@
       "Bash(timeout 30 mix test test/select_options_integration_test.exs:56 --max-cases 1)",
       "Bash(timeout 30 mix test test/select_options_integration_test.exs:71 --max-cases 1)",
       "Bash(timeout 30 mix test test/selecto_edge_cases_test.exs --max-cases 1)",
-      "Bash(timeout 30 mix test test/selecto_basic_integration_test.exs --max-cases 1)"
+      "Bash(timeout 30 mix test test/selecto_basic_integration_test.exs --max-cases 1)",
+      "Bash(timeout 30 mix phx.server --no-halt)",
+      "Bash(PORT=4081 timeout 30 mix phx.server --no-halt)",
+      "Bash(PORT=4081 timeout 15 mix phx.server --no-halt)",
+      "WebFetch(domain:localhost)",
+      "Bash(PORT=4082 timeout 30 mix phx.server --no-halt)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
