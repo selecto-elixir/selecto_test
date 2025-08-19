@@ -200,7 +200,7 @@ Selecto now provides extensive SQL function support across all major categories:
 1. ✅ **Create validation subsystem** with compile-time checks - Comprehensive DomainValidator with compile-time macro and runtime validation
 2. ✅ **Connection pooling integration** - Full connection pool with prepared statement caching, health monitoring, and seamless Selecto.configure integration
 3. ✅ **Complete advanced SQL functions** - Comprehensive SQL function library with string, math, date/time, array, window, and conditional functions
-4. **Enhanced join types** with better field resolution
+4. ✅ **Enhanced join types** with better field resolution - Self-joins, lateral joins, cross joins, full outer joins, conditional joins, and enhanced field resolution with smart disambiguation and error handling
 5. **Query optimization framework**
 
 ### Phase 4: Developer Experience (4-6 weeks)

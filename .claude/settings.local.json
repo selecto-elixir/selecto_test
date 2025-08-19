@@ -117,7 +117,11 @@
       "Bash(timeout 30 mix test test/connection_pool_test.exs --max-cases 1)",
       "Bash(timeout 30 mix test test/sql_functions_test.exs --max-cases 1)",
       "Bash(timeout 20 mix test test/sql_functions_test.exs:\"test string functions trim function\" --max-cases 1)",
-      "Bash(timeout 20 mix test test/sql_functions_test.exs:51 --max-cases 1)"
+      "Bash(timeout 20 mix test test/sql_functions_test.exs:51 --max-cases 1)",
+      "Bash(timeout 30 mix test vendor/selecto/test/enhanced_joins_test.exs --max-cases 1)",
+      "Bash(timeout 30 mix test test/enhanced_joins_test.exs --max-cases 1)",
+      "Bash(timeout 30 mix test test/field_resolver_test.exs --max-cases 1)",
+      "Bash(timeout 30 mix test test/enhanced_joins_integration_test.exs --max-cases 1)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
