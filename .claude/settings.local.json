@@ -121,7 +121,14 @@
       "Bash(timeout 30 mix test vendor/selecto/test/enhanced_joins_test.exs --max-cases 1)",
       "Bash(timeout 30 mix test test/enhanced_joins_test.exs --max-cases 1)",
       "Bash(timeout 30 mix test test/field_resolver_test.exs --max-cases 1)",
-      "Bash(timeout 30 mix test test/enhanced_joins_integration_test.exs --max-cases 1)"
+      "Bash(timeout 30 mix test test/enhanced_joins_integration_test.exs --max-cases 1)",
+      "Bash(PORT=4082 timeout 15 mix phx.server --no-halt)",
+      "Bash(PORT=4083 timeout 20 mix phx.server --no-halt)",
+      "Bash(PORT=4084 mix phx.server)",
+      "Bash(PORT=4085 timeout 30 mix phx.server --no-halt)",
+      "Bash(PORT=4085 mix phx.server)",
+      "Bash(true)",
+      "Bash(PORT=4085 timeout 15 mix phx.server --no-halt)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
