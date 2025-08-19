@@ -91,7 +91,7 @@ defmodule SelectoTest.PagilaDomainFilms do
         # },
         language: %{
           name: "Film Language",
-          ## TODO Lookup type means that local table as an ID to a table that provides a 'dimension' that is
+          # Dimension type: local table has ID to dimension table that provides enriched data
           type: :dimension,
           # the interesting data. So in this case, film has language[name], we will never care about language_id
           # We do not want to give 2 language ID columns to pick from, so will skip the remote, and skip date/update
