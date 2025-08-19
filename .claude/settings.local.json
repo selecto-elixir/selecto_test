@@ -114,7 +114,10 @@
       "Bash(PORT=4082 timeout 30 mix phx.server --no-halt)",
       "Bash(timeout 30 mix run test_domain_validation.exs)",
       "Bash(PORT=4082 mix phx.server --no-halt)",
-      "Bash(timeout 30 mix test test/connection_pool_test.exs --max-cases 1)"
+      "Bash(timeout 30 mix test test/connection_pool_test.exs --max-cases 1)",
+      "Bash(timeout 30 mix test test/sql_functions_test.exs --max-cases 1)",
+      "Bash(timeout 20 mix test test/sql_functions_test.exs:\"test string functions trim function\" --max-cases 1)",
+      "Bash(timeout 20 mix test test/sql_functions_test.exs:51 --max-cases 1)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
