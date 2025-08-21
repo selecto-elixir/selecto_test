@@ -128,7 +128,8 @@
       "Bash(PORT=4085 timeout 30 mix phx.server --no-halt)",
       "Bash(PORT=4085 mix phx.server)",
       "Bash(true)",
-      "Bash(PORT=4085 timeout 15 mix phx.server --no-halt)"
+      "Bash(PORT=4085 timeout 15 mix phx.server --no-halt)",
+      "Bash(timeout 30 mix test --max-cases 1)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
