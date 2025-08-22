@@ -6,118 +6,446 @@
 │   cwd: /data/chris/projects/selecto_test          │
 ╰───────────────────────────────────────────────────╯
 ● Compact summary (ctrl+r to expand)
-  ⎿  Read DEVELOPER_EXPERIENCE_ENHANCEMENT_PLAN.md (341 lines)
-  ⎿  Read vendor/selecto_kino/lib/selecto_kino.ex (340 lines)
-  ⎿ Read 
-    vendor/selecto_kino/lib/selecto_kino/domain_exporter.ex 
-    (533 lines)
-  ⎿  Referenced file 
-     vendor/selecto_kino/lib/selecto_kino/live_preview.ex
-  ⎿ Referenced file vendor/selecto_kino/lib/selecto_kino/enhanc
-    ed_query_builder.ex
+  ⎿  Referenced file ../../../../home/chris/projects/selecto_test/vendor/selecto_mix/lib/mix/selecto/learning_resources.ex
+  ⎿  Referenced file vendor/selecto_mix/lib/mix/selecto/learning_resources.ex
+  ⎿  Referenced file ../../../../home/chris/projects/selecto_test/vendor/selecto_mix/lib/mix/tasks/selecto.docs.examples.ex
+  ⎿  Referenced file vendor/selecto_mix/lib/mix/tasks/tasks/selecto.gen.domain.ex
+  ⎿  Referenced file ../../../../home/chris/projects/selecto_test/vendor/selecto_mix/lib/mix/tasks/tasks/selecto.gen.domain.ex
 
-> /compact 
-  ⎿  Compacted. ctrl+r to see full summary
+● I'll continue fixing the compilation errors in the learning_resources.ex file. Let me read the current state of the file and fix the undefined variable
+  errors in the heredoc interpolations.
 
-> Lets go with phase 4!
+● Read(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Read 2390 lines (ctrl+r to expand)
 
-● I'll implement Phase 4: Documentation and Learning Resources
-  from the enhancement plan!
+● Now I can see the undefined variable errors. The issue is in the heredoc strings where variables like error, message, fix_list, reason, and index are
+  being interpolated but they're not defined in the correct scope. Let me fix these variable scope issues:
 
-● Update Todos
-  ⎿  ☐ Implement auto-generated documentation system (Phase    
-       4.1)
-     ☐ Create comprehensive learning resources (Phase 4.2)
-     ☐ Enhance API reference documentation (Phase 4.3)
-     ☐ Update enhancement plan with Phase 4 progress
+● Update(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Error editing file
 
-● Update Todos
-  ⎿  ☐ Implement auto-generated documentation system (Phase    
-       4.1)
-     ☐ Create comprehensive learning resources (Phase 4.2)
-     ☐ Enhance API reference documentation (Phase 4.3)
-     ☐ Update enhancement plan with Phase 4 progress
+● Let me check the exact lines around this area and fix them one by one:
 
-● Let me start by implementing the auto-generated documentation
-   system. I'll create new Mix tasks for documentation
-  generation:
+● Read(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Read 50 lines (ctrl+r to expand)
 
-● Write(vendor/selecto_mix/lib/mix/tasks/selecto.docs.generate.
-       ex)
-  ⎿  Wrote 662 lines to                                        
-     vendor/selecto_mix/lib/mix/tasks/selecto.docs.generate.ex
-     defmodule Mix.Tasks.Selecto.Docs.Generate do
-       @moduledoc """
-       Generate comprehensive documentation for Selecto domains.
-       This task analyzes domain configurations and generates
-     rich documentation
-       including usage examples, performance notes, and
-     interactive guides.
-       ## Usage
-           mix selecto.docs.generate --domain=posts
+● Now let me fix the variable scope errors one by one:
 
-     … +652 lines (ctrl+r to expand)
+● Update(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Updated vendor/selecto_mix/lib/mix/selecto/learning_resources.ex with 2 additions and 2 removals
+       967        case safe_result do
+       968          {:ok, data} ->
+       969            Kino.DataTable.new(data, name: "Safe Query Results")
+       970 -        {:error, error} ->
+       971 -          Kino.Markdown.new("**Error occurred:** #{error.message}")
+       970 +        {:error, error_info} ->
+       971 +          Kino.Markdown.new("**Error occurred:** #{error_info.message}")
+       972        end
+       973        ```
+       974    
 
-● Now I'll create the performance documentation task:
+● Now let me fix the connection diagnostic section:
 
-● Write(vendor/selecto_mix/lib/mix/tasks/selecto.docs.performan
-       ce.ex)
-  ⎿  Wrote 483 lines to vendor/selecto_mix/lib/mix/tasks/select
-     .docs.performance.ex
-     defmodule Mix.Tasks.Selecto.Docs.Performance do
-       @moduledoc """
-       Generate performance documentation and benchmarks for
-     Selecto domains.
-       This task runs comprehensive performance analysis and
-     generates documentation
-       with benchmarks, optimization recommendations, and
-     performance patterns.
-       ## Usage
-           mix selecto.docs.performance --domain=posts
-     … +473 lines (ctrl+r to expand)
+● Read(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Read 20 lines (ctrl+r to expand)
 
-● Now I'll create the interactive examples task:
+● Update(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Updated vendor/selecto_mix/lib/mix/selecto/learning_resources.ex with 3 additions and 3 removals
+       1616        case ConnectionDiagnostic.test_connection(test_config) do
+       1617          {:ok, message} ->
+       1618            Kino.Markdown.new("✅ **Connection Test:** #{message}")
+       1619 -        {:error, error} ->
+       1620 -          fixes = ConnectionDiagnostic.suggest_fixes(error)
+       1619 +        {:error, error_msg} ->
+       1620 +          fixes = ConnectionDiagnostic.suggest_fixes(error_msg)
+       1621            fix_list = Enum.map_join(fixes, "\\n", fn fix -> "• #{fix}" end)
+       1622    
+       1623            Kino.Markdown.new(\"\"\"
+       1624 -          ❌ **Connection Test Failed:** #{error}
+       1624 +          ❌ **Connection Test Failed:** #{error_msg}
+       1625    
+       1626            **Suggested Fixes:**
+       1627            #{fix_list}
 
-● Write(vendor/selecto_mix/lib/mix/tasks/selecto.docs.examples.
-       ex)
-  ⎿  Wrote 1439 lines to                                       
-     vendor/selecto_mix/lib/mix/tasks/selecto.docs.examples.ex
-     defmodule Mix.Tasks.Selecto.Docs.Examples do
-       @moduledoc """
-       Generate interactive examples and tutorials for Selecto
-     domains.
-       This task creates comprehensive interactive documentation
-      with live examples,
-       tutorials, and hands-on learning materials for Selecto
-     domains.
-       ## Usage
-           mix selecto.docs.examples --domain=posts
-     … +1429 lines (ctrl+r to expand)
+● Now let me find and fix the rescue clause error patterns:
 
-● Update Todos
-  ⎿  ☒ Implement auto-generated documentation system (Phase    
-       4.1)
-     ☐ Create comprehensive learning resources (Phase 4.2)
-     ☐ Enhance API reference documentation (Phase 4.3)
-     ☐ Update enhancement plan with Phase 4 progress
+● Update(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Error editing file
 
-● Now I'll create comprehensive learning resources. Let me
-  create a Livebook tutorial system:
+● Let me search for rescue clauses with errors:
 
-● Write(vendor/selecto_mix/lib/mix/selecto/learning_resources.e
-       x)
-  ⎿  Wrote 2394 lines to                                       
-     vendor/selecto_mix/lib/mix/selecto/learning_resources.ex
-     defmodule Mix.Selecto.LearningResources do
-       @moduledoc """
-       Comprehensive learning resources for Selecto domains.
-       Provides tutorial creation, video walkthrough generation,
-      interactive examples,
-       pattern cookbooks, and troubleshooting guides.
-       """
-       @doc """
-       Generate a complete tutorial series for a domain.
-     … +2384 lines (ctrl+r to expand)
-  ⎿  5-hour limit reached ∙ resets 10am
+● Search(pattern: "rescue.*error", path: "vendor/selecto_mix/lib/mix/selecto/learning_resources.ex", output_mode: "content")
+  ⎿  Found 0 lines 
+
+● Let me search for all rescue patterns:
+
+● Search(pattern: "rescue", path: "vendor/selecto_mix/lib/mix/selecto/learning_resources.ex", output_mode: "content")
+  ⎿  Found 9 lines (ctrl+r to expand)
+
+● Now let me check each rescue clause:
+
+● Read(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Read 5 lines (ctrl+r to expand)
+
+● Update(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Updated vendor/selecto_mix/lib/mix/selecto/learning_resources.ex with 2 additions and 2 removals
+       283    
+       284                Kino.DataTable.new(results, name: "Your Custom Selection") |> Kino.render()
+       285              rescue
+       286 -              error ->
+       287 -                Kino.Markdown.new("Error: #{Exception.message(error)}") |> Kino.render()
+       286 +              exc ->
+       287 +                Kino.Markdown.new("Error: #{Exception.message(exc)}") |> Kino.render()
+       288              end
+       289            end
+       290          end)
+
+● Read(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Read 5 lines (ctrl+r to expand)
+
+● Update(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Updated vendor/selecto_mix/lib/mix/selecto/learning_resources.ex with 2 additions and 2 removals                                                      
+       357                  Kino.DataTable.new(results, name: "Filter Results") |> Kino.render()
+       358                end
+       359              rescue
+       360 -              error ->
+       361 -                Kino.Markdown.new("❌ **Error:** #{Exception.message(error)}\\n\\n*Tip: Make sure the value type matches the field type.*") |> 
+     Kino.render()
+           - Kino.render()
+       360 +              exc ->
+       361 +                Kino.Markdown.new("❌ **Error:** #{Exception.message(exc)}\\n\\n*Tip: Make sure the value type matches the field type.*") |> 
+     Kino.render()
+           + Kino.render()
+       362              end
+       363            end
+       364          end)
+
+● Read(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Read 5 lines (ctrl+r to expand)
+
+● Read(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Read 10 lines (ctrl+r to expand)
+
+● Update(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Updated vendor/selecto_mix/lib/mix/selecto/learning_resources.ex with 3 additions and 3 removals
+       942              result = query_fn.(Selecto.configure(conn, domain))
+       943              {:ok, result}
+       944            rescue
+       945 -            error ->
+       945 +            exc ->
+       946                {:error, %{
+       947 -                type: error.__struct__,
+       948 -                message: Exception.message(error),
+       947 +                type: exc.__struct__,
+       948 +                message: Exception.message(exc),
+       949                  stacktrace: __STACKTRACE__
+       950                }}
+       951            end
+
+● Now let me check the remaining rescue clauses:
+
+● Read(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Read 5 lines (ctrl+r to expand)
+
+● That one looks fine. Let me check the diagnostic sections:
+
+● Read(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Read 8 lines (ctrl+r to expand)
+
+● Update(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Updated vendor/selecto_mix/lib/mix/selecto/learning_resources.ex with 1 addition and 1 removal
+       1730              %{rows: [[count]]} = result
+       1731              {:ok, count}
+       1732            rescue
+       1733 -            error -> {:error, "Table check failed: #{Exception.message(error)}"}
+       1733 +            exc -> {:error, "Table check failed: #{Exception.message(exc)}"}
+       1734            end
+       1735    
+       1736            diagnostics = Map.put(diagnostics, :table_check, table_check)
+
+● Read(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Read 8 lines (ctrl+r to expand)
+
+● Update(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Updated vendor/selecto_mix/lib/mix/selecto/learning_resources.ex with 1 addition and 1 removal
+       1743    
+       1744              {:ok, length(result)}
+       1745            rescue
+       1746 -            error -> {:error, "Basic query failed: #{Exception.message(error)}"}
+       1746 +            exc -> {:error, "Basic query failed: #{Exception.message(exc)}"}
+       1747            end
+       1748    
+       1749            diagnostics = Map.put(diagnostics, :basic_query_check, basic_query_check)
+
+● Read(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Read 10 lines (ctrl+r to expand)
+
+● Update(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Updated vendor/selecto_mix/lib/mix/selecto/learning_resources.ex with 1 addition and 1 removal
+       1760    
+       1761                  {field, {:ok, length(result)}}
+       1762                rescue
+       1763 -                error -> {field, {:error, Exception.message(error)}}
+       1763 +                exc -> {field, {:error, Exception.message(exc)}}
+       1764                end
+       1765              end)
+       1766    
+
+● Update(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Updated vendor/selecto_mix/lib/mix/selecto/learning_resources.ex with 1 addition and 1 removal
+       1766    
+       1767              {:ok, field_results}
+       1768            rescue
+       1769 -            error -> {:error, "Field check failed: #{Exception.message(error)}"}
+       1769 +            exc -> {:error, "Field check failed: #{Exception.message(exc)}"}
+       1770            end
+       1771    
+       1772            diagnostics = Map.put(diagnostics, :field_checks, field_checks)
+
+● Now let me check for the field error fix section:
+
+● Read(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Read 10 lines (ctrl+r to expand)
+
+● Update(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Updated vendor/selecto_mix/lib/mix/selecto/learning_resources.ex with 2 additions and 2 removals                        
+       1880            if Enum.empty?(error_fields) do
+       1881              "✅ All fields are available"
+       1882            else
+       1883 -            fixes = Enum.map(error_fields, fn error ->
+       1884 -              "• **#{error.field}**: #{error.suggestion || "Check spelling and domain configuration"}"
+       1883 +            fixes = Enum.map(error_fields, fn error_info ->
+       1884 +              "• **#{error_info.field}**: #{error_info.suggestion || "Check spelling and domain configuration"}"
+       1885              end) |> Enum.join("\\n")
+       1886    
+       1887              "❌ **Field Issues:**\\n#{fixes}"
+
+● Now let me test the compilation to see if there are still errors:
+
+● Bash(mix compile)
+  ⎿  Error: warning: outdented heredoc line. The contents inside the heredoc should be indented at the same level as the closing """. The following is 
+     forbidden:
+
+               def text do
+                 """
+               contents
+                 """
+               end
+
+           Instead make sure the contents are indented as much as the heredoc closing:
+
+     … +238 lines (ctrl+r to see all)
+
+● I can see the compilation errors are related to variables being used in heredoc string interpolations. The issue is that these variables are being
+  interpolated inside heredoc strings within functions but they're not available in that scope. I need to escape these interpolations or restructure the
+  code. Let me fix them:
+
+● Update(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Error editing file
+
+● Let me find and fix the variable scope issues. The problem is that variables are being used in heredoc strings where they're not defined. Let me read the
+   exact context:
+
+● Read(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Read 10 lines (ctrl+r to expand)
+
+● I see the issue. The variable reason is being used in the interpolation inside the heredoc strings within the template code. These variables are part of
+  the generated Livebook code examples, not actual Elixir code that should be interpolated. I need to escape these interpolations. Let me fix all the
+  interpolations that should be literal:
+
+● Update(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Updated vendor/selecto_mix/lib/mix/selecto/learning_resources.ex with 1 addition and 1 removal
+       176            Kino.Markdown.new("✅ **Connected to database successfully!**")
+       177            {:ok, conn}
+       178          {:error, reason} ->
+       179 -          error_msg = "❌ **Connection failed:** #{inspect(reason)}"
+       179 +          error_msg = "❌ **Connection failed:** \#{inspect(reason)}"
+       180            Kino.Markdown.new(error_msg)
+       181            {:error, reason}
+       182        end
+
+● Update(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Updated vendor/selecto_mix/lib/mix/selecto/learning_resources.ex with 1 addition and 1 removal  
+       284                Kino.DataTable.new(results, name: "Your Custom Selection") |> Kino.render()
+       285              rescue
+       286                exc ->
+       287 -                Kino.Markdown.new("Error: #{Exception.message(exc)}") |> Kino.render()
+       287 +                Kino.Markdown.new("Error: \#{Exception.message(error)}") |> Kino.render()
+       288              end
+       289            end
+       290          end)
+
+● Update(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Updated vendor/selecto_mix/lib/mix/selecto/learning_resources.ex with 1 addition and 1 removal                                                        
+       358                end
+       359              rescue
+       360                exc ->
+       361 -                Kino.Markdown.new("❌ **Error:** #{Exception.message(exc)}\\n\\n*Tip: Make sure the value type matches the field type.*") |> 
+     Kino.render()
+           - Kino.render()
+       361 +                Kino.Markdown.new("❌ **Error:** \#{Exception.message(error)}\\n\\n*Tip: Make sure the value type matches the field type.*") |> 
+     Kino.render()
+           + Kino.render()
+       362              end
+       363            end
+       364          end)
+
+● Update(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Updated vendor/selecto_mix/lib/mix/selecto/learning_resources.ex with 1 addition and 1 removal
+       968          {:ok, data} ->
+       969            Kino.DataTable.new(data, name: "Safe Query Results")
+       970          {:error, error_info} ->
+       971 -          Kino.Markdown.new("**Error occurred:** #{error_info.message}")
+       971 +          Kino.Markdown.new("**Error occurred:** \#{error.message}")
+       972        end
+       973        ```
+       974    
+
+● Now let me fix the mock value generation function:
+
+● Read(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Read 10 lines (ctrl+r to expand)
+
+● This function is fine - these are actual Elixir variables. Let me check the context around the connection diagnostics:
+
+● Read(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Read 10 lines (ctrl+r to expand)
+
+● These are inside code blocks within the tutorial, so they should be escaped:
+
+● Update(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Updated vendor/selecto_mix/lib/mix/selecto/learning_resources.ex with 1 addition and 1 removal
+       1568                    {:ok, "Connection successful"}
+       1569                  {:error, error} ->
+       1570                    Postgrex.stop(pid)
+       1571 -                  {:error, "Query failed: #{inspect(error)}"}
+       1571 +                  {:error, "Query failed: \#{inspect(error)}"}
+       1572                end
+       1573              {:error, error} ->
+       1574                {:error, "Connection failed: #{inspect(error)}"}
+
+● Update(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Updated vendor/selecto_mix/lib/mix/selecto/learning_resources.ex with 1 addition and 1 removal
+       1571                    {:error, "Query failed: \#{inspect(error)}"}
+       1572                end
+       1573              {:error, error} ->
+       1574 -              {:error, "Connection failed: #{inspect(error)}"}
+       1574 +              {:error, "Connection failed: \#{inspect(error)}"}
+       1575            end
+       1576          end
+       1577    
+
+● Now let me fix the variables in the case statements that are within the tutorial code blocks:
+
+● Read(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Read 15 lines (ctrl+r to expand)
+
+● These variables are inside the tutorial code that will be executed in Livebook, so I need to escape their interpolations:
+
+● Update(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Updated vendor/selecto_mix/lib/mix/selecto/learning_resources.ex with 6 additions and 6 removals
+       1615    
+       1616        case ConnectionDiagnostic.test_connection(test_config) do
+       1617          {:ok, message} ->
+       1618 -          Kino.Markdown.new("✅ **Connection Test:** #{message}")
+       1619 -        {:error, error_msg} ->
+       1620 -          fixes = ConnectionDiagnostic.suggest_fixes(error_msg)
+       1621 -          fix_list = Enum.map_join(fixes, "\\n", fn fix -> "• #{fix}" end)
+       1618 +          Kino.Markdown.new("✅ **Connection Test:** \#{message}")
+       1619 +        {:error, error} ->
+       1620 +          fixes = ConnectionDiagnostic.suggest_fixes(error)
+       1621 +          fix_list = Enum.map_join(fixes, "\\n", fn fix -> "• \#{fix}" end)
+       1622    
+       1623            Kino.Markdown.new(\"\"\"
+       1624 -          ❌ **Connection Test Failed:** #{error_msg}
+       1624 +          ❌ **Connection Test Failed:** \#{error}
+       1625    
+       1626            **Suggested Fixes:**
+       1627 -          #{fix_list}
+       1627 +          \#{fix_list}
+       1628            \"\"\")
+       1629        end
+       1630        ```
+
+● Now let me find and fix the domain configuration issues:
+
+● Read(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Read 15 lines (ctrl+r to expand)
+
+● Update(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Updated vendor/selecto_mix/lib/mix/selecto/learning_resources.ex with 3 additions and 3 removals
+       1695    
+       1696        case DomainDiagnostic.validate_domain_config(test_domain) do
+       1697          {:ok, message} ->
+       1698 -          Kino.Markdown.new("✅ **Domain Config:** #{message}")
+       1698 +          Kino.Markdown.new("✅ **Domain Config:** \#{message}")
+       1699          {:error, issues} ->
+       1700 -          issue_list = Enum.map_join(issues, "\\n", fn issue -> "• #{issue}" end)
+       1700 +          issue_list = Enum.map_join(issues, "\\n", fn issue -> "• \#{issue}" end)
+       1701    
+       1702            fixed_config = DomainDiagnostic.fix_domain_config(test_domain)
+       1703    
+       1704            Kino.Markdown.new(\"\"\"
+       1705            ❌ **Domain Config Issues:**
+       1706 -          #{issue_list}
+       1706 +          \#{issue_list}
+       1707    
+       1708            ✅ **Suggested Fix:** Use this corrected configuration:
+       1709            \"\"\")
+
+● Now let me test the compilation again:
+
+● Bash(mix compile)
+  ⎿  Error: warning: variable "opts" is unused (if the variable is not meant to be used, prefix it with an underscore)
+         │
+      88 │   def restore_from_backup(backup_path, original_path, opts \\ []) do
+         │                                                       ~~~~
+         │
+         └─ lib/mix/selecto/file_generator.ex:88:55: Mix.Selecto.FileGenerator.restore_from_backup/3
+
+           warning: outdented heredoc line. The contents inside the heredoc should be indented at the same level as the closing """. The following is 
+     forbidden:
+
+               def text do
+     … +232 lines (ctrl+r to see all)
+
+● I still have more interpolation issues to fix. These are all within template strings that should not be interpolated. Let me continue fixing them
+  systematically. The variables are used in code examples that will be executed in Livebook, not in the template itself.
+
+  Let me fix the remaining ones in the troubleshooting section:
+
+● Update(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Updated vendor/selecto_mix/lib/mix/selecto/learning_resources.ex with 1 addition and 1 removal     
+       1726            table_name = domain_config.source.source_table
+       1727    
+       1728            table_check = try do
+       1729 -            {:ok, result} = Postgrex.query(conn, "SELECT COUNT(*) FROM #{table_name}", [])
+       1729 +            {:ok, result} = Postgrex.query(conn, "SELECT COUNT(*) FROM \#{table_name}", [])
+       1730              %{rows: [[count]]} = result
+       1731              {:ok, count}
+       1732            rescue
+
+● Update(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Updated vendor/selecto_mix/lib/mix/selecto/learning_resources.ex with 1 addition and 1 removal
+       1730              %{rows: [[count]]} = result
+       1731              {:ok, count}
+       1732            rescue
+       1733 -            exc -> {:error, "Table check failed: #{Exception.message(exc)}"}
+       1733 +            exc -> {:error, "Table check failed: \#{Exception.message(error)}"}
+       1734            end
+       1735    
+       1736            diagnostics = Map.put(diagnostics, :table_check, table_check)
+
+● Update(vendor/selecto_mix/lib/mix/selecto/learning_resources.ex)
+  ⎿  Updated vendor/selecto_mix/lib/mix/selecto/learning_resources.ex with 1 addition and 1 removal
+       1743    
+       1744              {:ok, length(result)}
+       1745            rescue
+       1746 -            exc -> {:error, "Basic query failed: #{Exception.message(exc)}"}
+       1746 +            exc -> {:error, "Basic query failed: \#{Exception.message(error)}"}
+       1747            end
+       1748    
+       1749            diagnostics = Map.put(diagnostics, :basic_query_check, basic_query_check)
+  ⎿  5-hour limit reached ∙ resets 3pm
      /upgrade to increase your usage limit.
 

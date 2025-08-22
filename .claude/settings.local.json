@@ -136,7 +136,11 @@
       "Bash(timeout 30 mix selecto.version.create test_domain --type=major --dry-run)",
       "Bash(timeout 30 mix selecto.guide --help)",
       "Bash(timeout 15 mix compile)",
-      "Bash(timeout 15 mix compile --force)"
+      "Bash(timeout 15 mix compile --force)",
+      "Bash(rg:*)",
+      "Bash(mix clean:*)",
+      "Bash(mix deps.clean:*)",
+      "Bash(chmod:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

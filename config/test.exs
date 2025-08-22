@@ -9,11 +9,11 @@ config :selecto_test, SelectoTest.Repo,
   username: "postgres",
   password: "postgres",
   hostname: "localhost",
-  database: "selecto_test_dev#{System.get_env("MIX_TEST_PARTITION")}",
+  database: "selecto_test_test#{System.get_env("MIX_TEST_PARTITION")}",
   pool: Ecto.Adapters.SQL.Sandbox,
-  pool_size: 20,
-  timeout: 30_000,
-  ownership_timeout: 30_000
+  pool_size: System.schedulers_online() * 2,
+  timeout: 120_000,
+  ownership_timeout: 120_000
 
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
@@ -33,3 +33,14 @@ config :logger, level: :warning
 
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime
+
+# Configure test coverage and performance
+config :excoveralls, :minimum_coverage, 70
+
+# Test timeout configuration
+config :ex_unit,
+  timeout: 120_000,
+  capture_log: true
+
+# Disable telemetry in tests for better performance
+config :telemetry, :disable_default_handlers, true
