@@ -131,7 +131,8 @@
       "Bash(PORT=4085 timeout 15 mix phx.server --no-halt)",
       "Bash(timeout 30 mix test --max-cases 1)",
       "Bash(timeout 30 mix selecto.gen.domain.multi SelectoTest.Store --dry-run)",
-      "Bash(timeout 30 mix selecto.gen.domain.multi SelectoTest.Store.Film,SelectoTest.Store.Actor films_actors_domain --dry-run)"
+      "Bash(timeout 30 mix selecto.gen.domain.multi SelectoTest.Store.Film,SelectoTest.Store.Actor films_actors_domain --dry-run)",
+      "Bash(timeout 30 mix selecto.gen.domain SelectoTest.Store.Film --dry-run)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
