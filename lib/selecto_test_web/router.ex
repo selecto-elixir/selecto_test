@@ -45,5 +45,11 @@ defmodule SelectoTestWeb.Router do
       live_dashboard "/dashboard", metrics: SelectoTestWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
     end
+    
+    # SelectoDev development tools
+    scope "/selecto_dev" do
+      pipe_through :browser
+      forward "/", SelectoDevWeb.Router
+    end
   end
 end
