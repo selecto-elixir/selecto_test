@@ -134,7 +134,9 @@
       "Bash(timeout 30 mix selecto.gen.domain.multi SelectoTest.Store.Film,SelectoTest.Store.Actor films_actors_domain --dry-run)",
       "Bash(timeout 30 mix selecto.gen.domain SelectoTest.Store.Film --dry-run)",
       "Bash(timeout 30 mix selecto.version.create test_domain --type=major --dry-run)",
-      "Bash(timeout 30 mix selecto.guide --help)"
+      "Bash(timeout 30 mix selecto.guide --help)",
+      "Bash(timeout 15 mix compile)",
+      "Bash(timeout 15 mix compile --force)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
