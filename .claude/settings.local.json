@@ -154,7 +154,8 @@
       "Bash(MIX_ENV=test mix test test/selecto_advanced_select_test.exs --max-cases 1)",
       "Bash(timeout 120 MIX_ENV=test mix test)",
       "Bash(timeout:*)",
-      "Bash(PGPASSWORD=postgres psql:*)"
+      "Bash(PGPASSWORD=postgres psql:*)",
+      "Bash(PORT=4001 mix phx.server)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
