@@ -140,7 +140,12 @@
       "Bash(rg:*)",
       "Bash(mix clean:*)",
       "Bash(mix deps.clean:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "WebFetch(domain:127.0.0.1)",
+      "Bash(PORT=4080 mix phx.server)",
+      "Bash(PORT=4081 mix phx.server)",
+      "Bash(PORT=4085 timeout 10 mix phx.server --no-halt)",
+      "Bash(timeout 30 mix run test_query_tracking.exs)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
