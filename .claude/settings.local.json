@@ -153,7 +153,8 @@
       "Bash(MIX_ENV=test mix test test/selecto_column_types_test.exs --max-cases 1)",
       "Bash(MIX_ENV=test mix test test/selecto_advanced_select_test.exs --max-cases 1)",
       "Bash(timeout 120 MIX_ENV=test mix test)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(PGPASSWORD=postgres psql:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

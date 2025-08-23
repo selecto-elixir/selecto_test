@@ -1,6 +1,10 @@
 # Selecto Test Project
 
-This project is a test/development project for the Selecto ecosystem modules. 
+This project is a test/development project for the Selecto ecosystem modules.
+
+## Sample Data
+
+This project uses the **[Pagila](https://github.com/devrimgunduz/pagila)** sample database, a PostgreSQL port of the MySQL Sakila sample database. Pagila provides a rich dataset of films, actors, customers, and rental transactions that serves as an excellent testbed for Selecto's advanced query capabilities. 
 
 This project includes the complete Selecto ecosystem in the vendor directory:
 - [selecto](https://github.com/selecto-elixir/selecto) - Core query builder

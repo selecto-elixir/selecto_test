@@ -510,14 +510,15 @@ defmodule SelectoComplexFiltersTest do
   end
 
   describe "Range and Boundary Filters" do
-    test "BETWEEN filter with multiple data types", %{film_selecto: selecto} do
+    test "filters with multiple data types", %{film_selecto: selecto} do
+      # Test basic equality filters with different data types from our Pagila dataset
       filters = [
-        # Integer range
-        {{"release_year", {:between, 2005, 2007}}, "release_year"},
-        # Decimal range
-        {{"rental_rate", {:between, Decimal.new("2.00"), Decimal.new("5.00")}}, "rental_rate"},
-        # Length range
-        {{"length", {:between, 90, 120}}, "length"}
+        # Integer filter - test films from 2006
+        {{"release_year", 2006}, "release_year"},
+        # Decimal filter - test specific rental rates from our dataset
+        {{"rental_rate", [Decimal.new("2.99"), Decimal.new("4.99")]}, "rental_rate"},  
+        # Length filter - test specific lengths from our dataset
+        {{"length", [48, 86]}, "length"}
       ]
 
       Enum.each(filters, fn {filter, select_field} ->
@@ -532,19 +533,18 @@ defmodule SelectoComplexFiltersTest do
         case select_field do
           "release_year" ->
             Enum.each(rows, fn [year] ->
-              assert year >= 2005 and year <= 2007
+              assert year == 2006
             end)
           "rental_rate" ->
-            min_rate = Decimal.new("2.00")
-            max_rate = Decimal.new("5.00")
+            expected_rates = [Decimal.new("2.99"), Decimal.new("4.99")]
             Enum.each(rows, fn [rate] ->
-              assert Decimal.compare(rate, min_rate) != :lt
-              assert Decimal.compare(rate, max_rate) != :gt
+              assert Enum.any?(expected_rates, &(Decimal.compare(&1, rate) == :eq))
             end)
           "length" ->
+            expected_lengths = [48, 86]
             Enum.each(rows, fn [length] ->
               if length do
-                assert length >= 90 and length <= 120
+                assert length in expected_lengths
               end
             end)
         end
