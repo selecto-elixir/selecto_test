@@ -70,7 +70,8 @@ defmodule SelectoTest.SelectOptionsIntegrationTest do
 
     test "detects category association through Film Category join" do
       # Test that we can detect complex associations
-      analysis = SchemaAnalyzer.analyze_schema(SelectoTest.Store.FilmCategory)
+      analysis = SchemaAnalyzer.analyze_schema(SelectoTest.Store.FilmCategory, 
+        include_associations: true)
       
       # Should detect film and category associations
       film_candidate = Enum.find(analysis.select_candidates, &(&1.field == :film))

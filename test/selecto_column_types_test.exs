@@ -96,7 +96,7 @@ defmodule SelectoColumnTypesTest do
     test "select integer fields", %{selecto: selecto} do
       result = selecto
       |> Selecto.select(["film_id", "release_year", "length"])
-      |> Selecto.filter({"film_id", 1})
+      |> Selecto.filter({"film_id", 6396})
       |> Selecto.execute()
       
       assert {:ok, {rows, columns, _aliases}} = result
@@ -140,13 +140,13 @@ defmodule SelectoColumnTypesTest do
       # Test string to integer conversion (might not be supported)
       result = selecto
       |> Selecto.select(["film_id"])
-      |> Selecto.filter({"film_id", "1"})  # String "1" should convert to integer
+      |> Selecto.filter({"film_id", "6396"})  # String "6396" should convert to integer
       |> Selecto.execute()
       
       case result do
         {:ok, {rows, _columns, _aliases}} ->
           assert length(rows) == 1
-          assert hd(rows) == [1]
+          assert hd(rows) == [6396]
         {:error, _} ->
           # String to integer conversion might not be implemented
           :ok
@@ -158,7 +158,7 @@ defmodule SelectoColumnTypesTest do
     test "select string fields", %{selecto: selecto} do
       result = selecto
       |> Selecto.select(["title", "rating"])
-      |> Selecto.filter({"film_id", 1})
+      |> Selecto.filter({"film_id", 6396})
       |> Selecto.execute()
       
       assert {:ok, {rows, columns, _aliases}} = result
@@ -213,7 +213,7 @@ defmodule SelectoColumnTypesTest do
     test "select text field", %{selecto: selecto} do
       result = selecto
       |> Selecto.select(["description"])
-      |> Selecto.filter({"film_id", 1})
+      |> Selecto.filter({"film_id", 6396})
       |> Selecto.execute()
       
       assert {:ok, {rows, columns, _aliases}} = result
@@ -243,7 +243,7 @@ defmodule SelectoColumnTypesTest do
     test "select decimal fields", %{selecto: selecto} do
       result = selecto
       |> Selecto.select(["rental_rate", "replacement_cost"])
-      |> Selecto.filter({"film_id", 1})
+      |> Selecto.filter({"film_id", 6396})
       |> Selecto.execute()
       
       assert {:ok, {rows, columns, _aliases}} = result
@@ -286,7 +286,7 @@ defmodule SelectoColumnTypesTest do
     test "select array field", %{selecto: selecto} do
       result = selecto
       |> Selecto.select(["special_features"])
-      |> Selecto.filter({"film_id", 1})
+      |> Selecto.filter({"film_id", 6396})
       |> Selecto.execute()
       
       assert {:ok, {rows, columns, _aliases}} = result
@@ -319,7 +319,7 @@ defmodule SelectoColumnTypesTest do
     test "select datetime field", %{selecto: selecto} do
       result = selecto
       |> Selecto.select(["last_update"])
-      |> Selecto.filter({"film_id", 1})
+      |> Selecto.filter({"film_id", 6396})
       |> Selecto.execute()
       
       assert {:ok, {rows, columns, _aliases}} = result
@@ -450,7 +450,7 @@ defmodule SelectoColumnTypesTest do
       # Test various type coercions that should work
       type_tests = [
         # Integer field with string value
-        {{"film_id", "1"}, "film_id"},
+        {{"film_id", "6396"}, "film_id"},
         # Decimal with integer value  
         {{"rental_rate", 4}, "rental_rate"},
         # String field with atom (should convert to string)
@@ -484,7 +484,7 @@ defmodule SelectoColumnTypesTest do
         "last_update",       # datetime
         "special_features"   # array
       ])
-      |> Selecto.filter({"film_id", [1, 2, 3]})
+      |> Selecto.filter({"film_id", [6396, 6397, 6398]})
       |> Selecto.execute()
       
       assert {:ok, {rows, columns, _aliases}} = result
@@ -511,15 +511,15 @@ defmodule SelectoColumnTypesTest do
         {:max, "length"}
       ])
       |> Selecto.group_by(["rating"])
-      |> Selecto.filter({"rating", ["G", "PG", "PG-13"]})
+      |> Selecto.filter({"rating", ["G", "PG", "NC-17"]})
       |> Selecto.execute()
       
       assert {:ok, {rows, columns, _aliases}} = result
       assert columns == ["rating", "count", "avg", "min", "max"]
-      assert length(rows) >= 3  # At least G, PG, PG-13
+      assert length(rows) >= 3  # At least G, PG, NC-17
       
       Enum.each(rows, fn [rating, count, avg_rate, min_year, max_length] ->
-        assert is_binary(rating) and rating in ["G", "PG", "PG-13"]
+        assert is_binary(rating) and rating in ["G", "PG", "NC-17"]
         assert is_integer(count) and count > 0
         assert %Decimal{} = avg_rate
         assert is_integer(min_year)

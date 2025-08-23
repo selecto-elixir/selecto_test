@@ -76,7 +76,7 @@ defmodule SelectoAdvancedSelectTest do
     test "COALESCE function", %{selecto: selecto} do
       result = selecto
       |> Selecto.select([{:coalesce, ["title", {:literal, "No Title"}]}])
-      |> Selecto.filter({"film_id", 1})
+      |> Selecto.filter({"film_id", 6396})  # Use the first film ID from our test data
       |> Selecto.execute()
       
       case result do
