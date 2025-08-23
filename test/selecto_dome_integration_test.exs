@@ -1,6 +1,7 @@
 defmodule SelectoDomeIntegrationTest do
   use SelectoTest.SelectoCase, async: false
-  
+
+  import Ecto.Query
   alias SelectoTest.{Repo, PagilaDomain}
   alias SelectoTest.Store.{Actor, Film, Language}
   alias SelectoDome
@@ -30,7 +31,7 @@ defmodule SelectoDomeIntegrationTest do
       # Execute query
       {:ok, result} = Selecto.execute(selecto)
       {rows, columns, aliases} = result
-      
+
       assert length(rows) >= 2  # At least our test actors
       assert "first_name" in columns
       assert "last_name" in columns
@@ -38,7 +39,7 @@ defmodule SelectoDomeIntegrationTest do
 
       # Create SelectoDome
       {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
-      
+
       assert dome.selecto == selecto
       assert dome.repo == Repo
       assert dome.result_metadata.source_table == "actor"
@@ -175,6 +176,10 @@ defmodule SelectoDomeIntegrationTest do
 
       initial_count = length(elem(result, 0))
 
+      # Remove the film_actor relationship to avoid foreign key constraint
+      from(fa in SelectoTest.Store.FilmActor, where: fa.actor_id == ^actor2.actor_id)
+      |> Repo.delete_all()
+
       # Delete and commit
       {:ok, dome_with_delete} = SelectoDome.delete(dome, actor2.actor_id)
       {:ok, updated_result} = SelectoDome.commit(dome_with_delete)
@@ -228,7 +233,7 @@ defmodule SelectoDomeIntegrationTest do
   describe "SelectoDome query consistency validation" do
     setup do
       {:ok, english} = %Language{name: "English"} |> Repo.insert()
-      
+
       # Create a filtered query - only actors whose names start with 'J'
       domain = PagilaDomain.actors_domain()
       selecto = Selecto.configure(domain, SelectoTest.Repo)
@@ -276,9 +281,9 @@ defmodule SelectoDomeIntegrationTest do
     setup do
       # Create test data using Ecto
       test_data = insert_test_data!()
-      
+
       {:ok, actor} = %Actor{first_name: "Tom", last_name: "Hanks"} |> Repo.insert()
-      
+
       {:ok, film} = %Film{
         title: "Test Movie",
         description: "A great film",
@@ -311,7 +316,7 @@ defmodule SelectoDomeIntegrationTest do
 
       metadata = SelectoDome.metadata(dome)
       assert metadata.source_table == "actor"
-      
+
       # Should recognize multiple tables involved
       assert Map.has_key?(metadata.tables, "actor")
       # Note: The join analysis might need refinement based on how Selecto structures joins
@@ -351,7 +356,7 @@ defmodule SelectoDomeIntegrationTest do
 
     test "handles invalid field types gracefully", %{selecto: selecto} do
       {:ok, actor} = %Actor{first_name: "Test", last_name: "Actor"} |> Repo.insert()
-      
+
       {:ok, result} = Selecto.execute(selecto)
       {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
@@ -409,7 +414,7 @@ defmodule SelectoDomeIntegrationTest do
 
       # Add an update
       {:ok, dome} = SelectoDome.update(dome, actor.actor_id, %{first_name: "Updated"})
-      
+
       # Add a delete
       {:ok, dome} = SelectoDome.delete(dome, actor.actor_id)
 

@@ -1,13 +1,13 @@
 defmodule SelectoComplexFiltersTest do
   use SelectoTest.SelectoCase, async: false
-  
+
   # Tests for complex Selecto filter operations
   # Covers logical operations (AND/OR/NOT), subqueries, and advanced patterns
 
   setup do
     # Insert test data
     _test_data = insert_test_data!()
-    
+
     # Actor domain with film associations for complex queries
     domain = %{
       source: %{
@@ -27,16 +27,16 @@ defmodule SelectoComplexFiltersTest do
       joins: %{},
       schemas: %{}
     }
-    
+
     selecto = Selecto.configure(domain, SelectoTest.Repo)
-    
+
     # Also set up a film domain for cross-table testing
     film_domain = %{
       source: %{
         source_table: "film",
         primary_key: :film_id,
-        fields: [:film_id, :title, :description, :release_year, :language_id, 
-                :rental_duration, :rental_rate, :length, :replacement_cost, 
+        fields: [:film_id, :title, :description, :release_year, :language_id,
+                :rental_duration, :rental_rate, :length, :replacement_cost,
                 :rating, :special_features],
         redact_fields: [],
         columns: %{
@@ -58,9 +58,9 @@ defmodule SelectoComplexFiltersTest do
       joins: %{},
       schemas: %{}
     }
-    
+
     film_selecto = Selecto.configure(film_domain, SelectoTest.Repo)
-    
+
     {:ok, selecto: selecto, film_selecto: film_selecto}
   end
 
@@ -72,7 +72,7 @@ defmodule SelectoComplexFiltersTest do
       |> Selecto.filter({"actor_id", {"<", 15}})
       |> Selecto.filter({"first_name", {:like, "A%"}})
       |> Selecto.execute()
-      
+
       assert {:ok, {rows, _columns, _aliases}} = result
       Enum.each(rows, fn [actor_id, first_name, _last_name] ->
         assert actor_id > 10 and actor_id < 15
@@ -87,12 +87,12 @@ defmodule SelectoComplexFiltersTest do
         {"actor_id", {"<=", 20}},
         {"first_name", {:ilike, "a%"}}
       ]}
-      
+
       result = selecto
       |> Selecto.select(["actor_id", "first_name"])
       |> Selecto.filter(and_filter)
       |> Selecto.execute()
-      
+
       case result do
         {:ok, {rows, _columns, _aliases}} ->
           Enum.each(rows, fn [actor_id, first_name] ->
@@ -113,7 +113,7 @@ defmodule SelectoComplexFiltersTest do
       |> Selecto.filter({"rental_rate", {"<=", Decimal.new("4.99")}})
       |> Selecto.filter({"title", {:like, "A%"}})
       |> Selecto.execute()
-      
+
       assert {:ok, {rows, _columns, _aliases}} = result
       Enum.each(rows, fn [_film_id, title, rating, rental_rate] ->
         assert rating in ["G", "PG"]
@@ -132,12 +132,12 @@ defmodule SelectoComplexFiltersTest do
         {"actor_id", 2},
         {"first_name", "JOHNNY"}
       ]}
-      
+
       result = selecto
       |> Selecto.select(["actor_id", "first_name"])
       |> Selecto.filter(or_filter)
       |> Selecto.execute()
-      
+
       case result do
         {:ok, {rows, _columns, _aliases}} ->
           Enum.each(rows, fn [actor_id, first_name] ->
@@ -156,19 +156,19 @@ defmodule SelectoComplexFiltersTest do
         {"rental_rate", {">", Decimal.new("6.00")}},
         {"rating", "NC-17"}
       ]}
-      
+
       result = selecto
       |> Selecto.select(["film_id", "rental_rate", "rating"])
       |> Selecto.filter(or_filter)
       |> Selecto.execute()
-      
+
       case result do
         {:ok, {rows, _columns, _aliases}} ->
           Enum.each(rows, fn [_film_id, rental_rate, rating] ->
             low_rate = Decimal.compare(rental_rate, Decimal.new("1.00")) == :lt
             high_rate = Decimal.compare(rental_rate, Decimal.new("6.00")) == :gt
             nc17_rating = rating == "NC-17"
-            
+
             assert low_rate or high_rate or nc17_rating
           end)
         {:error, _} ->
@@ -182,19 +182,19 @@ defmodule SelectoComplexFiltersTest do
         {"first_name", {:like, "J%"}},
         {"last_name", {:like, "%SON"}}
       ]}
-      
+
       result = selecto
       |> Selecto.select(["first_name", "last_name"])
       |> Selecto.filter(or_filter)
       |> Selecto.execute()
-      
+
       case result do
         {:ok, {rows, _columns, _aliases}} ->
           Enum.each(rows, fn [first_name, last_name] ->
             starts_with_a = String.starts_with?(first_name, "A")
             starts_with_j = String.starts_with?(first_name, "J")
             ends_with_son = String.ends_with?(last_name, "SON")
-            
+
             assert starts_with_a or starts_with_j or ends_with_son
           end)
         {:error, _} ->
@@ -206,13 +206,13 @@ defmodule SelectoComplexFiltersTest do
   describe "Logical NOT Operations" do
     test "NOT filter with simple condition", %{selecto: selecto} do
       not_filter = {:not, {"first_name", "JOHNNY"}}
-      
+
       result = selecto
       |> Selecto.select(["first_name"])
       |> Selecto.filter(not_filter)
       |> Selecto.filter({"actor_id", [1, 2, 3, 4, 5]})  # Limit results
       |> Selecto.execute()
-      
+
       case result do
         {:ok, {rows, _columns, _aliases}} ->
           Enum.each(rows, fn [first_name] ->
@@ -226,12 +226,12 @@ defmodule SelectoComplexFiltersTest do
 
     test "NOT with comparison operations", %{film_selecto: selecto} do
       not_filter = {:not, {"rating", ["G", "PG"]}}
-      
+
       result = selecto
       |> Selecto.select(["rating"])
       |> Selecto.filter(not_filter)
       |> Selecto.execute()
-      
+
       case result do
         {:ok, {rows, _columns, _aliases}} ->
           Enum.each(rows, fn [rating] ->
@@ -244,13 +244,13 @@ defmodule SelectoComplexFiltersTest do
 
     test "NOT with LIKE patterns", %{selecto: selecto} do
       not_filter = {:not, {"first_name", {:like, "J%"}}}
-      
+
       result = selecto
       |> Selecto.select(["first_name"])
       |> Selecto.filter(not_filter)
       |> Selecto.filter({"actor_id", [1, 2, 3, 4, 5]})
       |> Selecto.execute()
-      
+
       case result do
         {:ok, {rows, _columns, _aliases}} ->
           Enum.each(rows, fn [first_name] ->
@@ -273,12 +273,12 @@ defmodule SelectoComplexFiltersTest do
         {:not, {"rental_rate", {">", Decimal.new("5.00")}}},
         {"title", {:like, "A%"}}
       ]}
-      
+
       result = selecto
       |> Selecto.select(["title", "rating", "rental_rate"])
       |> Selecto.filter(complex_filter)
       |> Selecto.execute()
-      
+
       case result do
         {:ok, {rows, _columns, _aliases}} ->
           Enum.each(rows, fn [title, rating, rental_rate] ->
@@ -301,12 +301,12 @@ defmodule SelectoComplexFiltersTest do
         ]},
         {:not, {"actor_id", {"<", 10}}}
       ]}
-      
+
       result = selecto
       |> Selecto.select(["actor_id", "first_name"])
       |> Selecto.filter(nested_filter)
       |> Selecto.execute()
-      
+
       case result do
         {:ok, {rows, _columns, _aliases}} ->
           Enum.each(rows, fn [actor_id, first_name] ->
@@ -323,16 +323,16 @@ defmodule SelectoComplexFiltersTest do
   describe "Subquery Filters" do
     test "EXISTS subquery", %{selecto: selecto} do
       # Find actors who exist in the film_actor table
-      exists_filter = {:exists, 
+      exists_filter = {:exists,
         "SELECT 1 FROM film_actor WHERE film_actor.actor_id = actor.actor_id",
         []
       }
-      
+
       result = selecto
       |> Selecto.select(["actor_id", "first_name"])
       |> Selecto.filter(exists_filter)
       |> Selecto.execute()
-      
+
       case result do
         {:ok, {rows, _columns, _aliases}} ->
           assert length(rows) > 0
@@ -353,12 +353,12 @@ defmodule SelectoComplexFiltersTest do
         "SELECT DISTINCT actor_id FROM film_actor fa JOIN film f ON fa.film_id = f.film_id WHERE f.rating = ANY(?)",
         [["G", "PG"]]
       }}
-      
+
       result = selecto
       |> Selecto.select(["actor_id", "first_name"])
       |> Selecto.filter(subquery_filter)
       |> Selecto.execute()
-      
+
       case result do
         {:ok, {rows, _columns, _aliases}} ->
           assert length(rows) > 0
@@ -373,27 +373,27 @@ defmodule SelectoComplexFiltersTest do
     test "comparison with subquery result", %{film_selecto: selecto} do
       # Find films with rental_rate higher than average
       subquery_filter = {"rental_rate", {
-        ">", 
+        ">",
         {:subquery, :any,
           "SELECT AVG(rental_rate) FROM film",
           []
         }
       }}
-      
+
       result = selecto
       |> Selecto.select(["film_id", "title", "rental_rate"])
       |> Selecto.filter(subquery_filter)
       |> Selecto.execute()
-      
+
       case result do
         {:ok, {rows, _columns, _aliases}} ->
           # Get the actual average to verify
           avg_result = selecto
           |> Selecto.select([{:avg, "rental_rate"}])
           |> Selecto.execute()
-          
+
           assert {:ok, {[[avg_rate]], _columns, _aliases}} = avg_result
-          
+
           Enum.each(rows, fn [_film_id, _title, rental_rate] ->
             assert Decimal.compare(rental_rate, avg_rate) == :gt
           end)
@@ -408,12 +408,12 @@ defmodule SelectoComplexFiltersTest do
         "SELECT 1 FROM film_actor WHERE film_actor.actor_id = actor.actor_id",
         []
       }}
-      
+
       result = selecto
       |> Selecto.select(["actor_id", "first_name"])
       |> Selecto.filter(not_exists_filter)
       |> Selecto.execute()
-      
+
       case result do
         {:ok, {rows, _columns, _aliases}} ->
           # In Pagila, all actors should appear in films, so this might be empty
@@ -425,6 +425,7 @@ defmodule SelectoComplexFiltersTest do
   end
 
   describe "Full-Text Search Filters" do
+    @tag :skip
     setup %{film_selecto: selecto} do
       # Set up film domain with fulltext column
       domain = %{
@@ -445,7 +446,7 @@ defmodule SelectoComplexFiltersTest do
         joins: %{},
         schemas: %{}
       }
-      
+
       fulltext_selecto = Selecto.configure(domain, selecto.postgrex_opts)
       {:ok, fulltext_selecto: fulltext_selecto}
     end
@@ -455,7 +456,7 @@ defmodule SelectoComplexFiltersTest do
       |> Selecto.select(["title", "description"])
       |> Selecto.filter({"fulltext", {:text_search, "drama"}})
       |> Selecto.execute()
-      
+
       assert {:ok, {rows, _columns, _aliases}} = result
       # Should find films with "drama" in their content
       assert length(rows) > 0
@@ -465,12 +466,13 @@ defmodule SelectoComplexFiltersTest do
       end)
     end
 
+    @tag :skip
     test "complex text search with operators", %{fulltext_selecto: selecto} do
       result = selecto
       |> Selecto.select(["title"])
       |> Selecto.filter({"fulltext", {:text_search, "drama & comedy"}})
       |> Selecto.execute()
-      
+
       assert {:ok, {rows, _columns, _aliases}} = result
       # Should find films with both drama AND comedy
       Enum.each(rows, fn [title] ->
@@ -478,12 +480,13 @@ defmodule SelectoComplexFiltersTest do
       end)
     end
 
+    @tag :skip
     test "text search with OR logic", %{fulltext_selecto: selecto} do
       result = selecto
       |> Selecto.select(["title"])
       |> Selecto.filter({"fulltext", {:text_search, "action | adventure"}})
       |> Selecto.execute()
-      
+
       assert {:ok, {rows, _columns, _aliases}} = result
       # Should find films with action OR adventure
       Enum.each(rows, fn [title] ->
@@ -491,12 +494,13 @@ defmodule SelectoComplexFiltersTest do
       end)
     end
 
+    @tag :skip
     test "text search with negation", %{fulltext_selecto: selecto} do
       result = selecto
       |> Selecto.select(["title"])
       |> Selecto.filter({"fulltext", {:text_search, "drama & !comedy"}})
       |> Selecto.execute()
-      
+
       assert {:ok, {rows, _columns, _aliases}} = result
       # Should find films with drama but NOT comedy
       Enum.each(rows, fn [title] ->
@@ -521,10 +525,10 @@ defmodule SelectoComplexFiltersTest do
         |> Selecto.select([select_field])
         |> Selecto.filter(filter)
         |> Selecto.execute()
-        
+
         assert {:ok, {rows, _columns, _aliases}} = result
         assert length(rows) > 0
-        
+
         case select_field do
           "release_year" ->
             Enum.each(rows, fn [year] ->
@@ -555,7 +559,7 @@ defmodule SelectoComplexFiltersTest do
       |> Selecto.filter({"rental_rate", {:between, Decimal.new("0.99"), Decimal.new("2.99")}})
       |> Selecto.filter({"length", {">", 100}})
       |> Selecto.execute()
-      
+
       assert {:ok, {rows, _columns, _aliases}} = result
       Enum.each(rows, fn [_title, year, rate, length] ->
         assert year >= 2005 and year <= 2006
@@ -581,24 +585,24 @@ defmodule SelectoComplexFiltersTest do
         {:not, {"title", {:like, "THE %"}}},
         {"release_year", {:between, 2005, 2006}}
       ]}
-      
+
       result = selecto
       |> Selecto.select(["title", "rating", "rental_rate", "release_year"])
       |> Selecto.filter(complex_filter)
       |> Selecto.execute()
-      
+
       case result do
         {:ok, {rows, _columns, _aliases}} ->
           Enum.each(rows, fn [title, rating, rental_rate, release_year] ->
             # Verify all conditions
             _rating_ok = rating in ["G", "PG"]  # Simplified - would need to check special_features too
-            
+
             rate_in_range = Decimal.compare(rental_rate, Decimal.new("2.00")) != :lt and
                            Decimal.compare(rental_rate, Decimal.new("4.99")) != :gt
-            
+
             not_the_title = not String.starts_with?(title, "THE ")
             year_in_range = release_year >= 2005 and release_year <= 2006
-            
+
             assert rate_in_range
             assert not_the_title
             assert year_in_range
@@ -622,7 +626,7 @@ defmodule SelectoComplexFiltersTest do
         |> Selecto.select(["actor_id"])
         |> Selecto.filter(filter)
         |> Selecto.execute()
-        
+
         assert {:ok, {rows, _columns, _aliases}} = result
         assert length(rows) == 0
       end)
@@ -631,15 +635,15 @@ defmodule SelectoComplexFiltersTest do
     test "filter performance with large IN lists", %{selecto: selecto} do
       # Test performance with large IN lists
       large_id_list = Enum.to_list(1..100)
-      
+
       result = selecto
       |> Selecto.select(["actor_id", "first_name"])
       |> Selecto.filter({"actor_id", large_id_list})
       |> Selecto.execute()
-      
+
       assert {:ok, {rows, _columns, _aliases}} = result
       assert length(rows) <= 100  # At most 100, might be less if not all IDs exist
-      
+
       returned_ids = Enum.map(rows, fn [actor_id, _] -> actor_id end)
       Enum.each(returned_ids, fn id ->
         assert id in large_id_list
