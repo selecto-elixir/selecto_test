@@ -56,7 +56,7 @@ defmodule SelectoAdvancedSelectTest do
       # Test CONCAT function - may fail due to PostgreSQL parameter type inference
       result = selecto
       |> Selecto.select([{:concat, ["title", {:literal, " ("}, "rating", {:literal, ")"}]}])
-      |> Selecto.filter({"film_id", [5, 6]})
+      |> Selecto.filter({"film_id", [986, 991]})
       |> Selecto.execute()
 
       case result do
@@ -76,7 +76,7 @@ defmodule SelectoAdvancedSelectTest do
     test "COALESCE function", %{selecto: selecto} do
       result = selecto
       |> Selecto.select([{:coalesce, ["title", {:literal, "No Title"}]}])
-      |> Selecto.filter({"film_id", 6396})  # Use the first film ID from our test data
+      |> Selecto.filter({"film_id", 986})  # Use an existing film ID
       |> Selecto.execute()
 
       case result do
@@ -99,7 +99,7 @@ defmodule SelectoAdvancedSelectTest do
         {:greatest, ["rental_duration", "length"]},
         {:least, ["rental_duration", "length"]}
       ])
-      |> Selecto.filter({"film_id", 1})
+      |> Selecto.filter({"film_id", 986})
       |> Selecto.execute()
 
       assert {:ok, {rows, columns, _aliases}} = result
@@ -133,7 +133,7 @@ defmodule SelectoAdvancedSelectTest do
         {:extract, "month", "last_update"},
         {:extract, "day", "last_update"}
       ])
-      |> Selecto.filter({"film_id", 1})
+      |> Selecto.filter({"film_id", 986})
       |> Selecto.execute()
 
       case result do
@@ -153,7 +153,7 @@ defmodule SelectoAdvancedSelectTest do
     test "TO_CHAR function for date formatting", %{selecto: selecto} do
       result = selecto
       |> Selecto.select([{:to_char, {"last_update", "YYYY-MM-DD"}}])
-      |> Selecto.filter({"film_id", 1})
+      |> Selecto.filter({"film_id", 986})
       |> Selecto.execute()
 
       assert {:ok, {rows, columns, _aliases}} = result
@@ -257,7 +257,7 @@ defmodule SelectoAdvancedSelectTest do
     test "ROW construction", %{selecto: selecto} do
       result = selecto
       |> Selecto.select([{:row, ["film_id", "title", "rating"], "film_info"}])
-      |> Selecto.filter({"film_id", 1})
+      |> Selecto.filter({"film_id", 986})
       |> Selecto.execute()
 
       case result do
@@ -281,7 +281,7 @@ defmodule SelectoAdvancedSelectTest do
         "title",
         "rating"  # Just select basic fields instead of complex expressions
       ])
-      |> Selecto.filter({"film_id", [5, 6]})
+      |> Selecto.filter({"film_id", [986, 991]})
       |> Selecto.execute()
 
       assert {:ok, {rows, columns, _aliases}} = result
@@ -305,7 +305,7 @@ defmodule SelectoAdvancedSelectTest do
           []
         }
       ])
-      |> Selecto.filter({"film_id", [5, 6]})
+      |> Selecto.filter({"film_id", [986, 991]})
       |> Selecto.execute()
 
       # This might not work with the current implementation but tests the concept
@@ -491,7 +491,7 @@ defmodule SelectoAdvancedSelectTest do
       |> Selecto.select([
         "title"  # Just select a simple field
       ])
-      |> Selecto.filter({"film_id", 1})
+      |> Selecto.filter({"film_id", 986})
       |> Selecto.execute()
 
       case result do
@@ -514,7 +514,7 @@ defmodule SelectoAdvancedSelectTest do
         "release_year",
         "rental_rate"
       ])
-      |> Selecto.filter({"film_id", 1})
+      |> Selecto.filter({"film_id", 986})
       |> Selecto.execute()
 
       case result do

@@ -53,9 +53,11 @@ defmodule SelectoColumnTypesTest do
       }
     ]
 
-    Enum.each(films_data, fn film_data ->
+    films = Enum.map(films_data, fn film_data ->
       Film.changeset(%Film{}, film_data) |> Repo.insert!()
     end)
+
+    [film1, film2, film3] = films
 
     # Define comprehensive domain with all column types from Pagila
     domain = %{
@@ -89,14 +91,14 @@ defmodule SelectoColumnTypesTest do
 
     selecto = Selecto.configure(domain, SelectoTest.Repo)
 
-    {:ok, selecto: selecto}
+    {:ok, selecto: selecto, film1: film1, film2: film2, film3: film3}
   end
 
   describe "Integer Column Type" do
-    test "select integer fields", %{selecto: selecto} do
+    test "select integer fields", %{selecto: selecto, film1: film1} do
       result = selecto
       |> Selecto.select(["film_id", "release_year", "length"])
-      |> Selecto.filter({"film_id", 6396})
+      |> Selecto.filter({"film_id", film1.film_id})
       |> Selecto.execute()
 
       assert {:ok, {rows, columns, _aliases}} = result
@@ -136,17 +138,17 @@ defmodule SelectoColumnTypesTest do
       end)
     end
 
-    test "integer type conversion from string", %{selecto: selecto} do
+    test "integer type conversion from string", %{selecto: selecto, film1: film1} do
       # Test string to integer conversion (might not be supported)
       result = selecto
       |> Selecto.select(["film_id"])
-      |> Selecto.filter({"film_id", "6396"})  # String "6396" should convert to integer
+      |> Selecto.filter({"film_id", "#{film1.film_id}"})  # String should convert to integer
       |> Selecto.execute()
 
       case result do
         {:ok, {rows, _columns, _aliases}} ->
           assert length(rows) == 1
-          assert hd(rows) == [6396]
+          assert hd(rows) == [film1.film_id]
         {:error, _} ->
           # String to integer conversion might not be implemented
           :ok
@@ -155,10 +157,10 @@ defmodule SelectoColumnTypesTest do
   end
 
   describe "String Column Type" do
-    test "select string fields", %{selecto: selecto} do
+    test "select string fields", %{selecto: selecto, film1: film1} do
       result = selecto
       |> Selecto.select(["title", "rating"])
-      |> Selecto.filter({"film_id", 6396})
+      |> Selecto.filter({"film_id", film1.film_id})
       |> Selecto.execute()
 
       assert {:ok, {rows, columns, _aliases}} = result
@@ -210,10 +212,10 @@ defmodule SelectoColumnTypesTest do
   end
 
   describe "Text Column Type" do
-    test "select text field", %{selecto: selecto} do
+    test "select text field", %{selecto: selecto, film1: film1} do
       result = selecto
       |> Selecto.select(["description"])
-      |> Selecto.filter({"film_id", 6396})
+      |> Selecto.filter({"film_id", film1.film_id})
       |> Selecto.execute()
 
       assert {:ok, {rows, columns, _aliases}} = result
@@ -240,10 +242,10 @@ defmodule SelectoColumnTypesTest do
   end
 
   describe "Decimal Column Type" do
-    test "select decimal fields", %{selecto: selecto} do
+    test "select decimal fields", %{selecto: selecto, film1: film1} do
       result = selecto
       |> Selecto.select(["rental_rate", "replacement_cost"])
-      |> Selecto.filter({"film_id", 6396})
+      |> Selecto.filter({"film_id", film1.film_id})
       |> Selecto.execute()
 
       assert {:ok, {rows, columns, _aliases}} = result
@@ -283,10 +285,10 @@ defmodule SelectoColumnTypesTest do
   end
 
   describe "Array Column Type" do
-    test "select array field", %{selecto: selecto} do
+    test "select array field", %{selecto: selecto, film1: film1} do
       result = selecto
       |> Selecto.select(["special_features"])
-      |> Selecto.filter({"film_id", 6396})
+      |> Selecto.filter({"film_id", film1.film_id})
       |> Selecto.execute()
 
       assert {:ok, {rows, columns, _aliases}} = result
@@ -316,10 +318,10 @@ defmodule SelectoColumnTypesTest do
   end
 
   describe "DateTime Column Type" do
-    test "select datetime field", %{selecto: selecto} do
+    test "select datetime field", %{selecto: selecto, film1: film1} do
       result = selecto
       |> Selecto.select(["last_update"])
-      |> Selecto.filter({"film_id", 6396})
+      |> Selecto.filter({"film_id", film1.film_id})
       |> Selecto.execute()
 
       assert {:ok, {rows, columns, _aliases}} = result
@@ -475,7 +477,7 @@ defmodule SelectoColumnTypesTest do
   end
 
   describe "Complex Type Combinations" do
-    test "mixed type selections with filtering", %{selecto: selecto} do
+    test "mixed type selections with filtering", %{selecto: selecto, film1: film1, film2: film2, film3: film3} do
       result = selecto
       |> Selecto.select([
         "film_id",           # integer
@@ -484,7 +486,7 @@ defmodule SelectoColumnTypesTest do
         "last_update",       # datetime
         "special_features"   # array
       ])
-      |> Selecto.filter({"film_id", [6396, 6397, 6398]})
+      |> Selecto.filter({"film_id", [film1.film_id, film2.film_id, film3.film_id]})
       |> Selecto.execute()
 
       assert {:ok, {rows, columns, _aliases}} = result

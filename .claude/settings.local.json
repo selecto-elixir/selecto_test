@@ -145,7 +145,15 @@
       "Bash(PORT=4080 mix phx.server)",
       "Bash(PORT=4081 mix phx.server)",
       "Bash(PORT=4085 timeout 10 mix phx.server --no-halt)",
-      "Bash(timeout 30 mix run test_query_tracking.exs)"
+      "Bash(timeout 30 mix run test_query_tracking.exs)",
+      "Bash(timeout 30 mix test test/selecto_column_types_test.exs:\"Integer Column Type\" --max-cases 1 --trace)",
+      "Bash(timeout 30 mix test test/selecto_column_types_test.exs --max-cases 1)",
+      "Bash(mix ecto.reset:*)",
+      "Bash(MIX_ENV=test mix run priv/repo/seeds.exs)",
+      "Bash(MIX_ENV=test mix test test/selecto_column_types_test.exs --max-cases 1)",
+      "Bash(MIX_ENV=test mix test test/selecto_advanced_select_test.exs --max-cases 1)",
+      "Bash(timeout 120 MIX_ENV=test mix test)",
+      "Bash(timeout:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
