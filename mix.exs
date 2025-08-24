@@ -74,6 +74,7 @@ defmodule SelectoTest.MixProject do
       {:kino, "~> 0.7.0"},
       {:tidewave, "~> 0.2", only: :dev},
       {:excoveralls, "~> 0.18", only: :test},
+      {:earmark, "~> 1.4"},
     ]
   end
 
