@@ -101,7 +101,9 @@ defmodule SelectoTestWeb.DocsLive do
   end
 
   defp read_documentation(doc_path) do
-    full_path = Path.join([Application.app_dir(:selecto_test), doc_path])
+    # Use project root instead of compiled app directory
+    project_root = File.cwd!()
+    full_path = Path.join([project_root, doc_path])
     
     # Try with .md extension if not already present
     file_path = if String.ends_with?(full_path, ".md") do
