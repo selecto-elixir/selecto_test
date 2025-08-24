@@ -50,15 +50,6 @@ defmodule SelectoTestWeb.DocsLive do
               <.link navigate="/docs/selecto-system/system-overview" class="text-blue-600 hover:text-blue-800 font-medium">
                 🏠 System Overview
               </.link>
-              <.link navigate="/docs/selecto-system/getting-started" class="text-green-600 hover:text-green-800">
-                📖 Getting Started
-              </.link>
-              <.link navigate="/docs/selecto-system/best-practices" class="text-purple-600 hover:text-purple-800">
-                ⭐ Best Practices
-              </.link>
-              <.link navigate="/docs/selecto-system/troubleshooting" class="text-orange-600 hover:text-orange-800">
-                🔧 Troubleshooting
-              </.link>
             </div>
             
             <div class="flex items-center gap-2 text-sm text-gray-500">

@@ -1,6 +1,6 @@
 # Selecto Ecosystem - System Overview
 
-> **⚠️ EXPERIMENTAL SYSTEM**: This documentation describes an experimental system. Features, APIs, and compatibility may change without notice. Use in production at your own risk.
+> **⚠️ EXPERIMENTAL SYSTEM**: This documentation describes an experimental system. Features, APIs, and compatibility may change without notice. Use in production at your own risk. This documentation was written by Claude and may not be accurate.
 
 Welcome to the comprehensive documentation for the Selecto ecosystem. This system provides a complete toolkit for building dynamic, data-driven applications with Phoenix LiveView.
 
