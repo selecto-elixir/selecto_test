@@ -6,7 +6,7 @@ Welcome to the comprehensive API documentation for the Selecto ecosystem. This r
 
 ## 📚 Core Modules
 
-### 🎯 Selecto Core (v0.2.6)
+### 🎯 Selecto Core (v0.3.0)
 
 The foundational query building library with advanced SQL generation capabilities.
 
@@ -166,7 +166,7 @@ union_all(query1, query2)
 ```
 Combines multiple queries with UNION operations.
 
-### 🎨 SelectoComponents (v0.2.8)
+### 🎨 SelectoComponents (v0.3.0)
 
 Interactive Phoenix LiveView components for data visualization.
 
@@ -253,7 +253,7 @@ pagination: %{
 }
 ```
 
-### 🔧 SelectoMix (v0.1.0)
+### 🔧 SelectoMix (v0.3.0)
 
 Mix tasks and code generators for domain configuration.
 
@@ -336,7 +336,7 @@ mix selecto.version.migrate DOMAIN_NAME --from=V1 --to=V2
 ```
 Generates migration between domain versions.
 
-### 📊 SelectoKino (v0.1.0)
+### 📊 SelectoKino (v0.3.0)
 
 Interactive development tools for Livebook environments.
 
@@ -366,7 +366,7 @@ SelectoKino.data_explorer(domain, repo)
 ```
 Interactive data exploration interface.
 
-### 🏢 SelectoDome (v0.1.0)
+### 🏢 SelectoDome (v0.3.0)
 
 Data manipulation interface for Selecto query results.
 
@@ -545,7 +545,7 @@ end
 
 ---
 
-**Version**: Selecto Ecosystem v0.2.x (Experimental)  
+**Version**: Selecto Ecosystem v0.3.0 (Experimental)  
 **Last Updated**: 2025-08-24
 
 For more detailed examples and tutorials, see:

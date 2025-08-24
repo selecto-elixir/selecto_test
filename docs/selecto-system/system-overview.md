@@ -15,20 +15,20 @@ The Selecto ecosystem consists of several interconnected modules working togethe
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐          │
 │  │   Selecto   │  │SelectoComponents│SelectoKino│          │
 │  │    Core     │  │  LiveView   │  │  Livebook   │          │
-│  │   v0.2.6    │  │   v0.2.8    │  │   v0.1.0    │          │
+│  │   v0.3.0    │  │   v0.3.0    │  │   v0.3.0    │          │
 │  └─────────────┘  └─────────────┘  └─────────────┘          │
 │         │                │               │                  │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐          │
 │  │SelectoDome │  │ SelectoMix  │  │SelectoDev   │          │
 │  │Data Manip.  │  │Mix Tasks    │  │Development  │          │
-│  │  v0.1.0     │  │  v0.1.0     │  │   Tools     │          │
+│  │  v0.3.0     │  │  v0.3.0     │  │   Tools     │          │
 │  └─────────────┘  └─────────────┘  └─────────────┘          │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ## 📦 Core Modules
 
-### 🎯 Selecto (v0.2.6) - Query Builder Core
+### 🎯 Selecto (v0.3.0) - Query Builder Core
 **Purpose**: Advanced SQL query building with comprehensive join support, CTEs, and OLAP functions.
 
 **Key Features**:
@@ -44,7 +44,7 @@ The Selecto ecosystem consists of several interconnected modules working togethe
 - `Selecto.aggregate/3` - Aggregation functions with grouping
 - `Selecto.execute/2` - Query execution with connection pooling
 
-### 🎨 SelectoComponents (v0.2.8) - LiveView Integration
+### 🎨 SelectoComponents (v0.3.0) - LiveView Integration
 **Purpose**: Interactive data visualization components for Phoenix LiveView with colocated hooks.
 
 **Key Features**:
@@ -59,7 +59,7 @@ The Selecto ecosystem consists of several interconnected modules working togethe
 - `SelectoComponents.Detail` - Detailed record views with pagination
 - `SelectoComponents.Graph` - Data visualization charts and graphs
 
-### 🔧 SelectoMix (v0.1.0) - Development Tools
+### 🔧 SelectoMix (v0.3.0) - Development Tools
 **Purpose**: Mix tasks and code generators for Selecto domain configuration and maintenance.
 
 **Key Features**:
@@ -74,7 +74,7 @@ The Selecto ecosystem consists of several interconnected modules working togethe
 - `mix selecto.docs.api` - Generate API reference
 - `mix selecto.docs.guide` - Generate comprehensive guides
 
-### 📊 SelectoKino (v0.1.0) - Livebook Integration
+### 📊 SelectoKino (v0.3.0) - Livebook Integration
 **Purpose**: Interactive development and exploration tools for Livebook environments.
 
 **Key Features**:
@@ -89,7 +89,7 @@ The Selecto ecosystem consists of several interconnected modules working togethe
 - `SelectoKino.performance_monitor/2` - Performance analysis tools
 - `SelectoKino.data_explorer/2` - Interactive data exploration
 
-### 🏢 SelectoDome (v0.1.0) - Data Manipulation Interface
+### 🏢 SelectoDome (v0.3.0) - Data Manipulation Interface
 **Purpose**: Advanced data manipulation and change tracking for Selecto query results.
 
 **Key Features**:
@@ -347,5 +347,5 @@ mix test test/selecto_dome_*
 
 ---
 
-**Version**: Selecto Ecosystem v0.2.x (Experimental)  
+**Version**: Selecto Ecosystem v0.3.0 (Experimental)  
 **Last Updated**: 2025-08-24

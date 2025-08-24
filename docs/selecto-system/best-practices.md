@@ -541,6 +541,6 @@ end
 
 ---
 
-**Version**: Selecto Ecosystem v0.2.x (Experimental)  
+**Version**: Selecto Ecosystem v0.3.0 (Experimental)  
 **Last Updated**: 2025-08-24  
 **Next**: [Troubleshooting Guide](troubleshooting.md) | [API Reference](index.md)

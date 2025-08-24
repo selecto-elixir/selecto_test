@@ -12,13 +12,13 @@ Add Selecto to your Phoenix application's dependencies:
 # mix.exs
 def deps do
   [
-    {:selecto, "~> 0.2.6"},
-    {:selecto_components, "~> 0.2.8"},
-    {:selecto_mix, "~> 0.1.0"},
+    {:selecto, "~> 0.3.0"},
+    {:selecto_components, "~> 0.3.0"},
+    {:selecto_mix, "~> 0.3.0"},
     # Optional: For Livebook integration
-    {:selecto_kino, "~> 0.1.0"},
+    {:selecto_kino, "~> 0.3.0"},
     # Optional: For data manipulation
-    {:selecto_dome, "~> 0.1.0"}
+    {:selecto_dome, "~> 0.3.0"}
   ]
 end
 ```
@@ -264,5 +264,5 @@ SelectoComponents supports three main view types:
 
 ---
 
-**Version**: Selecto Ecosystem v0.2.x (Experimental)  
+**Version**: Selecto Ecosystem v0.3.0 (Experimental)  
 **Last Updated**: 2025-08-24
