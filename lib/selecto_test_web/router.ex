@@ -23,6 +23,9 @@ defmodule SelectoTestWeb.Router do
     live "/pagila_films", PagilaLive, :films
 
     live "/pagila/film/:film_id", PagilaFilmLive, :index
+    
+    # Selecto Documentation
+    live "/docs/selecto-system/*path", DocsLive
   end
 
   # Other scopes may use custom stacks.
