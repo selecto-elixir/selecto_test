@@ -1,5 +1,7 @@
 # Selecto Troubleshooting Guide
 
+> **⚠️ EXPERIMENTAL SYSTEM**: This documentation describes an experimental system. Features, APIs, and compatibility may change without notice. Use in production at your own risk.
+
 This guide covers common issues and their solutions when working with the Selecto ecosystem.
 
 ## 🚨 Common Issues
@@ -484,6 +486,6 @@ For enterprise support and consulting:
 
 ---
 
-**Version**: Selecto Ecosystem v0.2.x  
+**Version**: Selecto Ecosystem v0.2.x (Experimental)  
 **Last Updated**: 2025-08-24  
 **Next**: [Best Practices](best-practices.md) | [System Overview](system-overview.md)

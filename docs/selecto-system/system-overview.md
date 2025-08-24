@@ -1,5 +1,7 @@
 # Selecto Ecosystem - System Overview
 
+> **⚠️ EXPERIMENTAL SYSTEM**: This documentation describes an experimental system. Features, APIs, and compatibility may change without notice. Use in production at your own risk.
+
 Welcome to the comprehensive documentation for the Selecto ecosystem. This system provides a complete toolkit for building dynamic, data-driven applications with Phoenix LiveView.
 
 ## 🏗️ Architecture Overview
@@ -345,6 +347,5 @@ mix test test/selecto_dome_*
 
 ---
 
-**Version**: Selecto Ecosystem v0.2.x  
-**Last Updated**: 2025-08-24  
-**Compatibility**: Phoenix v1.7+, LiveView v1.1+, Elixir v1.15+
+**Version**: Selecto Ecosystem v0.2.x (Experimental)  
+**Last Updated**: 2025-08-24

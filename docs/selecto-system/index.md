@@ -1,5 +1,7 @@
 # Selecto API Reference
 
+> **⚠️ EXPERIMENTAL SYSTEM**: This documentation describes an experimental system. Features, APIs, and compatibility may change without notice. Use in production at your own risk.
+
 Welcome to the comprehensive API documentation for the Selecto ecosystem. This reference covers all modules, functions, and components across the entire Selecto platform.
 
 ## 📚 Core Modules
@@ -543,9 +545,8 @@ end
 
 ---
 
-**Version**: Selecto Ecosystem v0.2.x  
-**Last Updated**: 2025-08-24  
-**Compatibility**: Phoenix v1.7+, LiveView v1.1+, Elixir v1.15+
+**Version**: Selecto Ecosystem v0.2.x (Experimental)  
+**Last Updated**: 2025-08-24
 
 For more detailed examples and tutorials, see:
 - [Getting Started Guide](getting-started.md)

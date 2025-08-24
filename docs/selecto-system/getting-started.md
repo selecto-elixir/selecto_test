@@ -1,5 +1,7 @@
 # Getting Started with Selecto
 
+> **⚠️ EXPERIMENTAL SYSTEM**: This documentation describes an experimental system. Features, APIs, and compatibility may change without notice. Use in production at your own risk.
+
 Welcome to Selecto! This guide will help you get up and running with the Selecto ecosystem for building dynamic, data-driven applications with Phoenix LiveView.
 
 ## 📦 Installation
@@ -262,6 +264,5 @@ SelectoComponents supports three main view types:
 
 ---
 
-**Version**: Selecto Ecosystem v0.2.x  
-**Last Updated**: 2025-08-24  
-**Compatibility**: Phoenix v1.7+, LiveView v1.1+, Elixir v1.15+
+**Version**: Selecto Ecosystem v0.2.x (Experimental)  
+**Last Updated**: 2025-08-24

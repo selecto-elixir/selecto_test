@@ -70,31 +70,174 @@ defmodule SelectoTestWeb.DocsLive do
 
         <!-- Documentation Content -->
         <div class="bg-white border border-gray-200 rounded-lg p-8">
-          <article class="prose prose-lg max-w-none
-            prose-headings:text-gray-900 prose-headings:font-semibold
-            prose-h1:text-3xl prose-h1:border-b prose-h1:border-gray-200 prose-h1:pb-2 prose-h1:mb-6
-            prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4
-            prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3
-            prose-h4:text-lg prose-h4:mt-4 prose-h4:mb-2
-            prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4
-            prose-a:text-blue-600 prose-a:hover:text-blue-800 prose-a:underline prose-a:transition-colors
-            prose-strong:text-gray-900 prose-strong:font-semibold
-            prose-em:text-gray-700 prose-em:italic
-            prose-code:text-sm prose-code:bg-gray-100 prose-code:text-gray-800 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:font-mono prose-code:border
-            prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:p-4 prose-pre:rounded-lg prose-pre:overflow-x-auto prose-pre:border prose-pre:shadow-sm
-            prose-pre>code:bg-transparent prose-pre>code:text-gray-100 prose-pre>code:p-0
-            prose-ul:list-disc prose-ul:pl-6 prose-ul:mb-4
-            prose-ol:list-decimal prose-ol:pl-6 prose-ol:mb-4
-            prose-li:text-gray-700 prose-li:mb-1 prose-li:leading-relaxed
-            prose-table:w-full prose-table:border-collapse prose-table:border prose-table:border-gray-300 prose-table:rounded-lg prose-table:overflow-hidden prose-table:shadow-sm
-            prose-thead:bg-gray-50
-            prose-th:px-6 prose-th:py-3 prose-th:text-left prose-th:font-semibold prose-th:text-gray-900 prose-th:border-b prose-th:border-gray-300
-            prose-td:px-6 prose-td:py-3 prose-td:text-gray-700 prose-td:border-b prose-td:border-gray-200
-            prose-tr:hover:bg-gray-50 prose-tr:transition-colors
-            prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-600">
+          <div class="documentation-content">
             <%= raw(markdown_to_html(@content)) %>
-          </article>
+          </div>
         </div>
+        
+        <style>
+          .documentation-content h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: #111827;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e5e7eb;
+          }
+          
+          .documentation-content h2 {
+            font-size: 1.875rem;
+            font-weight: 600;
+            color: #111827;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+          }
+          
+          .documentation-content h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #111827;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+          }
+          
+          .documentation-content h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #111827;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+          }
+          
+          .documentation-content p {
+            color: #374151;
+            line-height: 1.7;
+            margin-bottom: 1rem;
+          }
+          
+          .documentation-content a {
+            color: #2563eb;
+            text-decoration: underline;
+            transition: color 0.2s;
+          }
+          
+          .documentation-content a:hover {
+            color: #1d4ed8;
+          }
+          
+          .documentation-content strong {
+            font-weight: 600;
+            color: #111827;
+          }
+          
+          .documentation-content em {
+            font-style: italic;
+            color: #374151;
+          }
+          
+          .documentation-content code {
+            background-color: #f3f4f6;
+            color: #111827;
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 0.875rem;
+            border: 1px solid #d1d5db;
+          }
+          
+          .documentation-content pre {
+            background-color: #1f2937;
+            color: #f9fafb;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            border: 1px solid #374151;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+          }
+          
+          .documentation-content pre code {
+            background: transparent;
+            color: #f9fafb;
+            padding: 0;
+            border: none;
+            font-size: 0.875rem;
+          }
+          
+          .documentation-content ul, .documentation-content ol {
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+          }
+          
+          .documentation-content ul {
+            list-style-type: disc;
+          }
+          
+          .documentation-content ol {
+            list-style-type: decimal;
+          }
+          
+          .documentation-content li {
+            color: #374151;
+            margin-bottom: 0.25rem;
+            line-height: 1.6;
+          }
+          
+          .documentation-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+          }
+          
+          .documentation-content thead {
+            background-color: #f9fafb;
+          }
+          
+          .documentation-content th {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #111827;
+            border-bottom: 1px solid #d1d5db;
+          }
+          
+          .documentation-content td {
+            padding: 0.75rem 1rem;
+            color: #374151;
+            border-bottom: 1px solid #e5e7eb;
+          }
+          
+          .documentation-content tr:hover {
+            background-color: #f9fafb;
+          }
+          
+          .documentation-content blockquote {
+            border-left: 4px solid #3b82f6;
+            padding-left: 1rem;
+            margin: 1rem 0;
+            font-style: italic;
+            color: #6b7280;
+            background-color: #f8fafc;
+            padding: 1rem;
+            border-radius: 0.25rem;
+          }
+          
+          .documentation-content blockquote p {
+            margin: 0;
+          }
+          
+          /* Warning/Alert styling */
+          .documentation-content blockquote:has(strong:contains("⚠️")) {
+            border-left-color: #f59e0b;
+            background-color: #fffbeb;
+            color: #92400e;
+          }
+        </style>
         
         <!-- Additional Resources -->
         <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
