@@ -13,6 +13,7 @@ config :selecto_test,
 # Configures the endpoint
 config :selecto_test, SelectoTestWeb.Endpoint,
   url: [host: "localhost"],
+  adapter: Bandit.PhoenixAdapter,
   render_errors: [
     formats: [html: SelectoTestWeb.ErrorHTML, json: SelectoTestWeb.ErrorJSON],
     layout: false

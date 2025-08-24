@@ -62,7 +62,7 @@ defmodule SelectoTest.MixProject do
       {:telemetry_poller, "~> 1.0"},
       {:gettext, "~> 0.20"},
       {:jason, "~> 1.2"},
-      {:plug_cowboy, "~> 2.5"},
+      {:bandit, "~> 1.5"},
 
       {:selecto, path: "./vendor/selecto", override: true},
       {:selecto_components, path: "./vendor/selecto_components", override: true},
