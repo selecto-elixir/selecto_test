@@ -22,6 +22,9 @@ import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
 import hooks from "./hooks";
+
+// Load Chart.js globally
+import "../vendor/chart.js"
 // import {hooks as colocatedHooks} from "phoenix-colocated/selecto_components"
 
 // Simple TreeBuilderHook for drag and drop functionality

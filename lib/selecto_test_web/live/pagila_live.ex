@@ -30,8 +30,8 @@ defmodule SelectoTestWeb.PagilaLive do
 
     views = [
       {:aggregate, SelectoComponents.Views.Aggregate, "Aggregate View", %{drill_down: :detail}},
-      {:detail, SelectoComponents.Views.Detail, "Detail View", %{}}
-      # {:graph, SelectoComponents.Views.Graph, "Graph View", %{}},
+      {:detail, SelectoComponents.Views.Detail, "Detail View", %{}},
+      {:graph, SelectoComponents.Views.Graph, "Graph View", %{}}
     ]
 
     state = get_initial_state(views, selecto)
