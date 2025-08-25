@@ -25,9 +25,10 @@ import hooks from "./hooks";
 
 // Load Chart.js globally
 import "../vendor/chart.js"
+import {hooks as colocatedHooks} from "phoenix-colocated/selecto_components"
 
 // Simple TreeBuilderHook for drag and drop functionality
-const TreeBuilderLegacyHook = {
+const TreeBuilderHook = {
   mounted() {
     window.PushEventHook = this
   },
@@ -38,7 +39,8 @@ const TreeBuilderLegacyHook = {
 
 let myHooks = {
     ...hooks,
-    TreeBuilderHook: TreeBuilderLegacyHook, // Keep legacy support
+    TreeBuilderHook,
+    ...colocatedHooks
 }
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
