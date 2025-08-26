@@ -51,7 +51,7 @@ defmodule SelectoTest.MixProject do
       {:phoenix_live_reload, "~> 1.5", only: :dev},
       {:phoenix_live_view, "~> 1.1.4", override: true},
       {:lazy_html, "~> 0.1.0"},
-      {:heroicons, "~> 0.5"},
+      {:heroicons, "~> 0.5", override: true},
       {:floki, ">= 0.30.0", only: :test},
       {:phoenix_live_dashboard, "~> 0.8.7"},
       {:esbuild, "~> 0.8", runtime: Mix.env() == :dev},
