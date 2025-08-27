@@ -4,7 +4,7 @@ defmodule SelectoKino.DomainRegistry do
   Provides access to available domains and their configurations.
   """
 
-  alias SelectoTest.{PagilaDomain, PagilaDomainFilms, BlogDomain}
+  alias SelectoTest.{PagilaDomain, PagilaDomainFilms}
 
   @doc """
   Lists all available domains for SelectoKino.

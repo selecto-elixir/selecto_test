@@ -11,7 +11,7 @@ defmodule SelectoTest.Seed do
 
     # Create languages
     english = Repo.insert! %Language{name: "English"}
-    spanish = Repo.insert! %Language{name: "Spanish"}
+    _spanish = Repo.insert! %Language{name: "Spanish"}
     
     # Create films with various data types for column type testing
     Repo.insert! Film.changeset(%Film{}, %{

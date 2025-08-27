@@ -160,7 +160,8 @@
       "Bash(mix selecto.docs.guide:*)",
       "Bash(PORT=4090 timeout 10 mix phx.server --no-halt)",
       "Bash(PORT=4090 timeout 15 mix phx.server --no-halt)",
-      "Bash(npm install)"
+      "Bash(npm install)",
+      "Bash(mix deps:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

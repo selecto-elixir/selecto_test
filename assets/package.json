@@ -6,9 +6,10 @@
     "deploy": "NODE_ENV=production tailwind build --minify && esbuild js/app.js --bundle --minify --outdir=../priv/static/assets/ --external:/fonts/* --external:/images/*"
   },
   "dependencies": {
+    "@tailwindcss/forms": "^0.5.10",
     "phoenix": "^1.7.14",
-    "phoenix_html": "^4.1.1", 
-    "phoenix_live_view": "^1.1.4"
+    "phoenix_html": "^4.1.1",
+    "phoenix_live_view": "^1.1.8"
   },
   "devDependencies": {
     "tailwindcss": "^3.2.4"
