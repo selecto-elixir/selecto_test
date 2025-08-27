@@ -65,11 +65,11 @@ COPY assets assets
 # install npm dependencies
 RUN cd assets && npm install
 
-# compile assets
-RUN mix assets.deploy
-
-# Compile the release
+# Compile Elixir code first to generate colocated hooks
 RUN mix compile
+
+# compile assets (colocated hooks are now available)
+RUN mix assets.deploy
 
 # Changes to config/runtime.exs don't require recompiling the code
 COPY config/runtime.exs config/
