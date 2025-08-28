@@ -15,7 +15,7 @@ if needs_quoting do
   quoted_field = quote_char <> escaped_value <> quote_char
   IO.puts("Escaped value: #{inspect(escaped_value)}")
   IO.puts("Quoted field: #{inspect(quoted_field)}")
-  
+
   # Now put it in a CSV row
   full_row = quoted_field <> ",42" <> "\n"
   IO.puts("Full row: #{inspect(full_row)}")
