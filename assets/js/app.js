@@ -22,11 +22,12 @@ import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
 import hooks from "./hooks";
-import selecto_components from "selecto_components"
+
+// Load Chart.js globally
+import "../vendor/chart.js"
 
 let myHooks = {
-    ...hooks,
-    ...selecto_components
+    ...hooks
 }
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {

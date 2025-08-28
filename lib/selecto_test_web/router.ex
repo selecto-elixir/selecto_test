@@ -23,6 +23,9 @@ defmodule SelectoTestWeb.Router do
     live "/pagila_films", PagilaLive, :films
 
     live "/pagila/film/:film_id", PagilaFilmLive, :index
+    
+    # Selecto Documentation
+    live "/docs/selecto-system/*path", DocsLive
   end
 
   # Other scopes may use custom stacks.
@@ -42,7 +45,11 @@ defmodule SelectoTestWeb.Router do
     scope "/dev" do
       pipe_through :browser
 
-      live_dashboard "/dashboard", metrics: SelectoTestWeb.Telemetry
+      live_dashboard "/dashboard", 
+        metrics: SelectoTestWeb.Telemetry,
+        additional_pages: [
+          selecto_dev: SelectoDev.LiveDashboardPage
+        ]
       forward "/mailbox", Plug.Swoosh.MailboxPreview
     end
   end

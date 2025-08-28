@@ -1,0 +1,290 @@
+# Selecto Features Demo
+
+A focused demonstration of Selecto's key features using the app connection method.
+
+## Quick Start
+
+1. **Start the app**: `iex --name selecto_test@127.0.0.1 --cookie selecto_test_cookie -S mix phx.server`
+2. **Run this livebook**: Execute the cells in order
+
+## Setup
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.7.0"},
+  {:selecto_kino, path: "/home/chris/projects/selecto_test/vendor/selecto_kino"},
+  {:jason, "~> 1.0"}
+])
+```
+
+```elixir
+# Load SelectoKino modules
+["selecto_kino", "selecto_kino/connection", "selecto_kino/query_builder", 
+ "selecto_kino/selecto_query_builder", "selecto_kino/app_connection"]
+|> Enum.each(fn module ->
+  Code.compile_file("#{__DIR__}/../vendor/selecto_kino/lib/#{module}.ex")
+end)
+
+IO.puts("✅ SelectoKino loaded!")
+```
+
+## Connect to App
+
+```elixir
+SelectoKino.connect_app()
+```
+
+## Available Domains
+
+```elixir
+SelectoKino.app_domains()
+```
+
+## Feature 1: Basic Domain Queries
+
+### Simple Actor Query
+
+```elixir
+SelectoKino.app_query("actors")
+```
+
+### Simple Film Query
+
+```elixir
+SelectoKino.app_query("films")
+```
+
+## Feature 2: Custom Column Selection
+
+```elixir
+# Demo helper for custom queries
+defmodule SelectoQuickDemo do
+  def query(domain, columns, opts \\ []) do
+    query_params = %{
+      selected: String.split(columns, ",") |> Enum.map(&String.trim/1),
+      filters: opts[:filters] || %{},
+      joins: opts[:joins] || [],
+      limit: opts[:limit] || 10,
+      order_by: opts[:order_by] || []
+    }
+    
+    case SelectoKino.AppConnection.run_selecto_query(domain, query_params) do
+      {:ok, results} ->
+        Kino.Layout.grid([
+          Kino.Markdown.new("**Query:** #{domain} | **Columns:** #{columns}"),
+          Kino.DataTable.new(results)
+        ], columns: 1)
+      {:error, message} ->
+        Kino.Markdown.new("❌ **Error:** #{message}")
+    end
+  end
+end
+
+"Demo helper loaded!"
+```
+
+### Actor Names with Custom Columns
+
+```elixir
+SelectoQuickDemo.query("actors", "full_name, film_count, total_revenue", 
+  limit: 15, order_by: ["total_revenue desc"])
+```
+
+### Film Details with Calculated Fields
+
+```elixir
+SelectoQuickDemo.query("films", "title, release_year, rating, length, rental_rate", 
+  limit: 20, order_by: ["release_year desc"])
+```
+
+## Feature 3: Joins and Relationships
+
+### Films with Language Information
+
+```elixir
+SelectoQuickDemo.query("films", "title, language_name, release_year", 
+  joins: ["language"], limit: 15)
+```
+
+### Actors with Film Information
+
+```elixir
+SelectoQuickDemo.query("actors", "full_name, film_count, avg_rating", 
+  joins: ["film_actors", "films"], limit: 10, order_by: ["film_count desc"])
+```
+
+## Feature 4: Filtering
+
+### Name Search
+
+```elixir
+SelectoQuickDemo.query("actors", "first_name, last_name, film_count", 
+  filters: %{"first_name" => %{"like" => "%John%"}}, limit: 10)
+```
+
+### Year Range Filter
+
+```elixir
+SelectoQuickDemo.query("films", "title, release_year, rating", 
+  filters: %{"release_year" => %{"between" => [2000, 2006]}}, 
+  limit: 15, order_by: ["release_year"])
+```
+
+### Multiple Conditions
+
+```elixir
+SelectoQuickDemo.query("films", "title, rating, length", 
+  filters: %{
+    "rating" => "PG-13",
+    "length" => %{">=" => 120}
+  }, 
+  limit: 10, order_by: ["length desc"])
+```
+
+## Feature 5: Performance Analysis
+
+### Top Performing Actors
+
+```elixir
+SelectoQuickDemo.query("actors", "full_name, film_count, total_revenue, avg_rating", 
+  filters: %{"film_count" => %{">=" => 15}}, 
+  limit: 10, order_by: ["total_revenue desc"])
+```
+
+### Popular Films by Rental Activity
+
+```elixir
+SelectoQuickDemo.query("films", "title, rating, rental_rate, length", 
+  filters: %{"rating" => %{"in" => ["PG", "PG-13", "R"]}}, 
+  limit: 20, order_by: ["rental_rate desc"])
+```
+
+## Feature 6: Complex Queries
+
+### Interactive Query Builder
+
+```elixir
+# Create an interactive form for building custom queries
+domain_select = Kino.Input.select("Domain", [{"Actors", "actors"}, {"Films", "films"}])
+columns_input = Kino.Input.text("Columns (comma-separated)", default: "")
+joins_input = Kino.Input.text("Joins (comma-separated)", default: "")
+filter_field = Kino.Input.text("Filter Field", default: "")
+filter_operator = Kino.Input.select("Operator", [
+  {"Equals", "="}, {"Like", "like"}, {"Greater than", ">"}, 
+  {"Less than", "<"}, {"Between", "between"}, {"In list", "in"}
+])
+filter_value = Kino.Input.text("Filter Value", default: "")
+order_input = Kino.Input.text("Order By", default: "")
+limit_input = Kino.Input.number("Limit", default: 10)
+
+form = Kino.Control.form([
+  domain: domain_select,
+  columns: columns_input,
+  joins: joins_input,
+  filter_field: filter_field,
+  filter_operator: filter_operator,
+  filter_value: filter_value,
+  order_by: order_input,
+  limit: limit_input
+], submit: "Execute Query")
+
+frame = Kino.Frame.new()
+
+Kino.Control.stream(form)
+|> Kino.listen(fn %{data: data} ->
+  try do
+    # Parse inputs
+    columns = if String.trim(data.columns) == "", do: [], else: String.split(data.columns, ",") |> Enum.map(&String.trim/1)
+    joins = if String.trim(data.joins) == "", do: [], else: String.split(data.joins, ",") |> Enum.map(&String.trim/1)
+    order_by = if String.trim(data.order_by) == "", do: [], else: String.split(data.order_by, ",") |> Enum.map(&String.trim/1)
+    
+    # Build filters
+    filters = if String.trim(data.filter_field) != "" and String.trim(data.filter_value) != "" do
+      field = String.trim(data.filter_field)
+      value = String.trim(data.filter_value)
+      
+      case data.filter_operator do
+        "=" -> %{field => value}
+        "like" -> %{field => %{"like" => "%#{value}%"}}
+        ">" -> %{field => %{">" => String.to_integer(value)}}
+        "<" -> %{field => %{"<" => String.to_integer(value)}}
+        "between" -> 
+          [min, max] = String.split(value, ",") |> Enum.map(&String.to_integer(String.trim(&1)))
+          %{field => %{"between" => [min, max]}}
+        "in" -> 
+          values = String.split(value, ",") |> Enum.map(&String.trim/1)
+          %{field => %{"in" => values}}
+        _ -> %{}
+      end
+    else
+      %{}
+    end
+    
+    # Build query params
+    query_params = %{
+      selected: columns,
+      joins: joins,
+      filters: filters,
+      order_by: order_by,
+      limit: data.limit
+    }
+    
+    # Execute query
+    case SelectoKino.AppConnection.run_selecto_query(data.domain, query_params) do
+      {:ok, results} ->
+        result_info = Kino.Markdown.new("""
+        ✅ **Query executed successfully!**
+        
+        **Domain:** #{data.domain}
+        **Columns:** #{Enum.join(columns, ", ")}
+        **Filters:** #{inspect(filters)}
+        **Results:** #{length(results)} rows
+        """)
+        
+        layout = Kino.Layout.grid([
+          form,
+          result_info,
+          Kino.DataTable.new(results)
+        ], columns: 1)
+        
+        Kino.Frame.render(frame, layout)
+        
+      {:error, message} ->
+        error_layout = Kino.Layout.grid([
+          form,
+          Kino.Markdown.new("❌ **Error:** #{message}")
+        ], columns: 1)
+        
+        Kino.Frame.render(frame, error_layout)
+    end
+  rescue
+    error ->
+      error_layout = Kino.Layout.grid([
+        form,
+        Kino.Markdown.new("❌ **Parsing Error:** #{inspect(error)}")
+      ], columns: 1)
+      
+      Kino.Frame.render(frame, error_layout)
+  end
+end)
+
+Kino.Layout.grid([form, frame], columns: 1)
+```
+
+## Summary
+
+This demo showed Selecto's key features:
+
+1. **Domain-based queries** - Pre-configured schemas
+2. **Custom column selection** - Business logic fields  
+3. **Automatic joins** - Related table access
+4. **Rich filtering** - Multiple condition types
+5. **Performance metrics** - Business analytics
+6. **Interactive querying** - Dynamic query building
+
+**Benefits:**
+- Type-safe queries
+- Reusable domain configurations  
+- Business logic encapsulation
+- Performance optimization
+- Easy integration with LiveView/Kino

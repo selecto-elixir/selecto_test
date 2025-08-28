@@ -1,55 +1,74 @@
 defmodule SelectoTest.PagilaDomainFilms do
   use SelectoTestWeb, :verified_routes
-  @behaviour SelectoComponents.SavedViews
+  use SelectoTest.SavedViewContext
 
-  ### TODO - fix agg filter appluy for film ratings
-  import Ecto.Query
-
-  def get_view(name, context) do
-    q = from v in SelectoTest.SavedView,
-      where: ^context == v.context,
-      where:  ^name == v.name
-    SelectoTest.Repo.one( q )
-  end
-
-  def save_view(name, context, params) do
-    case get_view(name, context) do
-      nil -> SelectoTest.Repo.insert!(%SelectoTest.SavedView{name: name, context: context, params: params})
-      view -> update_view(view, params)
-    end
-  end
-
-  def update_view(view, params) do
-    {:ok, view} = SelectoTest.SavedView.changeset(view, %{params: params})
-      |> SelectoTest.Repo.update()
-    view
-  end
-
-  def get_view_names(context) do
-    q = from v in SelectoTest.SavedView,
-      select: v.name,
-      where: ^context == v.context
-
-    SelectoTest.Repo.all( q )
-  end
-
-  def decode_view(view) do
-    ### give params to use for view
-    view.params
-  end
-
+  # Fixed: rating filter configured in filters section for dropdown UI
 
   def domain() do
     ### customer info, payments and rentals
     %{
-      source: SelectoTest.Store.Film,
+      source: %{
+        source_table: "film",
+        primary_key: :film_id,
+        schema_module: SelectoTest.Store.Film,
+        fields: [:film_id, :title, :description, :release_year, :language_id, :rental_duration, :rental_rate, :length, :replacement_cost, :rating, :special_features],
+        redact_fields: [],
+        columns: %{
+          film_id: %{type: :integer},
+          title: %{type: :string},
+          description: %{type: :string},
+          release_year: %{type: :integer},
+          language_id: %{type: :integer},
+          rental_duration: %{type: :integer},
+          rental_rate: %{type: :decimal},
+          length: %{type: :integer},
+          replacement_cost: %{type: :decimal},
+          rating: %{type: :string},
+          special_features: %{type: {:array, :string}}
+        },
+        associations: %{
+          language: %{
+            queryable: :language,
+            field: :language,
+            owner_key: :language_id,
+            related_key: :language_id
+          }
+        }
+      },
+      schemas: %{
+        language: %{
+          source_table: "language",
+          primary_key: :language_id,
+          schema_module: SelectoTest.Store.Language,
+          fields: [:language_id, :name],
+          redact_fields: [],
+          columns: %{
+            language_id: %{type: :integer},
+            name: %{type: :string}
+          },
+          associations: %{}
+        }
+      },
       name: "Film",
       default_selected: ["title"],
       default_order_by: ["title"],
       default_group_by: ["release_year"],
       default_aggregate: [{"film_id", %{"format" => "count"}}],
       filters: %{
-
+        "rating" => %{
+          name: "Film Rating",
+          type: :select_options,
+          option_provider: %{
+            type: :enum,
+            schema: SelectoTest.Store.Film,
+            field: :rating
+          },
+          multiple: true,
+          searchable: false,
+          apply: fn _selecto, filter ->
+            {"rating", filter["value"]}
+          end
+        }
       },
       custom_columns: %{
         "film_link" => %{
@@ -72,7 +91,7 @@ defmodule SelectoTest.PagilaDomainFilms do
         # },
         language: %{
           name: "Film Language",
-          ## TODO Lookup type means that local table as an ID to a table that provides a 'dimension' that is
+          # Dimension type: local table has ID to dimension table that provides enriched data
           type: :dimension,
           # the interesting data. So in this case, film has language[name], we will never care about language_id
           # We do not want to give 2 language ID columns to pick from, so will skip the remote, and skip date/update

@@ -1,0 +1,468 @@
+# Selecto Comprehensive Demo
+
+This livebook demonstrates all the features of Selecto using the app connection method.
+
+## Prerequisites
+
+Before running this livebook, make sure you have:
+
+1. **Database setup**: Run `mix ecto.setup` to create and seed the database
+2. **Running app**: Start the app with distributed Erlang:
+   ```bash
+   iex --name selecto_test@127.0.0.1 --cookie selecto_test_cookie -S mix phx.server
+   ```
+
+## Setup
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.7.0"},
+  {:postgrex, ">= 0.0.0"},
+  {:selecto, path: "/home/chris/projects/selecto_test/vendor/selecto"},
+  {:selecto_kino, path: "/home/chris/projects/selecto_test/vendor/selecto_kino"}
+])
+```
+
+```elixir
+# Add vendor modules to the path
+Code.append_path("#{__DIR__}/../vendor/selecto_kino/lib")
+Code.append_path("#{__DIR__}/../vendor/selecto/lib")
+
+# Load the SelectoKino modules
+Code.compile_file("#{__DIR__}/../vendor/selecto_kino/lib/selecto_kino.ex")
+Code.compile_file("#{__DIR__}/../vendor/selecto_kino/lib/selecto_kino/connection.ex")
+Code.compile_file("#{__DIR__}/../vendor/selecto_kino/lib/selecto_kino/query_builder.ex")
+Code.compile_file("#{__DIR__}/../vendor/selecto_kino/lib/selecto_kino/selecto_query_builder.ex")
+Code.compile_file("#{__DIR__}/../vendor/selecto_kino/lib/selecto_kino/app_connection.ex")
+
+IO.puts("✅ SelectoKino modules loaded successfully!")
+```
+
+## Step 1: Connect to Running App
+
+Connect to the running SelectoTest application to access real domain configurations and execute queries.
+
+```elixir
+SelectoKino.connect_app()
+```
+
+## Step 2: Explore Available Domains
+
+Once connected, explore the available Selecto domains:
+
+```elixir
+SelectoKino.app_domains()
+```
+
+## Step 3: Basic Domain Queries
+
+### Actors Domain - Basic Selection
+
+Start with simple queries on the actors domain:
+
+```elixir
+SelectoKino.app_query("actors")
+```
+
+### Films Domain - Basic Selection
+
+Explore the films domain:
+
+```elixir
+SelectoKino.app_query("films")
+```
+
+## Step 4: Advanced Selecto Features
+
+The following sections demonstrate advanced Selecto capabilities. Each uses the app connection to execute real queries.
+
+### 4.1 Column Selection and Aliasing
+
+```elixir
+# Let's create a custom query interface for advanced features
+defmodule SelectoDemo do
+  def create_advanced_query_ui(domain_name, title, instructions) do
+    # Create input fields for advanced query building
+    columns_input = Kino.Input.textarea("Select Columns (comma-separated)", 
+      default: "first_name, last_name")
+    
+    joins_input = Kino.Input.textarea("Joins (optional)", 
+      default: "")
+    
+    filters_input = Kino.Input.textarea("Filters (JSON format)", 
+      default: "{}")
+    
+    aggregations_input = Kino.Input.textarea("Aggregations (optional)", 
+      default: "")
+    
+    group_by_input = Kino.Input.text("Group By", default: "")
+    
+    order_by_input = Kino.Input.text("Order By", default: "")
+    
+    limit_input = Kino.Input.number("Limit", default: 10)
+    
+    form = Kino.Control.form([
+      columns: columns_input,
+      joins: joins_input,
+      filters: filters_input,
+      aggregations: aggregations_input,
+      group_by: group_by_input,
+      order_by: order_by_input,
+      limit: limit_input
+    ], submit: "Execute Advanced Query")
+    
+    frame = Kino.Frame.new()
+    
+    layout = Kino.Layout.grid([
+      Kino.Markdown.new("### #{title}"),
+      Kino.Markdown.new(instructions),
+      form,
+      frame
+    ], columns: 1)
+    
+    # Handle form submission
+    Kino.Control.stream(form)
+    |> Kino.listen(fn %{data: query_data, origin: _origin} ->
+      execute_advanced_query(domain_name, query_data, frame, layout)
+    end)
+    
+    layout
+  end
+  
+  defp execute_advanced_query(domain_name, query_data, frame, layout) do
+    try do
+      # Parse the query parameters
+      columns = String.split(query_data.columns, ",") |> Enum.map(&String.trim/1)
+      filters = case Jason.decode(query_data.filters) do
+        {:ok, filters} -> filters
+        _ -> %{}
+      end
+      
+      # Build query params for the app connection
+      query_params = %{
+        selected: columns,
+        joins: parse_joins(query_data.joins),
+        filters: filters,
+        aggregations: parse_aggregations(query_data.aggregations),
+        group_by: parse_group_by(query_data.group_by),
+        order_by: parse_order_by(query_data.order_by),
+        limit: query_data.limit
+      }
+      
+      # Execute via app connection
+      case SelectoKino.AppConnection.run_selecto_query(domain_name, query_params) do
+        {:ok, results} ->
+          query_info = Kino.Markdown.new("""
+          ✅ **Advanced Query Executed Successfully!**
+          
+          **Domain:** #{String.capitalize(domain_name)}
+          **Columns:** #{Enum.join(columns, ", ")}
+          **Filters:** #{inspect(filters)}
+          **Results:** #{length(results)} row(s)
+          """)
+          
+          result_layout = Kino.Layout.grid([
+            layout,
+            query_info,
+            Kino.DataTable.new(results)
+          ], columns: 1)
+          
+          Kino.Frame.render(frame, result_layout)
+        
+        {:error, message} ->
+          error_info = Kino.Markdown.new("❌ **Query Error:** #{message}")
+          result_layout = Kino.Layout.grid([layout, error_info], columns: 1)
+          Kino.Frame.render(frame, result_layout)
+      end
+    rescue
+      error ->
+        error_info = Kino.Markdown.new("❌ **Parsing Error:** #{inspect(error)}")
+        result_layout = Kino.Layout.grid([layout, error_info], columns: 1)
+        Kino.Frame.render(frame, result_layout)
+    end
+  end
+  
+  defp parse_joins(""), do: []
+  defp parse_joins(joins_str) do
+    String.split(joins_str, ",") |> Enum.map(&String.trim/1)
+  end
+  
+  defp parse_aggregations(""), do: []
+  defp parse_aggregations(agg_str) do
+    String.split(agg_str, ",") |> Enum.map(&String.trim/1)
+  end
+  
+  defp parse_group_by(""), do: []
+  defp parse_group_by(group_str) do
+    String.split(group_str, ",") |> Enum.map(&String.trim/1)
+  end
+  
+  defp parse_order_by(""), do: []
+  defp parse_order_by(order_str) do
+    String.split(order_str, ",") |> Enum.map(&String.trim/1)
+  end
+end
+
+"SelectoDemo module loaded!"
+```
+
+### 4.2 Actors with Custom Columns
+
+```elixir
+SelectoDemo.create_advanced_query_ui("actors", 
+  "Actors - Custom Column Selection",
+  """
+  **Try these column combinations:**
+  - `first_name, last_name` - Basic actor info
+  - `actor_id, first_name, last_name, film_count` - With custom columns
+  - `full_name, total_revenue` - Calculated fields
+  
+  **Available custom columns in actors domain:**
+  - `full_name` - Concatenated first and last name
+  - `film_count` - Number of films the actor appeared in
+  - `total_revenue` - Total revenue from actor's films
+  - `avg_rating` - Average rating of actor's films
+  """)
+```
+
+### 4.3 Films with Joins
+
+```elixir
+SelectoDemo.create_advanced_query_ui("films", 
+  "Films - With Language and Category Joins",
+  """
+  **Try these examples:**
+  - Columns: `title, release_year, language_name, category_name`
+  - Joins: `language, film_categories.category`
+  - Filters: `{"release_year": {">=": 2000}}`
+  
+  **Available joins in films domain:**
+  - `language` - Film language information
+  - `film_categories` - Film category associations
+  - `film_actors` - Actor associations
+  - `inventory` - Store inventory data
+  """)
+```
+
+### 4.4 Filtering Examples
+
+```elixir
+SelectoDemo.create_advanced_query_ui("actors", 
+  "Advanced Filtering",
+  """
+  **Filter Examples (JSON format):**
+  
+  1. **Name search:**
+     ```json
+     {"first_name": {"like": "%John%"}}
+     ```
+  
+  2. **Multiple conditions:**
+     ```json
+     {"first_name": {"like": "%a%"}, "film_count": {">": 10}}
+     ```
+  
+  3. **Range filtering:**
+     ```json
+     {"film_count": {"between": [5, 20]}}
+     ```
+  
+  4. **Complex conditions:**
+     ```json
+     {"or": [{"first_name": {"like": "%John%"}}, {"last_name": {"like": "%Smith%"}}]}
+     ```
+  """)
+```
+
+### 4.5 Aggregation Queries
+
+```elixir
+SelectoDemo.create_advanced_query_ui("films", 
+  "Aggregations and Grouping",
+  """
+  **Aggregation Examples:**
+  
+  1. **Count by rating:**
+     - Columns: `rating, count(*) as film_count`
+     - Group By: `rating`
+  
+  2. **Average length by year:**
+     - Columns: `release_year, avg(length) as avg_length`
+     - Group By: `release_year`
+     - Order By: `release_year desc`
+  
+  3. **Revenue by category:**
+     - Columns: `category_name, sum(rental_rate * length) as total_revenue`
+     - Joins: `film_categories.category`
+     - Group By: `category_name`
+  """)
+```
+
+## Step 5: Domain-Specific Features
+
+### 5.1 Actor Performance Analysis
+
+```elixir
+SelectoDemo.create_advanced_query_ui("actors", 
+  "Actor Performance Analysis", 
+  """
+  **Analyze actor performance with custom metrics:**
+  
+  - Columns: `full_name, film_count, avg_rating, total_revenue`
+  - Order By: `total_revenue desc`
+  - Limit: `20`
+  
+  This query shows top-performing actors by revenue.
+  """)
+```
+
+### 5.2 Film Inventory Analysis
+
+```elixir
+SelectoDemo.create_advanced_query_ui("films", 
+  "Film Inventory & Popularity", 
+  """
+  **Analyze film inventory and popularity:**
+  
+  - Columns: `title, rating, length, rental_rate, inventory_count, rental_count`
+  - Joins: `inventory, rental`
+  - Filters: `{"rental_count": {">": 20}}`
+  - Order By: `rental_count desc`
+  
+  This shows popular films with high rental activity.
+  """)
+```
+
+## Step 6: Complex Multi-Table Queries
+
+### 6.1 Store Performance by Geography
+
+```elixir
+SelectoDemo.create_advanced_query_ui("films", 
+  "Store Performance Analysis", 
+  """
+  **Cross-domain analysis with multiple joins:**
+  
+  - Columns: `store_id, city, country, total_rentals, total_revenue`
+  - Joins: `inventory.store, store.address, address.city, city.country`
+  - Group By: `store_id, city, country`
+  - Order By: `total_revenue desc`
+  
+  This analyzes store performance across different geographical locations.
+  """)
+```
+
+### 6.2 Customer Behavior Analysis
+
+```elixir
+SelectoDemo.create_advanced_query_ui("actors", 
+  "Customer Preferences by Actor", 
+  """
+  **Analyze customer preferences:**
+  
+  - Columns: `full_name, customer_count, repeat_customer_rate, avg_customer_rating`
+  - Joins: `film_actors.films, films.inventory, inventory.rental, rental.customer`
+  - Group By: `actor_id, full_name`
+  - Filters: `{"customer_count": {">": 50}}`
+  - Order By: `repeat_customer_rate desc`
+  
+  This shows which actors attract loyal customers.
+  """)
+```
+
+## Step 7: Time-Based Analysis
+
+### 7.1 Seasonal Trends
+
+```elixir
+SelectoDemo.create_advanced_query_ui("films", 
+  "Seasonal Rental Trends", 
+  """
+  **Analyze rental patterns over time:**
+  
+  - Columns: `extract(month from rental_date) as month, extract(year from rental_date) as year, count(*) as rental_count, sum(rental_rate) as monthly_revenue`
+  - Joins: `inventory, rental`
+  - Group By: `extract(year from rental_date), extract(month from rental_date)`
+  - Order By: `year, month`
+  
+  This shows seasonal trends in rental activity.
+  """)
+```
+
+### 7.2 Film Age vs Performance
+
+```elixir
+SelectoDemo.create_advanced_query_ui("films", 
+  "Film Age Performance Analysis", 
+  """
+  **Correlate film age with performance:**
+  
+  - Columns: `release_year, count(*) as film_count, avg(rental_rate) as avg_rental_rate, sum(rental_count) as total_rentals`
+  - Group By: `release_year`
+  - Order By: `release_year desc`
+  - Filters: `{"release_year": {">=": 1990}}`
+  
+  This analyzes how film age affects rental performance.
+  """)
+```
+
+## Step 8: Advanced Selecto Features
+
+### 8.1 Custom Column Expressions
+
+```elixir
+SelectoDemo.create_advanced_query_ui("films", 
+  "Custom Calculated Fields", 
+  """
+  **Create complex calculated fields:**
+  
+  - Columns: `title, length, rental_rate, (length * rental_rate) as value_score, case when length > 120 then 'Long' else 'Short' end as duration_category`
+  - Order By: `value_score desc`
+  - Limit: `25`
+  
+  This demonstrates custom expressions and conditional logic.
+  """)
+```
+
+### 8.2 Window Functions
+
+```elixir
+SelectoDemo.create_advanced_query_ui("actors", 
+  "Ranking and Window Functions", 
+  """
+  **Use window functions for ranking:**
+  
+  - Columns: `full_name, film_count, total_revenue, rank() over (order by total_revenue desc) as revenue_rank, row_number() over (partition by film_count order by total_revenue desc) as rank_in_group`
+  - Order By: `revenue_rank`
+  - Limit: `50`
+  
+  This shows actor rankings using window functions.
+  """)
+```
+
+## Summary
+
+This livebook has demonstrated:
+
+1. **Basic Domain Queries** - Simple selection and filtering
+2. **Advanced Column Selection** - Custom and calculated columns  
+3. **Complex Joins** - Multi-table relationships
+4. **Filtering & Conditions** - Various filter types and operators
+5. **Aggregations** - Grouping and statistical functions
+6. **Cross-Domain Analysis** - Queries spanning multiple domains
+7. **Time-Based Analysis** - Temporal patterns and trends
+8. **Advanced SQL Features** - Window functions, expressions, and rankings
+
+**Key Selecto Benefits Demonstrated:**
+- **Domain-driven design** - Pre-configured schemas with relationships
+- **Type safety** - Strongly typed column definitions
+- **Rich filtering** - Complex condition builders
+- **Custom columns** - Business logic encapsulation
+- **Performance optimization** - Efficient query generation
+- **Reusability** - Domain configurations shared across applications
+
+**Next Steps:**
+- Explore domain customization in your own applications
+- Add custom columns and filters specific to your business logic
+- Create new domains for different data models
+- Integrate Selecto with LiveView for interactive dashboards

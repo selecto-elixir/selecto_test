@@ -12,7 +12,7 @@ defmodule SelectoTestWeb.CoreComponents do
   use Phoenix.Component
 
   alias Phoenix.LiveView.JS
-  import SelectoTestWeb.Gettext
+  use Gettext, backend: SelectoTestWeb.Gettext
 
   @doc """
   Renders a modal.

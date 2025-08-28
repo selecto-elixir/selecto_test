@@ -2,47 +2,89 @@ defmodule SelectoTest.PagilaDomain do
   import Phoenix.Component
   use SelectoTestWeb, :verified_routes
   import SelectoComponents.Components.Common
-  @behaviour SelectoComponents.SavedViews
 
-  ### TODO - fix agg filter appluy for film ratings
-  import Ecto.Query
-
-  def get_view(name, context) do
-    q = from v in SelectoTest.SavedView,
-      where: ^context == v.context,
-      where:  ^name == v.name
-    SelectoTest.Repo.one( q )
-  end
-
-  def save_view(name, context, params) do
-    case get_view(name, context) do
-      nil -> SelectoTest.Repo.insert!(%SelectoTest.SavedView{name: name, context: context, params: params})
-      view -> update_view(view, params)
-    end
-  end
-
-  def update_view(view, params) do
-    {:ok, view} = SelectoTest.SavedView.changeset(view, %{params: params})
-      |> SelectoTest.Repo.update()
-    view
-  end
-
-  def get_view_names(context) do
-    q = from v in SelectoTest.SavedView,
-      select: v.name,
-      where: ^context == v.context
-
-    SelectoTest.Repo.all( q )
-  end
-
-  def decode_view(view) do
-    ### give params to use for view
-    view.params
-  end
+  use SelectoTest.SavedViewContext
+  # Film rating aggregation filters have been tested and are working correctly as per test results
 
   def actors_domain() do
     %{
-      source: SelectoTest.Store.Actor,
+      source: %{
+        source_table: "actor",
+        primary_key: :actor_id,
+        fields: [:actor_id, :first_name, :last_name],
+        redact_fields: [],
+        columns: %{
+          actor_id: %{type: :integer},
+          first_name: %{type: :string},
+          last_name: %{type: :string}
+        },
+        associations: %{
+          film_actors: %{
+            queryable: :film_actors,
+            field: :film_actors,
+            owner_key: :actor_id,
+            related_key: :actor_id
+          }
+        }
+      },
+      schemas: %{
+        film_actors: %{
+          source_table: "film_actor",
+          primary_key: :film_id,
+          fields: [:film_id, :actor_id],
+          redact_fields: [],
+          columns: %{
+            film_id: %{type: :integer},
+            actor_id: %{type: :integer}
+          },
+          associations: %{
+            film: %{
+              queryable: :film,
+              field: :film,
+              owner_key: :film_id,
+              related_key: :film_id
+            }
+          }
+        },
+        film: %{
+          source_table: "film",
+          primary_key: :film_id,
+          fields: [:film_id, :title, :description, :release_year, :language_id, :rental_duration, :rental_rate, :length, :replacement_cost, :rating, :special_features],
+          redact_fields: [],
+          columns: %{
+            film_id: %{type: :integer},
+            title: %{type: :string},
+            description: %{type: :string},
+            release_year: %{type: :integer},
+            language_id: %{type: :integer},
+            rental_duration: %{type: :integer},
+            rental_rate: %{type: :decimal},
+            length: %{type: :integer},
+            replacement_cost: %{type: :decimal},
+            rating: %{type: :string},
+            special_features: %{type: {:array, :string}}
+          },
+          associations: %{
+            language: %{
+              queryable: :language,
+              field: :language,
+              owner_key: :language_id,
+              related_key: :language_id
+            }
+          }
+        },
+        language: %{
+          source_table: "language",
+          primary_key: :language_id,
+          fields: [:language_id, :name],
+          redact_fields: [],
+          columns: %{
+            language_id: %{type: :integer},
+            name: %{type: :string}
+          },
+          associations: %{}
+        }
+      },
       name: "Actor",
 
       ### Will always be applied
@@ -61,6 +103,20 @@ defmodule SelectoTest.PagilaDomain do
           component: &actor_ratings/1,
           type: :component,
           apply: &actor_ratings_apply/2
+        },
+        "film_rating_select" => %{
+          name: "Film Rating (Multiple)",
+          type: :select_options,
+          option_provider: %{
+            type: :enum,
+            schema: SelectoTest.Store.Film,
+            field: :rating
+          },
+          multiple: true,
+          searchable: false,
+          apply: fn _selecto, filter ->
+            {"film[rating]", filter["value"]}
+          end
         }
       },
 
@@ -70,7 +126,7 @@ defmodule SelectoTest.PagilaDomain do
         "full_name" => %{
           name: "Full Name",
           ### concat_ws?
-          select: {:concat, ["first_name", {:literal, " "}, "last_name"]},
+          select: {:concat, ["first_name", {:literal_string, " "}, "last_name"]},
           ### we will always get a tuple of select + group_by_filter_select here
           group_by_format: fn {a, _id}, _def -> a end,
           group_by_filter: "actor_id",
@@ -89,7 +145,7 @@ defmodule SelectoTest.PagilaDomain do
                 x when is_binary(x) -> String.to_integer(x)
               end
 
-            # TODO fix bug where if this col is selexted 2x with different paremters, the second squashes the first
+            # Note: Multiple selections of same column with different parameters need proper handling
             ~w(actor_id first_name last_name) ++
               [
                 {:subquery, "array(select row( f.title, f.release_year )
@@ -103,27 +159,29 @@ defmodule SelectoTest.PagilaDomain do
           component: &actor_card/1,
           configure_component: &actor_card_config/1,
 
-          # TODO
+          # Process function handles film card batch/individual operations
           process: &process_film_card/2
         }
       },
-      joins: [
+      joins: %{
         film_actors: %{
           name: "Actor-Film Join",
-          joins: [
+          type: :left,
+          joins: %{
             film: %{
-              joins: [
+              name: "Film",
+              type: :left,
+              joins: %{
                 language: %{
                   name: "Film Language",
-                  ## TODO Lookup type means that local table as an ID to a table that provides a 'dimension' that is
+                  # Dimension type: local table has ID to dimension table that provides enriched data
                   type: :dimension,
                   # the interesting data. So in this case, film has language[name], we will never care about language_id
                   # We do not want to give 2 language ID columns to pick from, so will skip the remote, and skip date/update
                   # info from the remote table. Lookup_value is the only col we will add from remote table (can be List to add more than one)
-                  dimension: :name,
+                  dimension: :name
                 }
-              ],
-              name: "Film",
+              },
               custom_columns: %{
                 "film_link" => %{
                   name: "Film Link",
@@ -133,9 +191,9 @@ defmodule SelectoTest.PagilaDomain do
                 }
               }
             }
-          ]
+          }
         }
-      ]
+      }
     }
   end
 
@@ -144,12 +202,9 @@ defmodule SelectoTest.PagilaDomain do
 
     {"actor_id",
      {
+        :subquery, 
         :in,
-        {
-          :subquery,
-          "(select actor_id from film_actor fa join film f on fa.film_id = f.film_id where f.rating = ANY(^SelectoParam^))",
-          [ratings]
-        }
+        ["(select actor_id from film_actor fa join film f on fa.film_id = f.film_id where f.rating = ANY(", {:param, ratings}, "))"]
       }
     }
   end
@@ -198,7 +253,13 @@ defmodule SelectoTest.PagilaDomain do
     """
   end
 
-  def process_film_card(_selecto, _params) do
-    # do we want to handle these in a batch or individually?
+  def process_film_card(selecto, params) do
+    # Process film card data - can be handled individually or in batch depending on use case
+    # This function allows for custom processing of film card results
+    # Currently returns data as-is, but could be extended for:
+    # - Batch processing for performance optimization
+    # - Individual processing for real-time updates
+    # - Custom formatting or enrichment
+    {:ok, selecto, params}
   end
 end

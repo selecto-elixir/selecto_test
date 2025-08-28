@@ -2,8 +2,12 @@
 
 app = "testselecto"
 kill_signal = "SIGTERM"
-kill_timeout = 5
-processes = []
+kill_timeout = "5s"
+
+[experimental]
+  auto_rollback = true
+
+[build]
 
 [deploy]
   release_command = "/app/bin/migrate"
@@ -12,32 +16,23 @@ processes = []
   PHX_HOST = "testselecto.fly.dev"
   PORT = "8080"
 
-[experimental]
-  allowed_public_ports = []
-  auto_rollback = true
-
-[[services]]
-  http_checks = []
+[http_service]
   internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
   processes = ["app"]
-  protocol = "tcp"
-  script_checks = []
-  [services.concurrency]
-    hard_limit = 25
-    soft_limit = 20
-    type = "connections"
 
-  [[services.ports]]
-    force_https = true
-    handlers = ["http"]
-    port = 80
+  [http_service.http_options]
+    h2_backend = false
 
-  [[services.ports]]
-    handlers = ["tls", "http"]
-    port = 443
+  [http_service.http_options.response]
+    [http_service.http_options.response.headers]
+      "Upgrade" = "websocket"
+      "Connection" = "Upgrade"
 
-  [[services.tcp_checks]]
-    grace_period = "1s"
-    interval = "15s"
-    restart_limit = 0
-    timeout = "2s"
+[[vm]]
+  memory = "1gb"
+  cpu_kind = "shared"
+  cpus = 1

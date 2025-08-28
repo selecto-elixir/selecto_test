@@ -1,0 +1,19 @@
+╭────────────────────────────────────────────────────────────────────────────╮
+│ ✻ Welcome to Claude Code!                                                  │
+│                                                                            │
+│   /help for help, /status for your current setup                           │
+│                                                                            │
+│   cwd: /data/chris/projects/selecto_test/vendor/selecto_components/assets  │
+╰────────────────────────────────────────────────────────────────────────────╯
+● Compact summary (ctrl+r to expand)
+  ⎿  Read ../../../lib/selecto_test/pagila_domain.ex (247 lines)
+  ⎿  Read ../lib/selecto_components/helpers/filters.ex (125 lines)
+  ⎿  Read ../../../lib/selecto_test_web/live/pagila_live.ex (66 lines)
+  ⎿  Read ../lib/selecto_components/form.ex (485 lines)
+  ⎿ Read ../../../_build/dev/phoenix-colocated/selecto_components/SelectoComponents.Components.TreeBuilder/11_jvtyi7r35xovlo6syocxixs74i.js 
+    (10 lines)
+  ⎿  Todo list read (2 items)
+  ⎿  Claude usage limit reached. Your limit will reset at 3pm (America/Denver).
+
+      • /upgrade to increase your usage limit.
+

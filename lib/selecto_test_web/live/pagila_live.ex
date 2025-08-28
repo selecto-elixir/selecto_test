@@ -6,24 +6,25 @@ defmodule SelectoTestWeb.PagilaLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    {domain, path} =
+    {module, domain, path} =
       case socket.assigns.live_action do
-        :index -> {SelectoTest.PagilaDomain.actors_domain(), "/pagila"}
-        #:stores -> {SelectoTest.PagilaDomain.stores_domain(), "/pagila_stores"}
-        :films -> {SelectoTest.PagilaDomainFilms.domain(), "/pagila_films"}
+        :index -> {SelectoTest.PagilaDomain, SelectoTest.PagilaDomain.actors_domain(), "/pagila"}
+        :stores -> {SelectoTest.PagilaDomain, SelectoTest.PagilaDomain.actors_domain(), "/pagila_stores"}  # Fallback to actors for now
+        :films -> {SelectoTest.PagilaDomainFilms, SelectoTest.PagilaDomainFilms.domain(), "/pagila_films"}
       end
 
-    selecto = Selecto.configure(SelectoTest.Repo, domain)
+    # Configure Selecto to use the main Repo connection pool
+    selecto = Selecto.configure(domain, SelectoTest.Repo)
 
     views = [
       {:aggregate, SelectoComponents.Views.Aggregate, "Aggregate View", %{drill_down: :detail}},
-      {:detail, SelectoComponents.Views.Detail, "Detail View", %{}}
-      # {:graph, SelectoComponents.Views.Graph, "Graph View", %{}},
+      {:detail, SelectoComponents.Views.Detail, "Detail View", %{}},
+      {:graph, SelectoComponents.Views.Graph, "Graph View", %{}}
     ]
 
     state = get_initial_state(views, selecto)
 
-    saved_views = SelectoTest.PagilaDomain.get_view_names( path )
+    saved_views = module.get_view_names( path )
 
     socket =
       assign(socket,

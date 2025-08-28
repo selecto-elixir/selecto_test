@@ -43,7 +43,7 @@ defmodule SelectoTestWeb do
         layouts: [html: SelectoTestWeb.Layouts]
 
       import Plug.Conn
-      import SelectoTestWeb.Gettext
+      use Gettext, backend: SelectoTestWeb.Gettext
 
       unquote(verified_routes())
     end
@@ -85,7 +85,7 @@ defmodule SelectoTestWeb do
       import Phoenix.HTML
       # Core UI components and translation
       import SelectoTestWeb.CoreComponents
-      import SelectoTestWeb.Gettext
+      use Gettext, backend: SelectoTestWeb.Gettext
 
       # Shortcut for generating JS commands
       alias Phoenix.LiveView.JS

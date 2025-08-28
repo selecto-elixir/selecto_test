@@ -1,0 +1,286 @@
+# Pagila Domain Interactive Tutorial
+
+```elixir
+Mix.install([
+  {:selecto, "~> 0.2.6"},
+  {:selecto_kino, path: "../vendor/selecto_kino"},
+  {:postgrex, "~> 0.17.0"},
+  {:kino, "~> 0.12.0"}
+])
+```
+
+## Introduction
+
+Welcome to the interactive pagila domain tutorial! This Livebook will guide you through
+exploring and working with the pagila domain configuration.
+
+## Database Connection
+
+First, let's establish a connection to your database:
+
+```elixir
+# Configure your database connection
+db_config = [
+  hostname: "localhost",
+  port: 5432,
+  username: "postgres", 
+  password: "postgres",
+  database: "selecto_test_dev"
+]
+
+{:ok, conn} = Postgrex.start_link(db_config)
+```
+
+## Domain Overview
+
+Let's load the pagila domain configuration:
+
+```elixir
+# This would load your actual domain configuration
+pagila_domain = %{
+  source: %{
+    source_table: "pagila",
+    primary_key: :id,
+    fields: [:id, :name, :created_at, :updated_at],
+    columns: %{id: :integer, name: :string, created_at: :datetime, updated_at: :datetime}
+  }
+}
+
+IO.inspect(pagila_domain, label: "Pagila Domain")
+```
+
+## Interactive Domain Builder
+
+Use SelectoKino to visually explore and modify your domain:
+
+```elixir
+SelectoKino.domain_builder(pagila_domain)
+```
+
+## Basic Queries
+
+Let's start with some basic queries:
+
+### Simple Selection
+```elixir
+# Select basic fields
+basic_query = 
+  Selecto.select(pagila_domain, [:id, :name])
+  |> Selecto.limit(10)
+
+# Execute and display results
+results = Selecto.execute(basic_query, conn)
+Kino.DataTable.new(results)
+```
+
+### Filtering Data
+```elixir
+# Interactive filter builder
+SelectoKino.filter_builder(pagila_domain)
+```
+
+```elixir
+# Apply filters based on the filter builder above
+filtered_query = 
+  Selecto.select(pagila_domain, [:id, :name, :created_at])
+  |> Selecto.filter(:name, :like, "%example%")
+  |> Selecto.limit(25)
+
+filtered_results = Selecto.execute(filtered_query, conn)
+Kino.DataTable.new(filtered_results)
+```
+
+## Aggregation Examples
+
+### Basic Aggregations
+```elixir
+# Count total records
+count_query = 
+  Selecto.select(pagila_domain, [:count])
+  |> Selecto.aggregate(:count, :id)
+
+count_result = Selecto.execute(count_query, conn)
+IO.inspect(count_result, label: "Total pagila count")
+```
+
+### Grouped Aggregations
+```elixir
+# Group by a field and count
+grouped_query = 
+  Selecto.select(pagila_domain, [:category, :count])
+  |> Selecto.group_by([:category])
+  |> Selecto.aggregate(:count, :id)
+  |> Selecto.order_by([{:count, :desc}])
+
+grouped_results = Selecto.execute(grouped_query, conn)
+Kino.DataTable.new(grouped_results)
+```
+
+## Visual Query Builder
+
+Use the enhanced query builder for complex queries:
+
+```elixir
+SelectoKino.enhanced_query_builder(pagila_domain, conn)
+```
+
+## Performance Analysis
+
+Monitor query performance in real-time:
+
+```elixir
+SelectoKino.performance_monitor(pagila_domain, conn)
+```
+
+### Query Benchmarking
+```elixir
+# Benchmark different query approaches
+queries_to_benchmark = [
+  {"Simple select", fn -> 
+    Selecto.select(pagila_domain, [:id, :name])
+    |> Selecto.limit(100)
+    |> Selecto.execute(conn)
+  end},
+  
+  {"Filtered select", fn -> 
+    Selecto.select(pagila_domain, [:id, :name])
+    |> Selecto.filter(:status, :eq, "active")
+    |> Selecto.limit(100)
+    |> Selecto.execute(conn)
+  end},
+  
+  {"Aggregation", fn -> 
+    Selecto.select(pagila_domain, [:category, :count])
+    |> Selecto.group_by([:category])
+    |> Selecto.aggregate(:count, :id)
+    |> Selecto.execute(conn)
+  end}
+]
+
+Enum.each(queries_to_benchmark, fn {name, query_func} ->
+  {time_microseconds, result} = :timer.tc(query_func)
+  time_ms = time_microseconds / 1000
+  result_count = length(result)
+  
+  IO.puts("**#{name}**: #{time_ms}ms, #{result_count} results")
+end)
+```
+
+## Data Visualization
+
+Create visualizations of your data:
+
+```elixir
+# Get data for visualization
+viz_data = 
+  Selecto.select(pagila_domain, [:created_at, :status])
+  |> Selecto.filter(:created_at, :gte, Date.add(Date.utc_today(), -30))
+  |> Selecto.execute(conn)
+
+# Group by date and status
+daily_counts = 
+  viz_data
+  |> Enum.group_by(fn row -> {Date.from_iso8601!(row.created_at), row.status} end)
+  |> Enum.map(fn {{date, status}, rows} -> %{date: date, status: status, count: length(rows)} end)
+
+Kino.DataTable.new(daily_counts)
+```
+
+## Live Data Exploration
+
+Explore your data interactively:
+
+```elixir
+# Create an interactive data explorer
+input_form = 
+  Kino.Control.form([
+    limit: Kino.Input.number("Limit", default: 25),
+    search: Kino.Input.text("Search term"),
+    status_filter: Kino.Input.select("Status", options: [
+      {"All", nil},
+      {"Active", "active"},
+      {"Inactive", "inactive"}
+    ])
+  ],
+  submit: "Load Data"
+)
+
+Kino.render(input_form)
+
+# React to form changes
+input_form
+|> Kino.Control.stream()
+|> Kino.animate(fn %{data: %{limit: limit, search: search, status_filter: status}} ->
+  query = Selecto.select(pagila_domain, [:id, :name, :status, :created_at])
+  
+  query = if search != "", do: Selecto.filter(query, :name, :ilike, "%#{search}%"), else: query
+  query = if status, do: Selecto.filter(query, :status, :eq, status), else: query
+  query = Selecto.limit(query, limit)
+  
+  results = Selecto.execute(query, conn)
+  Kino.DataTable.new(results)
+end)
+```
+
+## Join Exploration
+
+Explore join relationships:
+
+```elixir
+SelectoKino.join_designer(pagila_domain)
+```
+
+## Domain Configuration Export
+
+Export your customized domain configuration:
+
+```elixir
+SelectoKino.domain_exporter(pagila_domain)
+```
+
+## Advanced Topics
+
+### Custom Aggregation Functions
+```elixir
+# Example of custom SQL in aggregations
+advanced_stats = 
+  Selecto.select(pagila_domain, [
+    "COUNT(*) as total_count",
+    "COUNT(DISTINCT status) as status_variety", 
+    "MIN(created_at) as oldest_record",
+    "MAX(created_at) as newest_record"
+  ])
+  |> Selecto.execute(conn)
+
+Kino.DataTable.new(advanced_stats)
+```
+
+### Subqueries and CTEs
+```elixir
+# Example of more complex query patterns
+# (This would require extending Selecto's CTE support)
+```
+
+## Performance Optimization
+
+Use the performance analyzer to optimize your queries:
+
+```elixir
+SelectoKino.join_analyzer(pagila_domain, conn)
+```
+
+## Next Steps
+
+This tutorial covered the basics of working with the pagila domain. For more advanced
+topics, check out:
+
+- [Pagila Field Reference](pagila_fields.md)
+- [Pagila Join Guide](pagila_joins.md)
+- [Pagila Performance Guide](pagila_performance.md)
+
+## Cleanup
+
+```elixir
+# Close the database connection
+GenServer.stop(conn)
+```

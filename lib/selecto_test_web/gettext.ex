@@ -20,5 +20,5 @@ defmodule SelectoTestWeb.Gettext do
 
   See the [Gettext Docs](https://hexdocs.pm/gettext) for detailed usage.
   """
-  use Gettext, otp_app: :selecto_test
+  use Gettext.Backend, otp_app: :selecto_test
 end
