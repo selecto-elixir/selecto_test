@@ -60,7 +60,7 @@ defmodule SelectoTest.PagilaDomainFilms do
         },
         film_actors: %{
           source_table: "film_actor",
-          primary_key: false,
+          primary_key: :actor_id,
           schema_module: SelectoTest.Store.FilmActor,
           fields: [:film_id, :actor_id],
           redact_fields: [],

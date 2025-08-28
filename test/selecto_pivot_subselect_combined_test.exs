@@ -3,6 +3,8 @@ defmodule SelectoPivotSubselectCombinedTest do
 
   setup_all do
     setup_test_database()
+    # Insert test data that matches what the tests expect
+    insert_pagila_test_data()
   end
 
   describe "Combined Pivot and Subselect features" do
@@ -338,6 +340,66 @@ defmodule SelectoPivotSubselectCombinedTest do
   end
 
   defp setup_test_database do
+    # Insert test data that matches the Pagila schema expectations
+    insert_pagila_test_data()
     :ok
+  end
+
+  defp insert_pagila_test_data do
+    # Create test data that matches what the tests expect
+    # This simulates the Pagila dataset structure
+
+    # Insert languages
+    {:ok, english} = %SelectoTest.Store.Language{name: "English"} |> SelectoTest.Repo.insert()
+
+    # Insert actors that the tests look for
+    {:ok, penelope} = %SelectoTest.Store.Actor{first_name: "PENELOPE", last_name: "GUINESS"} |> SelectoTest.Repo.insert()
+    {:ok, wahlberg} = %SelectoTest.Store.Actor{first_name: "NICK", last_name: "WAHLBERG"} |> SelectoTest.Repo.insert()
+    {:ok, tom} = %SelectoTest.Store.Actor{first_name: "TOM", last_name: "MIRANDA"} |> SelectoTest.Repo.insert()
+    {:ok, julia} = %SelectoTest.Store.Actor{first_name: "JULIA", last_name: "MCQUEEN"} |> SelectoTest.Repo.insert()
+
+    # Insert films
+    {:ok, film1} = %SelectoTest.Store.Film{
+      title: "ACADEMY DINOSAUR",
+      description: "A Epic Drama of a Feminist And a Mad Scientist who must Battle a Teacher in The Canadian Rockies",
+      release_year: 2006,
+      language_id: english.language_id,
+      rental_duration: 6,
+      rental_rate: Decimal.new("0.99"),
+      length: 86,
+      replacement_cost: Decimal.new("20.99"),
+      rating: "PG"
+    } |> SelectoTest.Repo.insert()
+
+    {:ok, film2} = %SelectoTest.Store.Film{
+      title: "ACE GOLDFINGER",
+      description: "A Astounding Epistle of a Database Administrator And a Explorer who must Find a Car in Ancient China",
+      release_year: 2006,
+      language_id: english.language_id,
+      rental_duration: 3,
+      rental_rate: Decimal.new("4.99"),
+      length: 48,
+      replacement_cost: Decimal.new("12.99"),
+      rating: "G"
+    } |> SelectoTest.Repo.insert()
+
+    {:ok, film3} = %SelectoTest.Store.Film{
+      title: "ADAPTATION HOLES",
+      description: "A Astounding Reflection of a Lumberjack And a Car who must Sink a Lumberjack in A Baloon Factory",
+      release_year: 2006,
+      language_id: english.language_id,
+      rental_duration: 7,
+      rental_rate: Decimal.new("2.99"),
+      length: 50,
+      replacement_cost: Decimal.new("18.99"),
+      rating: "NC-17"
+    } |> SelectoTest.Repo.insert()
+
+    # Create film_actor relationships
+    %SelectoTest.Store.FilmActor{actor_id: penelope.actor_id, film_id: film1.film_id} |> SelectoTest.Repo.insert()
+    %SelectoTest.Store.FilmActor{actor_id: penelope.actor_id, film_id: film2.film_id} |> SelectoTest.Repo.insert()
+    %SelectoTest.Store.FilmActor{actor_id: wahlberg.actor_id, film_id: film1.film_id} |> SelectoTest.Repo.insert()
+    %SelectoTest.Store.FilmActor{actor_id: tom.actor_id, film_id: film2.film_id} |> SelectoTest.Repo.insert()
+    %SelectoTest.Store.FilmActor{actor_id: julia.actor_id, film_id: film3.film_id} |> SelectoTest.Repo.insert()
   end
 end
