@@ -167,7 +167,7 @@ defmodule SelectoPivotSubselectCombinedTest do
              alias: "related_films"
            }
          ])
-      |> Selecto.filter([{"rating", "PG"}])  # Additional filter on pivot target (films)
+                  |> Selecto.filter([{"rating", "PG"}])  # Additional filter on pivot target (films)
 
       case Selecto.execute(selecto) do
         {:ok, {rows, columns, _aliases}} ->

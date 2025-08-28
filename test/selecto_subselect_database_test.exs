@@ -5,13 +5,30 @@ defmodule SelectoSubselectDatabaseTest do
     setup_test_database()
   end
 
+  setup do
+    insert_test_data!()
+    :ok
+  end
+
   describe "Subselect with Pagila database - Actor with Film subselects" do
     test "basic subselect - actors with their films as JSON array" do
       selecto = create_selecto()
       |> Selecto.select(["first_name", "last_name"])
       |> Selecto.subselect(["film.title"])
-      |> Selecto.filter([{"first_name", "PENELOPE"}])
+      |> Selecto.filter([{"first_name", "Alice"}])
       |> Selecto.order_by(["last_name"])
+
+      # Debug: Check what actors actually exist
+      debug_selecto = create_selecto()
+      |> Selecto.select(["first_name", "last_name"])
+      |> Selecto.order_by(["last_name"])
+      
+      case Selecto.execute(debug_selecto) do
+        {:ok, {debug_rows, _, _}} ->
+          IO.inspect({:available_actors, debug_rows}, label: "DEBUG: Available actors in database")
+        _ ->
+          IO.inspect("DEBUG: Could not fetch actors")
+      end
 
       case Selecto.execute(selecto) do
         {:ok, {rows, columns, _aliases}} ->
@@ -26,7 +43,7 @@ defmodule SelectoSubselectDatabaseTest do
           [first_row | _] = rows
           [first_name, last_name, films_json] = first_row
           
-          assert first_name == "PENELOPE"
+          assert first_name == "Alice"
           assert is_binary(last_name)
           
           # films_json should be a JSON array string
@@ -34,7 +51,7 @@ defmodule SelectoSubselectDatabaseTest do
             assert is_list(films_json) or (is_binary(films_json) and String.starts_with?(films_json, "["))
           end
           
-          IO.inspect({:basic_subselect, "Found #{length(rows)} PENELOPE actors with film data"})
+          IO.inspect({:basic_subselect, "Found #{length(rows)} ALICE actors with film data"})
 
         {:error, reason} ->
           flunk("Basic subselect query failed: #{inspect(reason)}")
@@ -44,8 +61,8 @@ defmodule SelectoSubselectDatabaseTest do
     test "multiple field subselect - films with title and rating" do
       selecto = create_selecto()
       |> Selecto.select(["first_name", "last_name"])
-      |> Selecto.subselect(["film.title", "film.rating", "film.release_year"])
-      |> Selecto.filter([{"last_name", "WAHLBERG"}])
+      |> Selecto.subselect(["film[title,rating,release_year]"])
+      |> Selecto.filter([{"last_name", "Johnson"}])
 
       case Selecto.execute(selecto) do
         {:ok, {rows, _columns, _aliases}} ->
@@ -78,7 +95,7 @@ defmodule SelectoSubselectDatabaseTest do
              alias: "film_titles"
            }
          ])
-      |> Selecto.filter([{"first_name", "TOM"}])
+      |> Selecto.filter([{"first_name", "John"}])
 
       case Selecto.execute(selecto) do
         {:ok, {rows, columns, _aliases}} ->
@@ -113,7 +130,7 @@ defmodule SelectoSubselectDatabaseTest do
              separator: "; "
            }
          ])
-      |> Selecto.filter([{"first_name", "JULIA"}])
+      |> Selecto.filter([{"first_name", "Jane"}])
 
       case Selecto.execute(selecto) do
         {:ok, {rows, columns, _aliases}} ->
@@ -148,7 +165,7 @@ defmodule SelectoSubselectDatabaseTest do
              alias: "film_count"
            }
          ])
-      |> Selecto.filter([{"first_name", "NICK"}])
+      |> Selecto.filter([{"first_name", "Bob"}])
 
       case Selecto.execute(selecto) do
         {:ok, {rows, columns, _aliases}} ->
@@ -186,7 +203,7 @@ defmodule SelectoSubselectDatabaseTest do
              alias: "films_count"
            }
          ])
-      |> Selecto.filter([{"first_name", "SANDRA"}])
+      |> Selecto.filter([{"first_name", "Alice"}])
 
       case Selecto.execute(selecto) do
         {:ok, {rows, columns, _aliases}} ->
@@ -318,7 +335,7 @@ defmodule SelectoSubselectDatabaseTest do
              order_by: [{:desc, :release_year}, :title]
            }
          ])
-      |> Selecto.filter([{"first_name", "KEVIN"}])
+      |> Selecto.filter([{"first_name", "John"}])
 
       case Selecto.execute(selecto) do
         {:ok, {rows, _columns, _aliases}} ->
@@ -351,7 +368,7 @@ defmodule SelectoSubselectDatabaseTest do
              filters: [{"rating", "PG"}]  # Only PG films in subselect
            }
          ])
-      |> Selecto.filter([{"first_name", "MARY"}])
+      |> Selecto.filter([{"first_name", "Jane"}])
 
       case Selecto.execute(selecto) do
         {:ok, {rows, _columns, _aliases}} ->

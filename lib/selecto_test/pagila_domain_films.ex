@@ -36,6 +36,12 @@ defmodule SelectoTest.PagilaDomainFilms do
             field: :language,
             owner_key: :language_id,
             related_key: :language_id
+          },
+          film_actors: %{
+            queryable: :film_actors,
+            field: :film_actors,
+            owner_key: :film_id,
+            related_key: :film_id
           }
         }
       },
@@ -51,6 +57,45 @@ defmodule SelectoTest.PagilaDomainFilms do
             name: %{type: :string}
           },
           associations: %{}
+        },
+        film_actors: %{
+          source_table: "film_actor",
+          primary_key: false,
+          schema_module: SelectoTest.Store.FilmActor,
+          fields: [:film_id, :actor_id],
+          redact_fields: [],
+          columns: %{
+            film_id: %{type: :integer},
+            actor_id: %{type: :integer}
+          },
+          associations: %{
+            actor: %{
+              queryable: :actor,
+              field: :actor,
+              owner_key: :actor_id,
+              related_key: :actor_id
+            }
+          }
+        },
+        actor: %{
+          source_table: "actor",
+          primary_key: :actor_id,
+          schema_module: SelectoTest.Store.Actor,
+          fields: [:actor_id, :first_name, :last_name],
+          redact_fields: [],
+          columns: %{
+            actor_id: %{type: :integer},
+            first_name: %{type: :string},
+            last_name: %{type: :string}
+          },
+          associations: %{
+            film_actors: %{
+              queryable: :film_actors,
+              field: :film_actors,
+              owner_key: :actor_id,
+              related_key: :actor_id
+            }
+          }
         }
       },
       name: "Film",
@@ -101,6 +146,16 @@ defmodule SelectoTest.PagilaDomainFilms do
           # We do not want to give 2 language ID columns to pick from, so will skip the remote, and skip date/update
           # info from the remote table. Lookup_value is the only col we will add from remote table (can be List to add more than one)
           dimension: :name
+        },
+        film_actors: %{
+          name: "Film Actors",
+          type: :left,
+          joins: %{
+            actor: %{
+              name: "Actor",
+              type: :left
+            }
+          }
         }
       }
     }
