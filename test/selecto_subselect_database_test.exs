@@ -1,40 +1,57 @@
 defmodule SelectoSubselectDatabaseTest do
-  use ExUnit.Case
+  use SelectoTest.SelectoCase, async: false
 
   setup_all do
     setup_test_database()
+  end
+
+  setup do
+    insert_test_data!()
+    :ok
   end
 
   describe "Subselect with Pagila database - Actor with Film subselects" do
     test "basic subselect - actors with their films as JSON array" do
       selecto = create_selecto()
       |> Selecto.select(["first_name", "last_name"])
-      |> Selecto.subselect(["film[title]"])
-      |> Selecto.filter([{"first_name", "PENELOPE"}])
+      |> Selecto.subselect(["film.title"])
+      |> Selecto.filter([{"first_name", "Alice"}])
       |> Selecto.order_by(["last_name"])
+
+      # Debug: Check what actors actually exist
+      debug_selecto = create_selecto()
+      |> Selecto.select(["first_name", "last_name"])
+      |> Selecto.order_by(["last_name"])
+
+      case Selecto.execute(debug_selecto) do
+        {:ok, {debug_rows, _, _}} ->
+          IO.inspect({:available_actors, debug_rows}, label: "DEBUG: Available actors in database")
+        _ ->
+          IO.inspect("DEBUG: Could not fetch actors")
+      end
 
       case Selecto.execute(selecto) do
         {:ok, {rows, columns, _aliases}} ->
           assert length(rows) > 0
-          
+
           # Should have 3 columns: first_name, last_name, film (subselect)
           assert length(columns) == 3
           assert "first_name" in columns
           assert "last_name" in columns
           assert "film" in columns  # Default alias
-          
+
           [first_row | _] = rows
           [first_name, last_name, films_json] = first_row
-          
-          assert first_name == "PENELOPE"
+
+          assert first_name == "Alice"
           assert is_binary(last_name)
-          
+
           # films_json should be a JSON array string
           if films_json do
             assert is_list(films_json) or (is_binary(films_json) and String.starts_with?(films_json, "["))
           end
-          
-          IO.inspect({:basic_subselect, "Found #{length(rows)} PENELOPE actors with film data"})
+
+          IO.inspect({:basic_subselect, "Found #{length(rows)} ALICE actors with film data"})
 
         {:error, reason} ->
           flunk("Basic subselect query failed: #{inspect(reason)}")
@@ -44,22 +61,22 @@ defmodule SelectoSubselectDatabaseTest do
     test "multiple field subselect - films with title and rating" do
       selecto = create_selecto()
       |> Selecto.select(["first_name", "last_name"])
-      |> Selecto.subselect(["film[title, rating, release_year]"])
-      |> Selecto.filter([{"last_name", "WAHLBERG"}])
+      |> Selecto.subselect(["film[title,rating,release_year]"])
+      |> Selecto.filter([{"last_name", "Johnson"}])
 
       case Selecto.execute(selecto) do
         {:ok, {rows, _columns, _aliases}} ->
           assert length(rows) > 0
-          
+
           [first_row | _] = rows
           [_first_name, _last_name, films_data] = first_row
-          
+
           # Should contain structured data with multiple fields
           if films_data do
             # This will be JSON with title, rating, and release_year fields
             IO.inspect({:multi_field_films, films_data})
           end
-          
+
           IO.inspect({:multi_field_subselect, "Found #{length(rows)} WAHLBERG actors with detailed film data"})
 
         {:error, reason} ->
@@ -78,22 +95,22 @@ defmodule SelectoSubselectDatabaseTest do
              alias: "film_titles"
            }
          ])
-      |> Selecto.filter([{"first_name", "TOM"}])
+      |> Selecto.filter([{"first_name", "John"}])
 
       case Selecto.execute(selecto) do
         {:ok, {rows, columns, _aliases}} ->
           assert length(rows) > 0
           assert "film_titles" in columns
-          
+
           [first_row | _] = rows
           [_first_name, _last_name, film_titles] = first_row
-          
+
           # Should be PostgreSQL array or list
           if film_titles do
             assert is_list(film_titles) or is_binary(film_titles)
             IO.inspect({:array_titles, film_titles})
           end
-          
+
           IO.inspect({:array_subselect, "Found #{length(rows)} TOM actors with array film titles"})
 
         {:error, reason} ->
@@ -113,23 +130,23 @@ defmodule SelectoSubselectDatabaseTest do
              separator: "; "
            }
          ])
-      |> Selecto.filter([{"first_name", "JULIA"}])
+      |> Selecto.filter([{"first_name", "Jane"}])
 
       case Selecto.execute(selecto) do
         {:ok, {rows, columns, _aliases}} ->
           assert length(rows) > 0
           assert "film_list" in columns
-          
+
           [first_row | _] = rows
           [_first_name, _last_name, film_list] = first_row
-          
+
           # Should be semicolon-separated string
           if film_list do
             assert is_binary(film_list)
             assert String.contains?(film_list, "; ") or not String.contains?(film_list, "; ")  # Single film case
             IO.inspect({:string_list, film_list})
           end
-          
+
           IO.inspect({:string_subselect, "Found #{length(rows)} JULIA actors with string film list"})
 
         {:error, reason} ->
@@ -148,20 +165,20 @@ defmodule SelectoSubselectDatabaseTest do
              alias: "film_count"
            }
          ])
-      |> Selecto.filter([{"first_name", "NICK"}])
+      |> Selecto.filter([{"first_name", "Bob"}])
 
       case Selecto.execute(selecto) do
         {:ok, {rows, columns, _aliases}} ->
           assert length(rows) > 0
           assert "film_count" in columns
-          
+
           [first_row | _] = rows
           [_first_name, _last_name, film_count] = first_row
-          
+
           # Should be integer count
           assert is_integer(film_count)
           assert film_count >= 0
-          
+
           IO.inspect({:count_subselect, "Found #{length(rows)} NICK actors, first has #{film_count} films"})
 
         {:error, reason} ->
@@ -186,21 +203,21 @@ defmodule SelectoSubselectDatabaseTest do
              alias: "films_count"
            }
          ])
-      |> Selecto.filter([{"first_name", "SANDRA"}])
+      |> Selecto.filter([{"first_name", "Alice"}])
 
       case Selecto.execute(selecto) do
         {:ok, {rows, columns, _aliases}} ->
           assert length(rows) > 0
           assert "films_json" in columns
           assert "films_count" in columns
-          
+
           [first_row | _] = rows
           [_first_name, _last_name, films_json, films_count] = first_row
-          
+
           # Should have both JSON data and count
           if films_json, do: assert(is_list(films_json) or is_binary(films_json))
           assert is_integer(films_count)
-          
+
           IO.inspect({:multi_subselect, "SANDRA actor with #{films_count} films, JSON: #{inspect(films_json)}"})
 
         {:error, reason} ->
@@ -213,7 +230,7 @@ defmodule SelectoSubselectDatabaseTest do
     test "films with actor subselect" do
       selecto = create_film_selecto()
       |> Selecto.select(["title", "rating"])
-      |> Selecto.subselect(["film_actors[actor_id]"])  # Get actor IDs for each film
+      |> Selecto.subselect(["film_actors.actor_id"])  # Get actor IDs for each film
       |> Selecto.filter([{"rating", "PG"}])
       |> Selecto.order_by(["title"])
 
@@ -223,18 +240,18 @@ defmodule SelectoSubselectDatabaseTest do
           assert "title" in columns
           assert "rating" in columns
           assert "film_actors" in columns
-          
+
           [first_row | _] = rows
           [title, rating, actors] = first_row
-          
+
           assert is_binary(title)
           assert rating == "PG"
-          
+
           # actors should be JSON array of actor_ids
           if actors do
             IO.inspect({:film_actors, "Film '#{title}' has actors: #{inspect(actors)}"})
           end
-          
+
           IO.inspect({:film_subselect, "Found #{length(rows)} PG films with actor data"})
 
         {:error, reason} ->
@@ -247,26 +264,26 @@ defmodule SelectoSubselectDatabaseTest do
     test "generated SQL contains expected subselect structure" do
       selecto = create_selecto()
       |> Selecto.select(["first_name"])
-      |> Selecto.subselect(["film[title]"])
+      |> Selecto.subselect(["film.title"])
       |> Selecto.filter([{"last_name", "SMITH"}])
 
       {sql, params} = Selecto.to_sql(selecto)
-      
+
       # Should contain main SELECT
       assert sql =~ "SELECT"
       assert sql =~ "first_name"
-      
+
       # Should contain subselect with JSON aggregation
       assert sql =~ "json_agg" or sql =~ "array_agg"
       assert sql =~ "SELECT" # Subquery SELECT
-      
+
       # Should contain correlation condition
       assert sql =~ "WHERE"
       assert sql =~ "=" # Correlation join
-      
+
       # Should have parameter for filter
       assert "SMITH" in params
-      
+
       IO.inspect({:subselect_sql, sql})
       IO.inspect({:subselect_params, params})
     end
@@ -300,7 +317,7 @@ defmodule SelectoSubselectDatabaseTest do
       assert string_sql =~ "string_agg"
 
       IO.inspect({:json_sql, json_sql})
-      IO.inspect({:array_sql, array_sql})  
+      IO.inspect({:array_sql, array_sql})
       IO.inspect({:string_sql, string_sql})
     end
   end
@@ -318,20 +335,20 @@ defmodule SelectoSubselectDatabaseTest do
              order_by: [{:desc, :release_year}, :title]
            }
          ])
-      |> Selecto.filter([{"first_name", "KEVIN"}])
+      |> Selecto.filter([{"first_name", "John"}])
 
       case Selecto.execute(selecto) do
         {:ok, {rows, _columns, _aliases}} ->
           assert length(rows) > 0
-          
+
           [first_row | _] = rows
           [_first_name, _last_name, films] = first_row
-          
+
           if films do
             # Films should be ordered by release_year desc, then title
             IO.inspect({:ordered_films, films})
           end
-          
+
           IO.inspect({:ordered_subselect, "Found #{length(rows)} KEVIN actors with ordered films"})
 
         {:error, reason} ->
@@ -351,20 +368,20 @@ defmodule SelectoSubselectDatabaseTest do
              filters: [{"rating", "PG"}]  # Only PG films in subselect
            }
          ])
-      |> Selecto.filter([{"first_name", "MARY"}])
+      |> Selecto.filter([{"first_name", "Jane"}])
 
       case Selecto.execute(selecto) do
         {:ok, {rows, _columns, _aliases}} ->
           assert length(rows) > 0
-          
+
           [first_row | _] = rows
           [_first_name, _last_name, pg_films] = first_row
-          
+
           # Should only contain PG-rated films
           if pg_films do
             IO.inspect({:filtered_films, pg_films})
           end
-          
+
           IO.inspect({:filtered_subselect, "Found #{length(rows)} MARY actors with PG films only"})
 
         {:error, reason} ->
@@ -376,16 +393,16 @@ defmodule SelectoSubselectDatabaseTest do
   # Helper functions
   defp create_selecto do
     SelectoTest.PagilaDomain.actors_domain()
-    |> Selecto.configure(get_postgrex_opts(), validate: false)
+    |> Selecto.configure(SelectoTest.Repo, validate: false)
   end
 
   defp create_film_selecto do
     SelectoTest.PagilaDomainFilms.films_domain()
-    |> Selecto.configure(get_postgrex_opts(), validate: false)
+    |> Selecto.configure(SelectoTest.Repo, validate: false)
   end
 
   defp get_postgrex_opts do
-    Application.get_env(:selecto_test, SelectoTest.Repo)[:postgrex_opts] || 
+    Application.get_env(:selecto_test, SelectoTest.Repo)[:postgrex_opts] ||
       [
         hostname: System.get_env("DB_HOST", "localhost"),
         port: String.to_integer(System.get_env("DB_PORT", "5432")),

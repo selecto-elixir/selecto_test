@@ -1,8 +1,10 @@
 defmodule SelectoPivotSubselectCombinedTest do
-  use ExUnit.Case
+  use SelectoTest.SelectoCase, async: false
 
   setup_all do
     setup_test_database()
+    # Insert test data that matches what the tests expect
+    insert_pagila_test_data()
   end
 
   describe "Combined Pivot and Subselect features" do
@@ -25,26 +27,26 @@ defmodule SelectoPivotSubselectCombinedTest do
       case Selecto.execute(selecto) do
         {:ok, {rows, columns, _aliases}} ->
           assert length(rows) > 0
-          
+
           # Should have film columns plus film subselect
           assert "title" in columns
-          assert "rating" in columns  
+          assert "rating" in columns
           assert "release_year" in columns
           assert "film_details" in columns
-          
+
           [first_row | _] = rows
           [title, rating, year, film_json] = first_row
-          
+
           # Verify we have film data
           assert is_binary(title)
           assert is_binary(rating) or is_nil(rating)
-          
+
           # Verify film subselect contains film data
           if film_json do
             assert is_list(film_json) or is_binary(film_json)
             IO.inspect({:pivot_with_subselect, "Film '#{title}' has details: #{inspect(film_json)}"})
           end
-          
+
           IO.inspect({:combined_test, "Found #{length(rows)} films from PENELOPE filter with actor subselects"})
 
         {:error, reason} ->
@@ -85,24 +87,24 @@ defmodule SelectoPivotSubselectCombinedTest do
       case Selecto.execute(selecto) do
         {:ok, {rows, columns, _aliases}} ->
           assert length(rows) > 0
-          
+
           # Should have all the columns
           expected_columns = ["title", "length", "films_json", "film_count", "film_titles"]
           Enum.each(expected_columns, fn col ->
             assert col in columns, "Missing column: #{col}"
           end)
-          
+
           [first_row | _] = rows
           [title, length, films_json, film_count, film_titles] = first_row
-          
+
           assert is_binary(title)
           assert is_integer(length) or is_nil(length)
           assert is_integer(film_count)
-          
+
           if films_json, do: assert(is_list(films_json) or is_binary(films_json))
           if film_titles, do: assert(is_binary(film_titles))
-          
-          IO.inspect({:multi_format_subselects, 
+
+          IO.inspect({:multi_format_subselects,
             "Film '#{title}' has #{film_count} films: #{film_titles}, JSON: #{inspect(films_json)}"
           })
 
@@ -133,15 +135,15 @@ defmodule SelectoPivotSubselectCombinedTest do
         {:ok, {rows, columns, _aliases}} ->
           assert length(rows) > 0
           assert "other_films_by_actors" in columns
-          
+
           [first_row | _] = rows
           [title, rating, other_films] = first_row
-          
+
           assert is_binary(title)
-          
+
           # other_films should contain R-rated films ordered by year
           if other_films do
-            IO.inspect({:filtered_ordered_subselect, 
+            IO.inspect({:filtered_ordered_subselect,
               "Film '#{title}' (#{rating}) has R-rated films by same actors: #{inspect(other_films)}"
             })
           end
@@ -167,19 +169,19 @@ defmodule SelectoPivotSubselectCombinedTest do
              alias: "related_films"
            }
          ])
-      |> Selecto.filter([{"rating", "PG"}])  # Additional filter on pivot target (films)
+                  |> Selecto.filter([{"rating", "PG"}])  # Additional filter on pivot target (films)
 
       case Selecto.execute(selecto) do
         {:ok, {rows, columns, _aliases}} ->
           if length(rows) > 0 do
             assert "related_films" in columns
-            
+
             [first_row | _] = rows
             [title, rating, length, related_films] = first_row
-            
+
             assert rating == "PG"  # Should match our additional filter
-            
-            IO.inspect({:complex_pivot_subselect, 
+
+            IO.inspect({:complex_pivot_subselect,
               "JULIA MCQUEEN's PG film '#{title}' has related films: #{inspect(related_films)}"
             })
           else
@@ -210,14 +212,14 @@ defmodule SelectoPivotSubselectCombinedTest do
         {:ok, {rows, columns, _aliases}} ->
           assert length(rows) > 0
           assert "film_titles" in columns
-          
+
           [first_row | _] = rows
           [title, _description, film_titles] = first_row
-          
+
           # Should include film titles
           if film_titles do
             assert is_binary(film_titles)
-            IO.inspect({:exists_with_subselect, 
+            IO.inspect({:exists_with_subselect,
               "Film '#{title}' (found via EXISTS) has related films: #{film_titles}"
             })
           end
@@ -244,23 +246,23 @@ defmodule SelectoPivotSubselectCombinedTest do
          ])
 
       {sql, params} = Selecto.to_sql(selecto)
-      
+
       # Should contain pivot structure (main FROM is film table)
       assert sql =~ "FROM film"
-      
+
       # Should contain pivot subquery (IN or EXISTS)
       assert sql =~ "IN (" or sql =~ "EXISTS ("
-      
+
       # Should contain subselect correlated subquery
       assert sql =~ "json_agg"
-      
+
       # Should have multiple SELECT keywords (main + subqueries)
       select_count = (String.split(sql, "SELECT") |> length()) - 1
       assert select_count >= 2  # At least main SELECT and subselect SELECT
-      
+
       # Should have filter parameter
       assert "TEST" in params
-      
+
       IO.inspect({:combined_sql, sql})
       IO.inspect({:combined_params, params})
     end
@@ -290,14 +292,14 @@ defmodule SelectoPivotSubselectCombinedTest do
       |> Selecto.order_by([{:desc, "release_year"}, "title"])
 
       {sql, params} = Selecto.to_sql(selecto)
-      
+
       # Should generate without syntax errors
       assert is_binary(sql)
       assert is_list(params)
-      
+
       # Should be reasonably complex query
       assert String.length(sql) > 200  # Complex queries should be substantial
-      
+
       IO.inspect({:performance_test_sql_length, String.length(sql)})
     end
   end
@@ -323,11 +325,11 @@ defmodule SelectoPivotSubselectCombinedTest do
   # Helper functions
   defp create_selecto do
     SelectoTest.PagilaDomain.actors_domain()
-    |> Selecto.configure(get_postgrex_opts(), validate: false)
+    |> Selecto.configure(SelectoTest.Repo, validate: false)
   end
 
   defp get_postgrex_opts do
-    Application.get_env(:selecto_test, SelectoTest.Repo)[:postgrex_opts] || 
+    Application.get_env(:selecto_test, SelectoTest.Repo)[:postgrex_opts] ||
       [
         hostname: System.get_env("DB_HOST", "localhost"),
         port: String.to_integer(System.get_env("DB_PORT", "5432")),
@@ -338,6 +340,66 @@ defmodule SelectoPivotSubselectCombinedTest do
   end
 
   defp setup_test_database do
+    # Insert test data that matches the Pagila schema expectations
+    insert_pagila_test_data()
     :ok
+  end
+
+  defp insert_pagila_test_data do
+    # Create test data that matches what the tests expect
+    # This simulates the Pagila dataset structure
+
+    # Insert languages
+    {:ok, english} = %SelectoTest.Store.Language{name: "English"} |> SelectoTest.Repo.insert()
+
+    # Insert actors that the tests look for
+    {:ok, penelope} = %SelectoTest.Store.Actor{first_name: "PENELOPE", last_name: "GUINESS"} |> SelectoTest.Repo.insert()
+    {:ok, wahlberg} = %SelectoTest.Store.Actor{first_name: "NICK", last_name: "WAHLBERG"} |> SelectoTest.Repo.insert()
+    {:ok, tom} = %SelectoTest.Store.Actor{first_name: "TOM", last_name: "MIRANDA"} |> SelectoTest.Repo.insert()
+    {:ok, julia} = %SelectoTest.Store.Actor{first_name: "JULIA", last_name: "MCQUEEN"} |> SelectoTest.Repo.insert()
+
+    # Insert films
+    {:ok, film1} = %SelectoTest.Store.Film{
+      title: "ACADEMY DINOSAUR",
+      description: "A Epic Drama of a Feminist And a Mad Scientist who must Battle a Teacher in The Canadian Rockies",
+      release_year: 2006,
+      language_id: english.language_id,
+      rental_duration: 6,
+      rental_rate: Decimal.new("0.99"),
+      length: 86,
+      replacement_cost: Decimal.new("20.99"),
+      rating: "PG"
+    } |> SelectoTest.Repo.insert()
+
+    {:ok, film2} = %SelectoTest.Store.Film{
+      title: "ACE GOLDFINGER",
+      description: "A Astounding Epistle of a Database Administrator And a Explorer who must Find a Car in Ancient China",
+      release_year: 2006,
+      language_id: english.language_id,
+      rental_duration: 3,
+      rental_rate: Decimal.new("4.99"),
+      length: 48,
+      replacement_cost: Decimal.new("12.99"),
+      rating: "G"
+    } |> SelectoTest.Repo.insert()
+
+    {:ok, film3} = %SelectoTest.Store.Film{
+      title: "ADAPTATION HOLES",
+      description: "A Astounding Reflection of a Lumberjack And a Car who must Sink a Lumberjack in A Baloon Factory",
+      release_year: 2006,
+      language_id: english.language_id,
+      rental_duration: 7,
+      rental_rate: Decimal.new("2.99"),
+      length: 50,
+      replacement_cost: Decimal.new("18.99"),
+      rating: "NC-17"
+    } |> SelectoTest.Repo.insert()
+
+    # Create film_actor relationships
+    %SelectoTest.Store.FilmActor{actor_id: penelope.actor_id, film_id: film1.film_id} |> SelectoTest.Repo.insert()
+    %SelectoTest.Store.FilmActor{actor_id: penelope.actor_id, film_id: film2.film_id} |> SelectoTest.Repo.insert()
+    %SelectoTest.Store.FilmActor{actor_id: wahlberg.actor_id, film_id: film1.film_id} |> SelectoTest.Repo.insert()
+    %SelectoTest.Store.FilmActor{actor_id: tom.actor_id, film_id: film2.film_id} |> SelectoTest.Repo.insert()
+    %SelectoTest.Store.FilmActor{actor_id: julia.actor_id, film_id: film3.film_id} |> SelectoTest.Repo.insert()
   end
 end
