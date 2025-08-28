@@ -1,5 +1,5 @@
 defmodule SelectoPivotDatabaseTest do
-  use ExUnit.Case
+  use SelectoTest.SelectoCase, async: false
 
   setup_all do
     setup_test_database()
@@ -185,12 +185,12 @@ defmodule SelectoPivotDatabaseTest do
   # Helper functions
   defp create_selecto do
     SelectoTest.PagilaDomain.actors_domain()
-    |> Selecto.configure(get_postgrex_opts(), validate: false)
+    |> Selecto.configure(SelectoTest.Repo, validate: false)
   end
 
   defp create_film_selecto do
     SelectoTest.PagilaDomainFilms.films_domain()
-    |> Selecto.configure(get_postgrex_opts(), validate: false)
+    |> Selecto.configure(SelectoTest.Repo, validate: false)
   end
 
   defp get_postgrex_opts do

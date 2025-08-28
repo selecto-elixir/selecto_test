@@ -4,6 +4,10 @@ defmodule SelectoTest.PagilaDomainFilms do
 
   # Fixed: rating filter configured in filters section for dropdown UI
 
+  def films_domain() do
+    domain()
+  end
+
   def domain() do
     ### customer info, payments and rentals
     %{

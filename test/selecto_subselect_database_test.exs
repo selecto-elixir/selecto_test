@@ -1,5 +1,5 @@
 defmodule SelectoSubselectDatabaseTest do
-  use ExUnit.Case
+  use SelectoTest.SelectoCase, async: false
 
   setup_all do
     setup_test_database()
@@ -9,7 +9,7 @@ defmodule SelectoSubselectDatabaseTest do
     test "basic subselect - actors with their films as JSON array" do
       selecto = create_selecto()
       |> Selecto.select(["first_name", "last_name"])
-      |> Selecto.subselect(["film[title]"])
+      |> Selecto.subselect(["film.title"])
       |> Selecto.filter([{"first_name", "PENELOPE"}])
       |> Selecto.order_by(["last_name"])
 
@@ -44,7 +44,7 @@ defmodule SelectoSubselectDatabaseTest do
     test "multiple field subselect - films with title and rating" do
       selecto = create_selecto()
       |> Selecto.select(["first_name", "last_name"])
-      |> Selecto.subselect(["film[title, rating, release_year]"])
+      |> Selecto.subselect(["film.title", "film.rating", "film.release_year"])
       |> Selecto.filter([{"last_name", "WAHLBERG"}])
 
       case Selecto.execute(selecto) do
@@ -213,7 +213,7 @@ defmodule SelectoSubselectDatabaseTest do
     test "films with actor subselect" do
       selecto = create_film_selecto()
       |> Selecto.select(["title", "rating"])
-      |> Selecto.subselect(["film_actors[actor_id]"])  # Get actor IDs for each film
+      |> Selecto.subselect(["film_actors.actor_id"])  # Get actor IDs for each film
       |> Selecto.filter([{"rating", "PG"}])
       |> Selecto.order_by(["title"])
 
@@ -247,7 +247,7 @@ defmodule SelectoSubselectDatabaseTest do
     test "generated SQL contains expected subselect structure" do
       selecto = create_selecto()
       |> Selecto.select(["first_name"])
-      |> Selecto.subselect(["film[title]"])
+      |> Selecto.subselect(["film.title"])
       |> Selecto.filter([{"last_name", "SMITH"}])
 
       {sql, params} = Selecto.to_sql(selecto)
@@ -376,12 +376,12 @@ defmodule SelectoSubselectDatabaseTest do
   # Helper functions
   defp create_selecto do
     SelectoTest.PagilaDomain.actors_domain()
-    |> Selecto.configure(get_postgrex_opts(), validate: false)
+    |> Selecto.configure(SelectoTest.Repo, validate: false)
   end
 
   defp create_film_selecto do
     SelectoTest.PagilaDomainFilms.films_domain()
-    |> Selecto.configure(get_postgrex_opts(), validate: false)
+    |> Selecto.configure(SelectoTest.Repo, validate: false)
   end
 
   defp get_postgrex_opts do
