@@ -92,6 +92,84 @@ FROM table_name
 
 ---
 
+## ⊕ Set Operations
+
+### Overview
+Set operations provide powerful capabilities for combining query results using standard SQL set operations (UNION, INTERSECT, EXCEPT). All participating queries must have compatible column counts and types.
+
+### Implementation Status: ✅ COMPLETE
+
+### Features Implemented
+
+#### Core Set Operations
+- ✅ **UNION** - Combine results from multiple queries (removes duplicates)
+- ✅ **UNION ALL** - Combine results including duplicates (faster)
+- ✅ **INTERSECT** - Return only rows that appear in both queries
+- ✅ **INTERSECT ALL** - Include duplicate intersecting rows
+- ✅ **EXCEPT** - Return rows from first query not in second query
+- ✅ **EXCEPT ALL** - Include duplicates in difference calculation
+
+#### Schema Compatibility
+- ✅ **Automatic Validation** - Column count and type compatibility checking
+- ✅ **Type Coercion** - Intelligent type compatibility (string/text, numeric types, date/time)
+- ✅ **Error Handling** - Clear error messages for incompatible schemas
+- ✅ **Column Mapping** - Support for mapping columns between different schemas (planned)
+
+#### Advanced Features  
+- ✅ **Chained Operations** - Multiple set operations in sequence
+- ✅ **ORDER BY Support** - Ordering applied to final combined results
+- ✅ **Parameter Binding** - Proper SQL parameter handling across all queries
+- ✅ **SQL Generation** - Full integration with Selecto's SQL pipeline
+
+### API Usage
+
+```elixir
+# Basic UNION - combine results from two queries
+query1 = Selecto.configure(users_domain, connection)
+  |> Selecto.select(["name", "email"])
+  |> Selecto.filter([{"active", true}])
+  
+query2 = Selecto.configure(contacts_domain, connection)  
+  |> Selecto.select(["full_name", "email_address"])
+  |> Selecto.filter([{"status", "active"}])
+  
+combined = Selecto.union(query1, query2, all: true)
+
+# INTERSECT - find common records
+premium_active = Selecto.intersect(premium_users, active_users)
+
+# EXCEPT - find differences
+free_users = Selecto.except(all_users, premium_users)
+
+# Chained set operations
+result = query1
+  |> Selecto.union(query2) 
+  |> Selecto.intersect(query3)
+  |> Selecto.except(query4)
+  |> Selecto.order_by([{"name", :asc}])
+```
+
+### Generated SQL Examples
+
+```sql
+-- Basic UNION ALL
+(SELECT name, email FROM users WHERE active = true)
+UNION ALL
+(SELECT full_name, email_address FROM contacts WHERE status = 'active')
+
+-- Chained operations with ORDER BY
+(
+  (SELECT name, email FROM users WHERE active = true)
+  UNION 
+  (SELECT full_name, email_address FROM contacts WHERE status = 'active')
+)
+INTERSECT
+(SELECT name, email FROM premium_users)
+ORDER BY name ASC
+```
+
+---
+
 ## 🔍 Enhanced Subfilters
 
 ### Overview
