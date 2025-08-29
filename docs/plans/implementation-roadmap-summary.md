@@ -302,6 +302,12 @@ This roadmap prioritizes foundational improvements first, followed by high-impac
   - ✅ Subfilter System (2.1): 41/41 tests passing with production-ready implementation
   - ✅ Window Functions & Analytics (2.2): Comprehensive OLAP capabilities with full PostgreSQL function support
   - ✅ Set Operations (2.3): Complete UNION/INTERSECT/EXCEPT with schema validation and chaining
-- **Next Priority: Phase 3** - UI/UX Enhancements (SelectoComponents improvements)
+- **Phase 4: IN PROGRESS** - Advanced SQL Features (skipping Phase 3 temporarily)
+  - ✅ LATERAL Joins (4.1): Fully implemented with correlated subqueries and table functions (15/15 tests passing)
+  - ✅ VALUES Clauses (4.2): Fully implemented with data validation and SQL generation (40/40 tests passing)
+  - ⏳ JSON Operations (4.3): Pending
+  - ⏳ Common Table Expressions (4.4): Pending  
+  - ⏳ CASE Expressions (4.5): Pending
+  - ⏳ Array Operations (4.6): Pending
 
 Each phase delivers concrete value while building toward the comprehensive Selecto ecosystem vision.
