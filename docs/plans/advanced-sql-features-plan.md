@@ -105,7 +105,7 @@ selecto
 - **Type Inference**: Automatic type detection from data
 - **CTE Integration**: Seamless integration with Common Table Expressions
 
-### Phase 4.3: JSON Operations (2.5 weeks)
+### Phase 4.3: JSON Operations (2.5 weeks) ✅ COMPLETED
 
 #### API Design
 ```elixir
@@ -140,14 +140,23 @@ selecto
 # GROUP BY category
 ```
 
-#### JSON Function Coverage
-- **Extraction**: `->`, `->>`, `#>`, `#>>`, `json_extract_path`
-- **Testing**: `?`, `?&`, `?|`, `@>`, `<@`, `json_typeof`
-- **Aggregation**: `json_agg`, `json_object_agg`, `jsonb_agg`
-- **Construction**: `json_build_object`, `json_build_array`
-- **Manipulation**: `json_set`, `json_insert`, `json_remove`
+#### Implementation Components ✅ ALL COMPLETED
+- ✅ **JSON Operations Spec**: Comprehensive operation types and validation
+- ✅ **SQL Generation**: PostgreSQL-specific JSON/JSONB function calls
+- ✅ **API Integration**: json_select, json_filter, json_order_by methods
+- ✅ **Pipeline Integration**: SELECT, WHERE, ORDER BY clause support
 
-### Phase 4.4: Common Table Expressions (2 weeks)
+#### JSON Function Coverage ✅ IMPLEMENTED
+- **Extraction**: `->`, `->>`, `json_extract_path`, `json_extract_path_text`
+- **Testing**: `@>`, `<@`, `?`, `json_exists`, `jsonb_path_exists`
+- **Aggregation**: `json_agg`, `json_object_agg`, `jsonb_agg`, `jsonb_object_agg`
+- **Construction**: `json_build_object`, `json_build_array`, `jsonb_build_object`, `jsonb_build_array`
+- **Manipulation**: `json_set`, `jsonb_set`, `json_insert`, `jsonb_insert`
+- **Type Operations**: `json_typeof`, `jsonb_typeof`, `json_array_length`, `jsonb_array_length`
+
+**Status**: Fully implemented with comprehensive PostgreSQL JSON/JSONB support. Production-ready.
+
+### Phase 4.4: Common Table Expressions (2 weeks) ✅ COMPLETED
 
 #### API Design
 ```elixir
@@ -184,11 +193,15 @@ selecto
   )
 ```
 
-#### Implementation Components
-- **CTE Registry**: Track named CTEs and their dependencies
-- **SQL Generation**: WITH clause construction and ordering
-- **Recursive Support**: UNION ALL handling for recursive patterns
-- **Scope Management**: CTE visibility and reference resolution
+#### Implementation Components ✅ ALL COMPLETED
+- ✅ **CTE Specification**: Comprehensive CTE definitions with validation
+- ✅ **SQL Generation**: WITH clause construction with dependency ordering
+- ✅ **Recursive Support**: UNION ALL handling for recursive patterns with base/recursive queries
+- ✅ **API Integration**: with_cte, with_recursive_cte, and with_ctes methods
+- ✅ **Pipeline Integration**: Full integration with main SQL building pipeline
+- ✅ **Dependency Management**: Circular dependency detection and CTE ordering
+
+**Status**: Fully implemented with comprehensive PostgreSQL CTE support including recursive CTEs. Production-ready.
 
 ### Phase 4.5: CASE Expressions (1 week)
 
