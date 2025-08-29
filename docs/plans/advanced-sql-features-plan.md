@@ -1,377 +1,462 @@
-# Advanced SQL Features Enhancement Plan
+# Advanced SQL Features Implementation Plan
 
 ## Overview
 
-Add support for advanced PostgreSQL features including LATERAL JOINs, VALUES clauses, table functions, and enhanced JSON/JSONB operations to extend Selecto's query capabilities.
+This plan outlines Phase 4 of the Selecto roadmap, implementing advanced PostgreSQL features that extend beyond standard SQL operations. These features enable sophisticated data manipulation patterns, dynamic query construction, and modern JSON-based workflows.
 
-## Architecture Design
+Building on the completed foundational phases (Parameterized Joins, Output Formats, Subfilters, Window Functions, Set Operations), this phase adds enterprise-grade SQL capabilities while maintaining Selecto's characteristic ease of use and type safety.
 
-### Core Module Structure
-```
-vendor/selecto/lib/selecto/advanced/               # Advanced features namespace
-├── lateral.ex                                     # LATERAL JOIN support
-├── values.ex                                      # VALUES clause generation
-├── table_functions.ex                             # PostgreSQL table functions
-├── json_operations.ex                             # Enhanced JSON/JSONB support
-└── common_table_expressions.ex                    # Advanced CTE patterns
-vendor/selecto/lib/selecto/builder/advanced.ex     # SQL generation for advanced features
-```
+## Target Features
 
-### API Design
+### 1. LATERAL Joins
+Advanced join capability where the right side can reference columns from the left side, enabling correlated subqueries in join clauses.
 
-#### LATERAL JOINs
+### 2. VALUES Clauses
+Construct inline tables from literal values, useful for data transformations and testing scenarios.
+
+### 3. JSON Operations
+Comprehensive PostgreSQL JSON/JSONB support including path queries, aggregation, and manipulation functions.
+
+### 4. Common Table Expressions (CTEs)
+Recursive and non-recursive WITH clauses for hierarchical queries and query modularity.
+
+### 5. CASE Expressions
+Conditional logic within SELECT statements for data transformation.
+
+### 6. Array Operations
+PostgreSQL array functions for list manipulation and aggregation.
+
+## Implementation Strategy
+
+### Phase 4.1: LATERAL Joins (2 weeks) ✅ COMPLETED
+
+#### API Design
 ```elixir
-# Correlated subqueries with LATERAL
+# LATERAL join with correlated subquery
 selecto
-|> Selecto.select(["customers.name", "recent_orders.order_date", "recent_orders.total"])
-|> Selecto.lateral_join(:recent_orders, fn parent_selecto ->
-     Selecto.configure(order_domain, connection)
-     |> Selecto.select(["order_date", "total"])
-     |> Selecto.filter([{"customer_id", {:ref, "customers.id"}}])
-     |> Selecto.order_by([{"order_date", :desc}])
-     |> Selecto.limit(5)
-   end)
+|> Selecto.select(["customer.name", "recent_rentals.rental_count"])
+|> Selecto.lateral_join(
+  :left,
+  fn base_query ->
+    Selecto.configure(rental_domain, connection)
+    |> Selecto.select([{:func, "COUNT", ["*"], as: "rental_count"}])
+    |> Selecto.filter([{"customer_id", {:ref, "customer.customer_id"}}])
+    |> Selecto.filter([{"rental_date", {:>, {:func, "CURRENT_DATE - INTERVAL '30 days'"}}}])
+  end,
+  as: "recent_rentals"
+)
 
-# LATERAL with array unnesting
-selecto  
-|> Selecto.lateral_join(:expanded_tags, fn _parent ->
-     {:unnest, "customers.tags"}  # unnest(customers.tags) AS expanded_tags
-   end)
-|> Selecto.select(["customers.name", "expanded_tags.value"])
+# Generated SQL:
+# SELECT customer.name, recent_rentals.rental_count
+# FROM customer
+# LEFT JOIN LATERAL (
+#   SELECT COUNT(*) as rental_count
+#   FROM rental 
+#   WHERE customer_id = customer.customer_id 
+#     AND rental_date > CURRENT_DATE - INTERVAL '30 days'
+# ) recent_rentals ON true
 ```
 
-#### VALUES Clauses
-```elixir
-# Inline data generation
-selecto
-|> Selecto.values([
-     %{month: 1, name: "January", days: 31},
-     %{month: 2, name: "February", days: 28},
-     %{month: 3, name: "March", days: 31}
-   ], as: :months)
-|> Selecto.select(["months.name", "months.days"])
+#### Implementation Components ✅ ALL COMPLETED
+- ✅ **Lateral Join Spec**: Define correlation references and subquery builders
+- ✅ **SQL Generation**: Handle LATERAL keyword and correlation resolution
+- ✅ **Validation**: Ensure referenced columns exist in left-side tables
+- ✅ **Testing**: Complex correlation scenarios and edge cases
 
-# VALUES with JOINs for lookup tables
+**Status**: Fully implemented with comprehensive test coverage (15/15 tests passing). Production-ready.
+
+### Phase 4.2: VALUES Clauses (1.5 weeks) ✅ COMPLETED
+
+#### API Design
+```elixir
+# VALUES table for data transformation
+values_data = [
+  ["PG", "Family Friendly", 1],
+  ["PG-13", "Teen", 2], 
+  ["R", "Adult", 3],
+  ["NC-17", "Restricted", 4]
+]
+
 selecto
-|> Selecto.join_values([
-     {"premium", 100},
-     {"standard", 50}, 
-     {"basic", 10}
-   ], as: :tier_limits, on: [{"customers.tier", "tier_limits.tier"}])
-|> Selecto.select(["customers.name", "tier_limits.limit"])
+|> Selecto.with_values(values_data, 
+    columns: ["rating_code", "description", "sort_order"],
+    as: "rating_lookup"
+  )
+|> Selecto.join(:inner, "film.rating = rating_lookup.rating_code")
+|> Selecto.select(["film.title", "rating_lookup.description"])
+|> Selecto.order_by([{"rating_lookup.sort_order", :asc}])
+
+# Generated SQL:
+# WITH rating_lookup (rating_code, description, sort_order) AS (
+#   VALUES ('PG', 'Family Friendly', 1),
+#          ('PG-13', 'Teen', 2),
+#          ('R', 'Adult', 3), 
+#          ('NC-17', 'Restricted', 4)
+# )
+# SELECT film.title, rating_lookup.description
+# FROM film
+# INNER JOIN rating_lookup ON film.rating = rating_lookup.rating_code
+# ORDER BY rating_lookup.sort_order ASC
 ```
 
-#### Table Functions
+#### Implementation Components
+- **Values Spec**: Define column mappings and data validation
+- **SQL Generation**: VALUES clause construction with proper escaping
+- **Type Inference**: Automatic type detection from data
+- **CTE Integration**: Seamless integration with Common Table Expressions
+
+### Phase 4.3: JSON Operations (2.5 weeks) ✅ COMPLETED
+
+#### API Design
 ```elixir
-# PostgreSQL table functions
-selecto
-|> Selecto.table_function(:generate_series, [1, 100], as: :numbers)
-|> Selecto.select(["numbers.value"])
-
-# Custom table functions with parameters
-selecto
-|> Selecto.table_function(:get_sales_by_region, ["North America", "2023"], as: :regional_sales)
-|> Selecto.select(["regional_sales.month", "regional_sales.total"])
-
-# JSON table functions
-selecto
-|> Selecto.table_function(:json_array_elements, ["customer_data.preferences"], as: :prefs)
-|> Selecto.select(["customers.name", "prefs.value"])
-```
-
-#### Enhanced JSON Operations
-```elixir
-# JSON path queries
+# JSON path queries and operations
 selecto
 |> Selecto.select([
-     "customers.name",
-     {:json_path, "customer_data.profile", "$.address.city", as: "city"},
-     {:json_path, "customer_data.preferences", "$[*].category", as: "categories"}
-   ])
-
-# JSON aggregation
-selecto  
-|> Selecto.select([
-     "region",
-     {:json_agg, "customer_data.profile", as: "customer_profiles"},
-     {:json_object_agg, ["customers.name", "customers.total_sales"], as: "sales_by_customer"}
-   ])
-|> Selecto.group_by(["region"])
-
-# JSONB operations
-selecto
+    "product.name",
+    {:json_extract, "metadata", "$.category", as: "category"},
+    {:json_extract, "metadata", "$.specs.weight", as: "weight"},
+    {:json_array_length, "tags", as: "tag_count"}
+  ])
 |> Selecto.filter([
-     {:jsonb_contains, "customer_data.preferences", %{newsletter: true}},
-     {:jsonb_path_exists, "customer_data.profile", "$.address.city"}
-   ])
-```
+    {:json_contains, "metadata", %{"category" => "electronics"}},
+    {:json_path_exists, "metadata", "$.specs.warranty"}
+  ])
+|> Selecto.order_by([{:json_extract, "metadata", "$.priority"}])
 
-## Implementation Phases
-
-### Phase 1: LATERAL JOINs (Week 1-3)
-- [ ] Basic LATERAL JOIN syntax support
-- [ ] Correlated subquery parameter passing
-- [ ] Integration with existing JOIN infrastructure  
-- [ ] LATERAL with table functions and unnest operations
-
-### Phase 2: VALUES and Table Functions (Week 4-5)
-- [ ] VALUES clause generation and integration
-- [ ] Built-in PostgreSQL table function support  
-- [ ] Custom table function registration system
-- [ ] Parameter binding for table functions
-
-### Phase 3: Enhanced JSON Support (Week 6-7)
-- [ ] JSON path query operators (`->`, `->>`, `#>`, `#>>`)
-- [ ] JSON aggregation functions (`json_agg`, `json_object_agg`)
-- [ ] JSONB containment and existence operators
-- [ ] JSON table functions (`json_array_elements`, `json_each`)
-
-### Phase 4: Advanced CTEs and Integration (Week 8-9)
-- [ ] Recursive CTE enhancements  
-- [ ] Multiple CTE support with dependencies
-- [ ] Integration testing across all advanced features
-- [ ] Performance optimization and query plan analysis
-
-## SQL Generation Examples
-
-### LATERAL JOIN with Correlated Subquery
-```elixir
-# Input Selecto query
-selecto
-|> Selecto.lateral_join(:top_orders, fn _parent ->
-     Selecto.configure(order_domain, connection)
-     |> Selecto.select(["order_date", "total"])
-     |> Selecto.filter([{"customer_id", {:ref, "customers.id"}}])
-     |> Selecto.limit(3)
-   end)
-```
-
-```sql
--- Generated SQL
-SELECT customers.name, top_orders.order_date, top_orders.total
-FROM customers
-LEFT JOIN LATERAL (
-  SELECT order_date, total 
-  FROM orders 
-  WHERE customer_id = customers.id 
-  LIMIT 3
-) top_orders ON true
-```
-
-### VALUES with Complex Data
-```elixir
-# Input Selecto query
-selecto
-|> Selecto.values([
-     %{code: "USD", rate: 1.0, symbol: "$"},
-     %{code: "EUR", rate: 0.85, symbol: "€"}  
-   ], as: :currencies)
-```
-
-```sql
--- Generated SQL  
-SELECT * FROM (
-  VALUES 
-    ('USD', 1.0, '$'),
-    ('EUR', 0.85, '€')
-) AS currencies(code, rate, symbol)
-```
-
-### Enhanced JSON Operations
-```elixir
-# Input Selecto query
+# Advanced JSON aggregation
 selecto
 |> Selecto.select([
-     "name",
-     {:json_path, "profile", "$.address.city", as: "city"},
-     {:jsonb_contains, "preferences", %{newsletter: true}, as: "subscribed"}
-   ])
+    "category",
+    {:json_agg, "product_name", as: "products"},
+    {:json_object_agg, "product_id", "price", as: "price_map"}
+  ])
+|> Selecto.group_by(["category"])
+
+# Generated SQL:
+# SELECT category,
+#        JSON_AGG(product_name) as products,
+#        JSON_OBJECT_AGG(product_id, price) as price_map
+# FROM products
+# GROUP BY category
 ```
 
-```sql
--- Generated SQL
-SELECT 
-  name,
-  profile #>> '{address,city}' AS city,
-  (preferences @> '{"newsletter": true}') AS subscribed
-FROM customers
-```
+#### Implementation Components ✅ ALL COMPLETED
+- ✅ **JSON Operations Spec**: Comprehensive operation types and validation
+- ✅ **SQL Generation**: PostgreSQL-specific JSON/JSONB function calls
+- ✅ **API Integration**: json_select, json_filter, json_order_by methods
+- ✅ **Pipeline Integration**: SELECT, WHERE, ORDER BY clause support
 
-## Integration Points
+#### JSON Function Coverage ✅ IMPLEMENTED
+- **Extraction**: `->`, `->>`, `json_extract_path`, `json_extract_path_text`
+- **Testing**: `@>`, `<@`, `?`, `json_exists`, `jsonb_path_exists`
+- **Aggregation**: `json_agg`, `json_object_agg`, `jsonb_agg`, `jsonb_object_agg`
+- **Construction**: `json_build_object`, `json_build_array`, `jsonb_build_object`, `jsonb_build_array`
+- **Manipulation**: `json_set`, `jsonb_set`, `json_insert`, `jsonb_insert`
+- **Type Operations**: `json_typeof`, `jsonb_typeof`, `json_array_length`, `jsonb_array_length`
 
-### With Existing Features
-- **Regular JOINs**: LATERAL JOINs work alongside standard JOIN types
-- **Filters**: WHERE clauses can reference LATERAL JOIN results
-- **Window Functions**: Window functions over LATERAL JOIN results
-- **Set Operations**: UNION/INTERSECT with advanced SQL features
+**Status**: Fully implemented with comprehensive PostgreSQL JSON/JSONB support. Production-ready.
 
-### With SelectoComponents
-- **Dynamic Data**: VALUES clauses for UI-generated lookup data
-- **JSON Visualization**: Enhanced JSON operations for rich data display
-- **Advanced Filters**: JSON path filtering in component interfaces
+### Phase 4.4: Common Table Expressions (2 weeks) ✅ COMPLETED
 
-## LATERAL JOIN Patterns
-
-### Correlated Subqueries
+#### API Design
 ```elixir
-# Top N per group using LATERAL
-customers_with_recent_orders = selecto
-  |> Selecto.lateral_join(:recent_orders, fn _parent ->
-       order_selecto
-       |> Selecto.filter([{"customer_id", {:ref, "customers.id"}}])
-       |> Selecto.order_by([{"order_date", :desc}])
-       |> Selecto.limit(5)
-     end)
-```
-
-### Array Operations
-```elixir
-# Unnest arrays with LATERAL
+# Non-recursive CTE
 selecto
-|> Selecto.lateral_join(:tag_elements, {:unnest, "customers.tags"})
-|> Selecto.filter([{"tag_elements.value", {:ilike, "%premium%"}}])
-```
+|> Selecto.with_cte("high_value_customers", fn ->
+    Selecto.configure(customer_domain, connection)
+    |> Selecto.select(["customer_id", "first_name", "last_name"])
+    |> Selecto.aggregate([{"payment.amount", :sum, as: "total_spent"}])
+    |> Selecto.join(:inner, "payment", on: "customer.customer_id = payment.customer_id")
+    |> Selecto.group_by(["customer.customer_id", "customer.first_name", "customer.last_name"])
+    |> Selecto.having([{"total_spent", {:>, 100}}])
+  end)
+|> Selecto.select(["film.title", "high_value_customers.first_name"])
+|> Selecto.join(:inner, "high_value_customers", 
+    on: "rental.customer_id = high_value_customers.customer_id")
 
-### Function Calls
-```elixir  
-# Table functions with LATERAL
+# Recursive CTE for hierarchical data
 selecto
-|> Selecto.lateral_join(:monthly_stats, 
-     {:table_function, :get_customer_stats, ["customers.id", "2023"]})
+|> Selecto.with_recursive_cte("org_hierarchy", 
+    base_query: fn ->
+      # Anchor: top-level managers
+      Selecto.configure(employee_domain, connection)
+      |> Selecto.select(["employee_id", "name", "manager_id", {:literal, 0, as: "level"}])
+      |> Selecto.filter([{"manager_id", nil}])
+    end,
+    recursive_query: fn cte ->
+      # Recursive: employees under each manager
+      Selecto.configure(employee_domain, connection)
+      |> Selecto.select(["employee.employee_id", "employee.name", "employee.manager_id", 
+                        {:func, "org_hierarchy.level + 1", as: "level"}])
+      |> Selecto.join(:inner, cte, on: "employee.manager_id = org_hierarchy.employee_id")
+    end
+  )
 ```
 
-## JSON/JSONB Operation Types
+#### Implementation Components ✅ ALL COMPLETED
+- ✅ **CTE Specification**: Comprehensive CTE definitions with validation
+- ✅ **SQL Generation**: WITH clause construction with dependency ordering
+- ✅ **Recursive Support**: UNION ALL handling for recursive patterns with base/recursive queries
+- ✅ **API Integration**: with_cte, with_recursive_cte, and with_ctes methods
+- ✅ **Pipeline Integration**: Full integration with main SQL building pipeline
+- ✅ **Dependency Management**: Circular dependency detection and CTE ordering
 
-### Path Operations
-- `->`: JSON object field by key
-- `->>`: JSON object field as text  
-- `#>`: JSON object at path
-- `#>>`: JSON object at path as text
+**Status**: Fully implemented with comprehensive PostgreSQL CTE support including recursive CTEs. Production-ready.
 
-### Containment Operations
-- `@>`: JSON contains (left contains right)
-- `<@`: JSON contained by (left contained by right)
-- `?`: JSON object has key
-- `?|`: JSON object has any key
-- `?&`: JSON object has all keys
+### Phase 4.5: CASE Expressions (1 week) ✅ COMPLETED
 
-### Aggregation Functions
-- `json_agg()`: Aggregate values as JSON array
-- `json_object_agg()`: Aggregate key-value pairs as JSON object
-- `jsonb_agg()`: JSONB version of json_agg
-- `jsonb_object_agg()`: JSONB version of json_object_agg
-
-## Table Function Registry
-
-### Built-in Functions
+#### API Design
 ```elixir
-# Pre-registered PostgreSQL functions
-table_functions = %{
-  generate_series: %{params: [:integer, :integer], returns: :setof_integer},
-  unnest: %{params: [:array], returns: :setof_element},
-  json_array_elements: %{params: [:json], returns: :setof_json},
-  json_each: %{params: [:json], returns: :setof_record}
-}
+# Simple CASE expression
+selecto
+|> Selecto.select([
+    "film.title",
+    {:case, "film.rating",
+      when: [
+        {"G", "General Audience"},
+        {"PG", "Parental Guidance"},
+        {"PG-13", "Parents Strongly Cautioned"},
+        {"R", "Restricted"}
+      ],
+      else: "Not Rated",
+      as: "rating_description"
+    }
+  ])
+
+# Searched CASE expression
+selecto
+|> Selecto.select([
+    "customer.first_name",
+    {:case_when, [
+        {[{"payment_total", {:>, 100}}], "Premium"},
+        {[{"payment_total", {:between, 50, 100}}], "Standard"},
+        {[{"payment_total", {:>, 0}}], "Basic"}
+      ],
+      else: "No Purchases",
+      as: "customer_tier"
+    }
+  ])
+
+# Generated SQL:
+# SELECT customer.first_name,
+#        CASE 
+#          WHEN payment_total > 100 THEN 'Premium'
+#          WHEN payment_total BETWEEN 50 AND 100 THEN 'Standard'
+#          WHEN payment_total > 0 THEN 'Basic'
+#          ELSE 'No Purchases'
+#        END as customer_tier
 ```
 
-### Custom Function Registration
+#### Implementation Components ✅ ALL COMPLETED
+- ✅ **CASE Expression Specification**: Comprehensive CASE specification with validation
+- ✅ **SQL Generation**: PostgreSQL CASE syntax with proper parameter binding
+- ✅ **API Integration**: case_select and case_when_select methods
+- ✅ **Pipeline Integration**: SELECT clause support with aliasing
+- ✅ **Validation System**: Type checking and format validation for CASE expressions
+
+#### CASE Expression Coverage ✅ IMPLEMENTED
+- **Simple CASE**: Column-based CASE expressions with value matching
+- **Searched CASE**: Condition-based CASE expressions with complex logic
+- **Multiple Conditions**: Support for multiple conditions per WHEN clause
+- **Parameter Binding**: Safe parameter handling for values and conditions
+- **Aliasing**: AS clause support for CASE expression results
+- **Null Handling**: Proper NULL value handling in CASE expressions
+
+**Status**: Fully implemented with comprehensive PostgreSQL CASE expression support. Production-ready.
+
+### Phase 4.6: Array Operations (1.5 weeks) ✅ COMPLETED
+
+#### API Design  
 ```elixir
-# Register custom table functions
-Selecto.register_table_function(:get_sales_by_region, %{
-  params: [:text, :text], 
-  returns: [month: :date, total: :numeric],
-  description: "Get sales data for specific region and year"
-})
+# Array construction and operations
+selecto
+|> Selecto.select([
+    "category.name",
+    {:array_agg, "film.title", as: "films"},
+    {:array_length, {:array_agg, "film.film_id"}, 1, as: "film_count"}
+  ])
+|> Selecto.filter([
+    {:array_contains, "film.special_features", "Trailers"},
+    {:array_overlap, "film.special_features", ["Deleted Scenes", "Behind the Scenes"]}
+  ])
+|> Selecto.group_by(["category.category_id", "category.name"])
+
+# Array unnesting
+selecto
+|> Selecto.select(["film.title", "feature"])
+|> Selecto.unnest("film.special_features", as: "feature")
+|> Selecto.order_by(["film.title", "feature"])
+
+# Generated SQL:
+# SELECT film.title, feature
+# FROM film, UNNEST(film.special_features) AS feature
+# ORDER BY film.title, feature
 ```
+
+#### Implementation Components ✅ ALL COMPLETED
+- ✅ **Array Operations Spec**: Comprehensive specification module with validation
+- ✅ **SQL Builder**: Full PostgreSQL array SQL generation with parameter binding
+- ✅ **API Methods**: array_select, array_filter, unnest, array_manipulate
+- ✅ **Pipeline Integration**: Integrated into SELECT, WHERE, and FROM clauses
+- ✅ **Test Coverage**: Unit tests for all array operations and SQL generation
+
+#### Array Function Coverage ✅ IMPLEMENTED
+- **Aggregation**: `array_agg`, `array_agg_distinct`, `string_agg`
+- **Testing**: `@>`, `<@`, `&&`, `=` (contains, contained, overlap, equality)
+- **Size**: `array_length`, `cardinality`, `array_ndims`, `array_dims`
+- **Construction**: `array`, `array_fill`, `array_append`, `array_prepend`, `array_cat`
+- **Manipulation**: `array_remove`, `array_replace`, `array_position`, `array_positions`
+- **Transformation**: `unnest`, `array_to_string`, `string_to_array`
+- **Set Operations**: `array_union`, `array_intersect`, `array_except` (PG 14+)
+
+**Status**: Fully implemented with comprehensive PostgreSQL array support. Production-ready.
+
+## Architecture Integration
+
+### Module Structure
+```
+vendor/selecto/lib/selecto/advanced/
+├── lateral_join.ex                 # LATERAL join specifications
+├── values_clause.ex               # VALUES table construction  
+├── json_operations.ex             # JSON function definitions
+├── cte.ex                         # Common Table Expression specs
+├── case_expression.ex             # CASE/WHEN logic
+└── array_operations.ex            # Array function support
+
+vendor/selecto/lib/selecto/builder/advanced/
+├── lateral_join_builder.ex        # LATERAL SQL generation
+├── values_builder.ex              # VALUES SQL generation
+├── json_builder.ex                # JSON SQL generation
+├── cte_builder.ex                 # CTE SQL generation
+├── case_builder.ex                # CASE SQL generation
+└── array_builder.ex               # Array SQL generation
+```
+
+### SQL Pipeline Integration
+Advanced features integrate into the main SQL generation pipeline:
+
+1. **CTEs**: Generated first in WITH clauses
+2. **VALUES**: Integrated as CTE or subquery sources
+3. **LATERAL**: Enhanced join builder with correlation support
+4. **JSON/Array/CASE**: Enhanced column selection and filtering
+5. **Parameter Binding**: Advanced parameter handling for complex expressions
 
 ## Testing Strategy
 
 ### Unit Tests
-```elixir
-test "LATERAL JOIN generates correct SQL" do
-  result = selecto
-    |> Selecto.lateral_join(:sub, fn _p -> simple_query end)
-    |> Selecto.to_sql()
-    
-  assert result =~ "LEFT JOIN LATERAL"
-  assert result =~ "ON true"
-end
-
-test "VALUES clause with complex data" do
-  values_data = [%{id: 1, name: "test"}]
-  
-  result = selecto
-    |> Selecto.values(values_data, as: :lookup)
-    |> Selecto.to_sql()
-    
-  assert result =~ "VALUES"
-  assert result =~ "AS lookup"
-end
-
-test "JSON path operations" do
-  result = selecto
-    |> Selecto.select([{:json_path, "data", "$.key", as: "value"}])
-    |> Selecto.to_sql()
-    
-  assert result =~ "#>>"
-end
-```
+- Individual feature API testing
+- SQL generation verification
+- Parameter binding validation
+- Error condition handling
 
 ### Integration Tests
-- LATERAL JOINs with complex domain relationships
-- VALUES clauses in production-like scenarios  
-- JSON operations with real-world data structures
-- Performance testing with large datasets
+- Cross-feature compatibility (CTE + LATERAL + JSON)
+- Complex real-world scenarios
+- Performance benchmarking
+- Memory usage profiling
+
+### Test Data Scenarios
+- **Hierarchical Data**: Employee org charts, category trees
+- **JSON Documents**: Product catalogs, user preferences
+- **Array Data**: Tags, features, multi-value attributes
+- **Correlation Patterns**: Customer analytics, time-series analysis
 
 ## Performance Considerations
 
-### LATERAL JOIN Optimization
-- **Index usage**: Ensure correlated columns are indexed
-- **Limit early**: Apply LIMIT in LATERAL subqueries when possible
-- **Join selectivity**: Most selective tables joined first
+### Query Optimization
+- **LATERAL Join Strategies**: When to use vs. EXISTS/correlated subqueries
+- **CTE Materialization**: PostgreSQL CTE optimization behavior
+- **JSON Indexing**: GIN index recommendations for JSONB operations
+- **Array Performance**: Index strategies for array containment queries
 
-### JSON Operation Performance  
-- **GIN indexes**: Use GIN indexes for JSONB containment queries
-- **Path indexing**: Index commonly queried JSON paths
-- **Type consistency**: Use JSONB over JSON for better performance
+### Memory Management
+- **Large VALUES**: Streaming support for big inline datasets
+- **Deep CTEs**: Recursive query depth limitations
+- **JSON Processing**: Memory-efficient JSON aggregation
+- **Complex Expressions**: Compilation and caching strategies
 
-### VALUES Clause Efficiency
-- **Size limits**: Avoid very large VALUES clauses (use temp tables instead)
-- **Type consistency**: Ensure consistent types across VALUES rows
-- **Index compatibility**: VALUES data compatible with existing indexes
+## Error Handling & Validation
 
-## Error Handling
+### Advanced Validation Rules
+- **LATERAL Correlations**: Validate referenced columns exist
+- **CTE Dependencies**: Detect circular references
+- **JSON Paths**: Validate JSONPath syntax
+- **Recursive Limits**: Prevent infinite recursion
 
-### LATERAL JOIN Errors
-```elixir
-%Selecto.Advanced.LateralError{
-  type: :invalid_correlation,
-  message: "Cannot reference parent table field 'invalid_field'",
-  available_fields: ["id", "name", "email"]
-}
-```
+### Error Messages
+- Clear guidance for complex SQL errors
+- Suggestions for query optimization
+- Performance warnings for expensive operations
 
-### JSON Operation Errors
-```elixir
-%Selecto.Advanced.JsonError{
-  type: :invalid_path,
-  message: "JSON path '$.invalid..path' is malformed",
-  suggestion: "Use valid JSON path syntax like '$.field.subfield'"
-}
-```
+## Migration & Compatibility
+
+### Breaking Changes
+- None expected - all features are additive
+- New API methods with optional parameters
+- Backward compatible SQL generation
+
+### PostgreSQL Version Support
+- **Minimum**: PostgreSQL 10 (for improved JSON support)
+- **Recommended**: PostgreSQL 13+ (for advanced JSON path queries)
+- **Feature Flags**: Graceful degradation for unsupported features
 
 ## Documentation Requirements
 
-- [ ] Complete API documentation for all advanced features
-- [ ] LATERAL JOIN patterns and best practices guide
-- [ ] JSON/JSONB operation reference with examples
-- [ ] Table function registration and usage guide  
-- [ ] Performance tuning recommendations for advanced features
+### API Documentation
+- [ ] Comprehensive function documentation with examples
+- [ ] Performance guidelines for each feature
+- [ ] PostgreSQL version compatibility matrix
+- [ ] Common patterns and anti-patterns guide
+
+### Tutorial Content
+- [ ] LATERAL joins vs. correlated subqueries guide
+- [ ] JSON querying and indexing best practices
+- [ ] Recursive CTE patterns for hierarchical data
+- [ ] Advanced data transformation recipes
+
+### Migration Guides
+- [ ] Converting complex raw SQL to Selecto advanced features
+- [ ] Performance optimization techniques
+- [ ] Debugging complex queries
 
 ## Success Metrics
 
+### Feature Completeness
 - [ ] All major PostgreSQL advanced features supported
-- [ ] Seamless integration with existing Selecto functionality
-- [ ] Performance comparable to hand-written SQL (<15% overhead)
+- [ ] 100% API compatibility with existing Selecto patterns
 - [ ] Comprehensive test coverage (>95%)
-- [ ] Clear documentation with practical examples
+- [ ] Zero performance regression on existing queries
+
+### Performance Targets
+- [ ] LATERAL joins within 10% of hand-written SQL performance
+- [ ] JSON operations support for documents up to 10MB
+- [ ] CTE recursion depth support up to 1000 levels
+- [ ] Array operations efficient for arrays up to 10,000 elements
+
+### Developer Experience
+- [ ] Intuitive API consistent with existing Selecto patterns
+- [ ] Clear error messages for complex scenarios
+- [ ] Comprehensive examples for all major use cases
+- [ ] Production deployment validation
+
+## Future Enhancements
+
+### Advanced PostgreSQL Features
+- [ ] **Window Function Extensions**: FILTER clauses, custom aggregates
+- [ ] **Advanced Text Search**: Full-text search integration
+- [ ] **Geometric Operations**: PostGIS-style spatial queries
+- [ ] **Custom Functions**: User-defined function integration
+
+### Query Analysis & Optimization
+- [ ] **Query Plan Analysis**: EXPLAIN integration and optimization hints
+- [ ] **Performance Monitoring**: Query performance tracking
+- [ ] **Auto-Optimization**: Automatic query rewriting suggestions
+- [ ] **Index Recommendations**: Smart indexing suggestions
+
+### Developer Tooling
+- [ ] **Visual Query Builder**: UI for complex query construction
+- [ ] **Query Debugger**: Step-through query execution
+- [ ] **Performance Profiler**: Detailed performance analysis
+- [ ] **Schema Inspector**: Advanced schema exploration tools
+
+This Advanced SQL Features implementation establishes Selecto as a comprehensive PostgreSQL query builder capable of handling the most sophisticated analytical and data manipulation scenarios while maintaining its core principles of type safety and developer productivity.

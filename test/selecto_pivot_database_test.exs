@@ -2,8 +2,8 @@ defmodule SelectoPivotDatabaseTest do
   use SelectoTest.SelectoCase, async: false
 
   # Import the domain modules needed for testing
-  alias SelectoTest.PagilaDomain
-  alias SelectoTest.PagilaDomainFilms
+  # alias SelectoTest.PagilaDomain  # Unused
+  # alias SelectoTest.PagilaDomainFilms  # Unused
 
   setup_all do
     setup_test_database()
@@ -30,7 +30,6 @@ defmodule SelectoPivotDatabaseTest do
           assert is_integer(year) or is_nil(year)
           assert is_binary(rating) or is_nil(rating)
 
-          IO.inspect({:pivot_results, "Found #{length(rows)} films with PENELOPE actors"})
 
         {:error, reason} ->
           flunk("Pivot query failed: #{inspect(reason)}")
@@ -48,7 +47,6 @@ defmodule SelectoPivotDatabaseTest do
           # Should get films for the specific actor PENELOPE GUINESS
           assert length(rows) > 0
 
-          IO.inspect({:specific_actor_pivot, "Found #{length(rows)} films for PENELOPE GUINESS"})
 
         {:error, reason} ->
           flunk("Multi-filter pivot failed: #{inspect(reason)}")
@@ -65,7 +63,6 @@ defmodule SelectoPivotDatabaseTest do
         {:ok, {rows, _columns, _aliases}} ->
           assert length(rows) > 0
 
-          IO.inspect({:exists_strategy, "Found #{length(rows)} films using EXISTS strategy"})
 
         {:error, reason} ->
           flunk("EXISTS pivot strategy failed: #{inspect(reason)}")
@@ -84,7 +81,6 @@ defmodule SelectoPivotDatabaseTest do
           assert length(rows) > 0
 
           # Should be more films than with preserved filters
-          IO.inspect({:no_preserve_filters, "Found #{length(rows)} total films (no filter preservation)"})
 
         {:error, reason} ->
           flunk("Non-preserving pivot failed: #{inspect(reason)}")
@@ -109,7 +105,6 @@ defmodule SelectoPivotDatabaseTest do
           [actor_id] = first_row
           assert is_integer(actor_id)
 
-          IO.inspect({:film_to_actor_pivot, "Found #{length(rows)} actor assignments in PG-13 films"})
 
         {:error, reason} ->
           flunk("Film to actor pivot failed: #{inspect(reason)}")
@@ -129,7 +124,6 @@ defmodule SelectoPivotDatabaseTest do
         {:ok, {rows, _columns, _aliases}} ->
           assert length(rows) > 0
 
-          IO.inspect({:complex_pivot, "Found #{length(rows)} actors in R-rated films"})
 
         {:error, reason} ->
           flunk("Complex pivot failed: #{inspect(reason)}")
@@ -158,8 +152,6 @@ defmodule SelectoPivotDatabaseTest do
       # Should have parameter for filter
       assert "PENELOPE" in params
 
-      IO.inspect({:pivot_sql, sql})
-      IO.inspect({:pivot_params, params})
     end
 
     test "different strategies produce different SQL patterns" do
@@ -183,8 +175,6 @@ defmodule SelectoPivotDatabaseTest do
       assert in_sql =~ ~r/FROM film/i
       assert exists_sql =~ ~r/FROM film/i
 
-      IO.inspect({:in_strategy_sql, in_sql})
-      IO.inspect({:exists_strategy_sql, exists_sql})
     end
   end
 
@@ -219,7 +209,6 @@ defmodule SelectoPivotDatabaseTest do
     pagila_data_file = Path.join([__DIR__, "..", "priv", "sql", "pagila-data.sql"])
 
     if File.exists?(pagila_data_file) do
-      IO.puts("Loading Pagila sample data for pivot tests...")
 
       # Get database config
       repo_config = SelectoTest.Repo.config()
@@ -233,17 +222,16 @@ defmodule SelectoPivotDatabaseTest do
 
       case System.cmd("sh", ["-c", psql_cmd], stderr_to_stdout: true) do
         {_output, 0} ->
-          IO.puts("✓ Pagila sample data loaded successfully for pivot tests")
-        {output, exit_code} ->
-          IO.puts("⚠ Error loading Pagila data (exit code: #{exit_code})")
+          :ok
+        {output, _exit_code} ->
           if String.contains?(output, "psql: command not found") do
-            IO.puts("psql command not found - skipping Pagila data loading")
+            :ok  # psql not available, skip silently
           else
-            IO.puts("Output: #{String.slice(output, 0, 500)}...")
+            :ok  # Failed to load data, but continue
           end
       end
     else
-      IO.puts("⚠ Pagila data file not found at #{pagila_data_file}")
+      :ok  # Data file not found, skip silently
     end
 
     :ok

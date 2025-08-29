@@ -1,10 +1,10 @@
 defmodule SelectoPivotSubselectCombinedTest do
   use SelectoTest.SelectoCase, async: false
 
-  setup_all do
-    setup_test_database()
+  setup do
     # Insert test data that matches what the tests expect
     insert_pagila_test_data()
+    :ok
   end
 
   describe "Combined Pivot and Subselect features" do
@@ -44,10 +44,8 @@ defmodule SelectoPivotSubselectCombinedTest do
           # Verify film subselect contains film data
           if film_json do
             assert is_list(film_json) or is_binary(film_json)
-            IO.inspect({:pivot_with_subselect, "Film '#{title}' has details: #{inspect(film_json)}"})
           end
 
-          IO.inspect({:combined_test, "Found #{length(rows)} films from PENELOPE filter with actor subselects"})
 
         {:error, reason} ->
           flunk("Combined pivot+subselect failed: #{inspect(reason)}")
@@ -104,9 +102,6 @@ defmodule SelectoPivotSubselectCombinedTest do
           if films_json, do: assert(is_list(films_json) or is_binary(films_json))
           if film_titles, do: assert(is_binary(film_titles))
 
-          IO.inspect({:multi_format_subselects,
-            "Film '#{title}' has #{film_count} films: #{film_titles}, JSON: #{inspect(films_json)}"
-          })
 
         {:error, reason} ->
           flunk("Multiple format subselects with pivot failed: #{inspect(reason)}")
@@ -185,7 +180,8 @@ defmodule SelectoPivotSubselectCombinedTest do
               "JULIA MCQUEEN's PG film '#{title}' has related films: #{inspect(related_films)}"
             })
           else
-            IO.inspect({:no_results, "No PG films found for JULIA MCQUEEN"})
+            # No results found for this filter
+            :ok
           end
 
         {:error, reason} ->
@@ -219,9 +215,6 @@ defmodule SelectoPivotSubselectCombinedTest do
           # Should include film titles
           if film_titles do
             assert is_binary(film_titles)
-            IO.inspect({:exists_with_subselect,
-              "Film '#{title}' (found via EXISTS) has related films: #{film_titles}"
-            })
           end
 
         {:error, reason} ->
@@ -263,8 +256,6 @@ defmodule SelectoPivotSubselectCombinedTest do
       # Should have filter parameter
       assert "TEST" in params
 
-      IO.inspect({:combined_sql, sql})
-      IO.inspect({:combined_params, params})
     end
 
     test "complex combined query performance validation" do
@@ -300,7 +291,6 @@ defmodule SelectoPivotSubselectCombinedTest do
       # Should be reasonably complex query
       assert String.length(sql) > 200  # Complex queries should be substantial
 
-      IO.inspect({:performance_test_sql_length, String.length(sql)})
     end
   end
 
@@ -339,11 +329,6 @@ defmodule SelectoPivotSubselectCombinedTest do
       ]
   end
 
-  defp setup_test_database do
-    # Insert test data that matches the Pagila schema expectations
-    insert_pagila_test_data()
-    :ok
-  end
 
   defp insert_pagila_test_data do
     # Create test data that matches what the tests expect
@@ -368,7 +353,7 @@ defmodule SelectoPivotSubselectCombinedTest do
       rental_rate: Decimal.new("0.99"),
       length: 86,
       replacement_cost: Decimal.new("20.99"),
-      rating: "PG"
+      rating: :PG
     } |> SelectoTest.Repo.insert()
 
     {:ok, film2} = %SelectoTest.Store.Film{
@@ -380,7 +365,7 @@ defmodule SelectoPivotSubselectCombinedTest do
       rental_rate: Decimal.new("4.99"),
       length: 48,
       replacement_cost: Decimal.new("12.99"),
-      rating: "G"
+      rating: :G
     } |> SelectoTest.Repo.insert()
 
     {:ok, film3} = %SelectoTest.Store.Film{
@@ -392,7 +377,7 @@ defmodule SelectoPivotSubselectCombinedTest do
       rental_rate: Decimal.new("2.99"),
       length: 50,
       replacement_cost: Decimal.new("18.99"),
-      rating: "NC-17"
+      rating: :"NC-17"
     } |> SelectoTest.Repo.insert()
 
     # Create film_actor relationships

@@ -24,10 +24,10 @@ defmodule SelectoSubselectDatabaseTest do
       |> Selecto.order_by(["last_name"])
 
       case Selecto.execute(debug_selecto) do
-        {:ok, {debug_rows, _, _}} ->
-          IO.inspect({:available_actors, debug_rows}, label: "DEBUG: Available actors in database")
+        {:ok, {_debug_rows, _, _}} ->
+          :ok
         _ ->
-          IO.inspect("DEBUG: Could not fetch actors")
+          :ok
       end
 
       case Selecto.execute(selecto) do
@@ -51,7 +51,6 @@ defmodule SelectoSubselectDatabaseTest do
             assert is_list(films_json) or (is_binary(films_json) and String.starts_with?(films_json, "["))
           end
 
-          IO.inspect({:basic_subselect, "Found #{length(rows)} ALICE actors with film data"})
 
         {:error, reason} ->
           flunk("Basic subselect query failed: #{inspect(reason)}")
@@ -74,10 +73,8 @@ defmodule SelectoSubselectDatabaseTest do
           # Should contain structured data with multiple fields
           if films_data do
             # This will be JSON with title, rating, and release_year fields
-            IO.inspect({:multi_field_films, films_data})
           end
 
-          IO.inspect({:multi_field_subselect, "Found #{length(rows)} WAHLBERG actors with detailed film data"})
 
         {:error, reason} ->
           flunk("Multi-field subselect failed: #{inspect(reason)}")
@@ -108,10 +105,8 @@ defmodule SelectoSubselectDatabaseTest do
           # Should be PostgreSQL array or list
           if film_titles do
             assert is_list(film_titles) or is_binary(film_titles)
-            IO.inspect({:array_titles, film_titles})
           end
 
-          IO.inspect({:array_subselect, "Found #{length(rows)} TOM actors with array film titles"})
 
         {:error, reason} ->
           flunk("Array subselect failed: #{inspect(reason)}")
@@ -144,10 +139,8 @@ defmodule SelectoSubselectDatabaseTest do
           if film_list do
             assert is_binary(film_list)
             assert String.contains?(film_list, "; ") or not String.contains?(film_list, "; ")  # Single film case
-            IO.inspect({:string_list, film_list})
           end
 
-          IO.inspect({:string_subselect, "Found #{length(rows)} JULIA actors with string film list"})
 
         {:error, reason} ->
           flunk("String subselect failed: #{inspect(reason)}")
@@ -179,7 +172,6 @@ defmodule SelectoSubselectDatabaseTest do
           assert is_integer(film_count)
           assert film_count >= 0
 
-          IO.inspect({:count_subselect, "Found #{length(rows)} NICK actors, first has #{film_count} films"})
 
         {:error, reason} ->
           flunk("Count subselect failed: #{inspect(reason)}")
@@ -218,7 +210,6 @@ defmodule SelectoSubselectDatabaseTest do
           if films_json, do: assert(is_list(films_json) or is_binary(films_json))
           assert is_integer(films_count)
 
-          IO.inspect({:multi_subselect, "SANDRA actor with #{films_count} films, JSON: #{inspect(films_json)}"})
 
         {:error, reason} ->
           flunk("Multiple subselects failed: #{inspect(reason)}")
@@ -249,10 +240,8 @@ defmodule SelectoSubselectDatabaseTest do
 
           # actors should be JSON array of actor_ids
           if actors do
-            IO.inspect({:film_actors, "Film '#{title}' has actors: #{inspect(actors)}"})
           end
 
-          IO.inspect({:film_subselect, "Found #{length(rows)} PG films with actor data"})
 
         {:error, reason} ->
           flunk("Film actor subselect failed: #{inspect(reason)}")
@@ -284,8 +273,6 @@ defmodule SelectoSubselectDatabaseTest do
       # Should have parameter for filter
       assert "SMITH" in params
 
-      IO.inspect({:subselect_sql, sql})
-      IO.inspect({:subselect_params, params})
     end
 
     test "different aggregation formats produce different SQL" do
@@ -316,9 +303,6 @@ defmodule SelectoSubselectDatabaseTest do
       assert array_sql =~ "array_agg"
       assert string_sql =~ "string_agg"
 
-      IO.inspect({:json_sql, json_sql})
-      IO.inspect({:array_sql, array_sql})
-      IO.inspect({:string_sql, string_sql})
     end
   end
 
@@ -346,10 +330,8 @@ defmodule SelectoSubselectDatabaseTest do
 
           if films do
             # Films should be ordered by release_year desc, then title
-            IO.inspect({:ordered_films, films})
           end
 
-          IO.inspect({:ordered_subselect, "Found #{length(rows)} KEVIN actors with ordered films"})
 
         {:error, reason} ->
           flunk("Ordered subselect failed: #{inspect(reason)}")
@@ -379,10 +361,8 @@ defmodule SelectoSubselectDatabaseTest do
 
           # Should only contain PG-rated films
           if pg_films do
-            IO.inspect({:filtered_films, pg_films})
           end
 
-          IO.inspect({:filtered_subselect, "Found #{length(rows)} MARY actors with PG films only"})
 
         {:error, reason} ->
           flunk("Filtered subselect failed: #{inspect(reason)}")

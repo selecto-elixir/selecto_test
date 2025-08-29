@@ -274,59 +274,71 @@ defmodule SelectoEctoAdvancedIntegrationTest do
   describe "Join Field Access Patterns" do
     test "can attempt join field access with error handling" do
       # This tests the pattern where we try to access joined fields
-      # Even if the join isn't fully configured, we should handle gracefully
       selecto = Selecto.from_ecto(Repo, Film,
         joins: [:language]
       )
       
-      # Try to select a joined field - this might not work depending on join config
-      # but should not crash the system
+      # Try to select a joined field - this should work with proper join config
       case Selecto.select(selecto, ["title", "language[name]"])
            |> Selecto.execute() do
         {:ok, {rows, _columns, _aliases}} ->
           assert is_list(rows)
-          IO.puts("✓ Join field access succeeded")
           
         {:error, reason} ->
-          # This is acceptable - join field access might not be fully implemented
-          IO.puts("ℹ Join field access failed as expected: #{inspect(reason)}")
-          :ok
+          flunk("Join field access failed: #{inspect(reason)}")
       end
     end
     
     test "can test advanced selecto functions with ecto schemas" do
       selecto = Selecto.from_ecto(Repo, Film)
       
-      # Test literal values in select
+      # Test literal values in select - this should work
       case selecto
            |> Selecto.select([{:literal, "Hello World"}])
            |> Selecto.execute() do
         {:ok, {rows, _columns, _aliases}} ->
           assert is_list(rows)
-          IO.puts("✓ Literal select succeeded")
           
         {:error, reason} ->
-          IO.puts("ℹ Literal select failed: #{inspect(reason)}")
-          :ok
+          flunk("Literal select failed: #{inspect(reason)}")
       end
     end
     
     test "can test concatenation functions with ecto schemas" do
       selecto = Selecto.from_ecto(Repo, Film)
       
-      # Test CONCAT function with error handling
+      # Test CONCAT function - should now work with the fix for parameter type issues
+      # Test with pure literals first to ensure CONCAT itself works
       case selecto
-           |> Selecto.select([{:concat, ["title", {:literal, " (Rating: "}, "rating", {:literal, ")"}]}])
-           |> Selecto.filter({"film_id", [1, 2, 3]})  # Limit results
+           |> Selecto.select([{:concat, [{:literal, "Test"}, {:literal, " (Rating: "}, {:literal, "PG"}, {:literal, ")"}]}])
            |> Selecto.execute() do
         {:ok, {rows, _columns, _aliases}} ->
           assert is_list(rows)
-          IO.puts("✓ CONCAT function succeeded")
+          # Even if no films exist, CONCAT with literals should work
+          # If there are films, each should have the same concatenated literal
+          for [concat_result] <- rows do
+            assert is_binary(concat_result)
+            assert concat_result == "Test (Rating: PG)"
+          end
           
         {:error, reason} ->
-          # CONCAT may fail due to PostgreSQL parameter type inference
-          IO.puts("ℹ CONCAT function failed as expected: #{inspect(reason)}")
-          :ok
+          flunk("CONCAT function with literals failed: #{inspect(reason)}")
+      end
+      
+      # Now test CONCAT with field references if data exists
+      case selecto
+           |> Selecto.select([{:concat, ["title", {:literal, " (Rating: "}, "rating", {:literal, ")"}]}])
+           |> Selecto.execute() do
+        {:ok, {rows, _columns, _aliases}} ->
+          assert is_list(rows)
+          # Each row should have the concatenated result if data exists
+          for [concat_result] <- rows do
+            assert is_binary(concat_result)
+            assert concat_result =~ ~r/.+ \(Rating: .+\)/
+          end
+          
+        {:error, reason} ->
+          flunk("CONCAT function with fields failed: #{inspect(reason)}")
       end
     end
     
@@ -441,7 +453,7 @@ defmodule SelectoEctoAdvancedIntegrationTest do
         {:ok, _result} ->
           flunk("Expected error for non-existent field")
           
-        {:error, _reason} ->
+        {:error, reason} ->
           # Expected - should fail gracefully
           :ok
       end
@@ -457,7 +469,7 @@ defmodule SelectoEctoAdvancedIntegrationTest do
           # If it succeeds, that's also acceptable (might ignore invalid filters)
           :ok
           
-        {:error, _reason} ->
+        {:error, reason} ->
           # Expected - should fail gracefully
           :ok
       end
@@ -477,7 +489,7 @@ defmodule SelectoEctoAdvancedIntegrationTest do
           # If there are results, that's also fine (might be coincidental match)
           assert is_list(rows)
           
-        {:error, _reason} ->
+        {:error, reason} ->
           # Error is also acceptable
           :ok
       end

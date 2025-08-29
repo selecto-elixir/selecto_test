@@ -35,16 +35,9 @@ defmodule SelectoDomeIntegrationSimpleTest do
 
     case Selecto.execute(selecto) do
       {:ok, {rows, columns, aliases}} ->
-        IO.puts("\n✅ Selecto query executed successfully!")
-        IO.puts("Rows: #{inspect(length(rows))}")
-        IO.puts("Columns: #{inspect(columns)}")
-        IO.puts("Aliases: #{inspect(is_list(aliases))}")
-        
         # Test SelectoDome creation
         case SelectoDome.from_result(selecto, {rows, columns, aliases}, SelectoTest.Repo) do
           {:ok, dome} ->
-            IO.puts("✅ SelectoDome created successfully!")
-            
             # Test basic operations without database commits
             {:ok, dome} = SelectoDome.insert(dome, %{first_name: "Test Actor"})
             {:ok, changes} = SelectoDome.preview_changes(dome)
@@ -52,15 +45,11 @@ defmodule SelectoDomeIntegrationSimpleTest do
             assert changes.total_changes == 1
             assert length(changes.inserts) == 1
             
-            IO.puts("✅ SelectoDome operations work correctly!")
-            
           {:error, reason} ->
-            IO.puts("❌ SelectoDome creation failed: #{inspect(reason)}")
             flunk("SelectoDome creation failed")
         end
         
       {:error, reason} ->
-        IO.puts("❌ Selecto query failed: #{inspect(reason)}")
         flunk("Selecto query failed: #{inspect(reason)}")
     end
   end

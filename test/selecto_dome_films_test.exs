@@ -61,7 +61,7 @@ defmodule SelectoDomeFilmsTest do
 
     test "creates dome from Film query result", %{selecto: selecto} do
       {:ok, result} = Selecto.execute(selecto)
-      {rows, columns, aliases} = result
+      {rows, columns, _aliases} = result
       
       assert length(rows) >= 2  # At least our test films
       assert "title" in columns
@@ -154,7 +154,7 @@ defmodule SelectoDomeFilmsTest do
       }
 
       {:ok, dome_with_update} = SelectoDome.update(dome, film1.film_id, update_attrs)
-      {:ok, updated_result} = SelectoDome.commit(dome_with_update)
+      {:ok, _updated_result} = SelectoDome.commit(dome_with_update)
 
       # Verify update in database
       updated_film = Repo.get(Film, film1.film_id)
