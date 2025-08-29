@@ -1,7 +1,7 @@
 defmodule SelectoDomeRepoTest do
   use SelectoTest.SelectoCase, async: false
 
-  alias SelectoTest.Repo
+  # alias SelectoTest.Repo  # Unused
   alias SelectoDome
 
   @moduletag timeout: 10_000
@@ -38,29 +38,19 @@ defmodule SelectoDomeRepoTest do
 
     case Selecto.execute(selecto) do
       {:ok, result} ->
-        {rows, columns, aliases} = result
+        {_rows, _columns, _aliases} = result
         
-        IO.puts("\n=== DEBUG WITH REPO ===")
-        IO.puts("Rows: #{inspect(rows, limit: 3)}")
-        IO.puts("Columns: #{inspect(columns)}")
-        IO.puts("Aliases: #{inspect(aliases)}")
-        IO.puts("Aliases type: #{inspect(is_map(aliases))}")
-        IO.puts("Aliases is list?: #{inspect(is_list(aliases))}")
         
         # Try to create a dome
         case SelectoDome.from_result(selecto, result, SelectoTest.Repo) do
-          {:ok, dome} ->
-            IO.puts("✅ SelectoDome created successfully!")
-            IO.puts("Source table: #{dome.result_metadata.source_table}")
-            IO.puts("Row count: #{dome.result_metadata.result_structure.row_count}")
-          {:error, reason} ->
-            IO.puts("❌ SelectoDome creation failed: #{inspect(reason)}")
+          {:ok, _dome} ->
+            :ok
+          {:error, _reason} ->
+            :ok
         end
         
-        IO.puts("========================\n")
-        
-      {:error, reason} ->
-        IO.puts("❌ Selecto query failed: #{inspect(reason)}")
+      {:error, _reason} ->
+        :ok
     end
   end
 
@@ -113,7 +103,5 @@ defmodule SelectoDomeRepoTest do
     {:ok, multi_changes} = SelectoDome.preview_changes(dome_multi)
     assert multi_changes.total_changes == 3
     
-    IO.puts("\n✅ All SelectoDome operations working correctly with Repo!")
-    IO.puts("Total changes tracked: #{multi_changes.total_changes}")
   end
 end

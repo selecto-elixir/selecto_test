@@ -104,8 +104,8 @@ defmodule SelectoTest.PagilaDomainFilms do
       default_group_by: ["release_year"],
       default_aggregate: [{"film_id", %{"format" => "count"}}],
       filters: %{
-        "rating" => %{
-          name: "Film Rating",
+        "film_rating" => %{
+          name: "Film: Rating",
           type: :select_options,
           option_provider: %{
             type: :enum,

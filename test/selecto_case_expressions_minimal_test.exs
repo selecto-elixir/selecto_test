@@ -100,8 +100,6 @@ defmodule SelectoCaseExpressionsMinimalTest do
           assert length(first_result) == 2  # title and length_desc
           
         {:error, error} ->
-          # Log the error for debugging
-          IO.inspect(error, label: "CASE execution error")
           flunk("CASE execution failed: #{inspect(error)}")
       end
     end

@@ -91,9 +91,6 @@ defmodule SelectoPivotSubselectSimpleTest do
       # Should have parameter for filter
       assert "Alice" in params
       
-      IO.puts("Pivot SQL:")
-      IO.puts(sql)
-      IO.puts("Params: #{inspect(params)}")
     end
 
     test "different pivot strategies produce different SQL" do
@@ -113,10 +110,6 @@ defmodule SelectoPivotSubselectSimpleTest do
       assert in_sql =~ "IN ("
       assert exists_sql =~ "EXISTS ("
       
-      IO.puts("IN Strategy SQL:")
-      IO.puts(in_sql)
-      IO.puts("\nEXISTS Strategy SQL:")
-      IO.puts(exists_sql)
     end
   end
 
@@ -140,9 +133,6 @@ defmodule SelectoPivotSubselectSimpleTest do
       assert sql =~ "WHERE"
       assert sql =~ "=" # Correlation join
       
-      IO.puts("Subselect SQL:")
-      IO.puts(sql)
-      IO.puts("Params: #{inspect(params)}")
     end
 
     test "different aggregation formats produce different SQL" do
@@ -165,10 +155,6 @@ defmodule SelectoPivotSubselectSimpleTest do
       assert json_sql =~ "json_agg"
       assert array_sql =~ "array_agg"
 
-      IO.puts("JSON Aggregation SQL:")
-      IO.puts(json_sql)
-      IO.puts("\nArray Aggregation SQL:")
-      IO.puts(array_sql)
     end
 
     test "multiple subselects work together" do
@@ -197,8 +183,6 @@ defmodule SelectoPivotSubselectSimpleTest do
       assert sql =~ "AS \"post_titles\""
       assert sql =~ "AS \"post_count\""
 
-      IO.puts("Multiple Subselects SQL:")
-      IO.puts(sql)
     end
   end
 
@@ -231,9 +215,6 @@ defmodule SelectoPivotSubselectSimpleTest do
       # Should have filter parameter
       assert "Charlie" in params
 
-      IO.puts("Combined Pivot+Subselect SQL:")
-      IO.puts(sql)
-      IO.puts("Params: #{inspect(params)}")
     end
   end
 

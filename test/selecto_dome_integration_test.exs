@@ -30,7 +30,7 @@ defmodule SelectoDomeIntegrationTest do
     test "creates dome from Selecto query result", %{selecto: selecto} do
       # Execute query
       {:ok, result} = Selecto.execute(selecto)
-      {rows, columns, aliases} = result
+      {rows, columns, _aliases} = result
 
       assert length(rows) >= 2  # At least our test actors
       assert "first_name" in columns
@@ -245,8 +245,8 @@ defmodule SelectoDomeIntegrationTest do
 
     test "validates insert satisfies query constraints", %{selecto: selecto} do
       # Create some test data that matches the filter
-      {:ok, john} = %Actor{first_name: "John", last_name: "Doe"} |> Repo.insert()
-      {:ok, jane} = %Actor{first_name: "Jane", last_name: "Smith"} |> Repo.insert()
+      {:ok, _john} = %Actor{first_name: "John", last_name: "Doe"} |> Repo.insert()
+      {:ok, _jane} = %Actor{first_name: "Jane", last_name: "Smith"} |> Repo.insert()
 
       {:ok, result} = Selecto.execute(selecto)
       {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
@@ -385,7 +385,7 @@ defmodule SelectoDomeIntegrationTest do
       assert changes.total_changes == 1
 
       # Commit should handle the error gracefully
-      result = SelectoDome.commit(dome)
+      _result = SelectoDome.commit(dome)
       # Note: The current implementation may not have sophisticated error handling yet
       # but this tests the basic flow
     end

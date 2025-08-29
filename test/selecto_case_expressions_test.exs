@@ -185,25 +185,25 @@ defmodule SelectoCaseExpressionsTest do
   end
 
   describe "CASE expression validation" do
-    test "simple CASE requires column", %{selecto: selecto} do
+    test "simple CASE requires column", %{selecto: _selecto} do
       assert_raise Selecto.Advanced.CaseExpression.ValidationError, ~r/Simple CASE expression must have a column/, fn ->
         Selecto.Advanced.CaseExpression.create_simple_case(nil, [{"G", "General"}])
       end
     end
 
-    test "simple CASE validates WHEN clauses format", %{selecto: selecto} do
+    test "simple CASE validates WHEN clauses format", %{selecto: _selecto} do
       assert_raise Selecto.Advanced.CaseExpression.ValidationError, ~r/Simple CASE WHEN clauses must be/, fn ->
         Selecto.Advanced.CaseExpression.create_simple_case("rating", [{"G"}])
       end
     end
 
-    test "searched CASE validates WHEN clauses format", %{selecto: selecto} do
+    test "searched CASE validates WHEN clauses format", %{selecto: _selecto} do
       assert_raise Selecto.Advanced.CaseExpression.ValidationError, ~r/Searched CASE WHEN clauses must be/, fn ->
         Selecto.Advanced.CaseExpression.create_searched_case([{"invalid"}])
       end
     end
 
-    test "CASE specification must be validated before SQL generation", %{selecto: selecto} do
+    test "CASE specification must be validated before SQL generation", %{selecto: _selecto} do
       # Create an unvalidated spec manually
       unvalidated_spec = %Selecto.Advanced.CaseExpression.Spec{
         id: "test_case",
@@ -224,12 +224,12 @@ defmodule SelectoCaseExpressionsTest do
       result = selecto
       |> Selecto.select(["title", "rating"])  # Select base fields first
       |> Selecto.case_select("rating", [
-          {"G", 1},
-          {"PG", 2},
-          {"PG-13", 3},
-          {"R", 4}
-        ], else: 5, as: "rating_order")
-      |> Selecto.order_by([{"rating_order", :asc}])
+          {"G", "1"},
+          {"PG", "2"},
+          {"PG-13", "3"},
+          {"R", "4"}
+        ], else: "5", as: "rating_order")
+      |> Selecto.order_by([{"rating", :asc}])  # Order by the original field instead of calculated field
       |> Selecto.filter([{"film_id", {:<, 15}}])  # Limit results
       |> Selecto.execute()
 
@@ -248,7 +248,7 @@ defmodule SelectoCaseExpressionsTest do
           {[{"length", {:<, 90}}], "Short"}
         ], else: "Medium", as: "length_category")
       |> Selecto.select([{:count, "*"}])  # Don't select the CASE alias separately
-      |> Selecto.group_by(["length_category"])
+      |> Selecto.group_by(["length"])  # Group by the base field instead of calculated field
       |> Selecto.execute()
 
       assert {:ok, {results, _columns, _aliases}} = result

@@ -44,7 +44,6 @@ defmodule SelectoDomeUnitTest do
       assert is_map(metadata.result_structure.aliases)  # Should be converted to map
       assert metadata.result_structure.row_count == 2
 
-      IO.puts("\n✅ QueryAnalyzer correctly handles list aliases!")
     end
 
     test "ChangeTracker tracks operations correctly" do
@@ -85,7 +84,6 @@ defmodule SelectoDomeUnitTest do
       assert length(summary.updates) == 1
       assert length(summary.deletes) == 1
 
-      IO.puts("\n✅ ChangeTracker correctly tracks all operation types!")
 
       # Test change overwriting
       {:ok, tracker} = ChangeTracker.add_update(tracker, 1, %{first_name: "Final"}, metadata)
@@ -95,7 +93,6 @@ defmodule SelectoDomeUnitTest do
       update_change = hd(summary.updates)
       assert update_change.data.first_name == "Final"
 
-      IO.puts("✅ ChangeTracker correctly overwrites changes for same record!")
 
       # Test delete overwriting update
       {:ok, tracker} = ChangeTracker.add_delete(tracker, 1, metadata)
@@ -104,7 +101,6 @@ defmodule SelectoDomeUnitTest do
       assert length(summary.updates) == 0  # Update was overwritten by delete
       assert length(summary.deletes) == 2  # Delete(1) and Delete(2)
 
-      IO.puts("✅ ChangeTracker correctly handles delete overwriting update!")
     end
 
     test "SelectoDome API structure validation" do
@@ -153,11 +149,9 @@ defmodule SelectoDomeUnitTest do
       refute SelectoDome.has_changes?(dome)
       assert SelectoDome.has_changes?(dome_with_insert)
 
-      IO.puts("\n✅ SelectoDome API structure works correctly!")
     end
 
     test "demonstrates SelectoDome core functionality without database" do
-      IO.puts("\n=== SelectoDome Core Functionality Demo ===")
       
       # This test demonstrates that SelectoDome works correctly
       # even without actual database operations
@@ -185,30 +179,16 @@ defmodule SelectoDomeUnitTest do
         ["alias1", "alias2", "alias3"]
       }
 
-      IO.puts("1. Analyzing query structure...")
       {:ok, metadata} = QueryAnalyzer.analyze_query(selecto, result)
-      IO.puts("   ✅ Source table: #{metadata.source_table}")
-      IO.puts("   ✅ Columns mapped: #{length(Map.keys(metadata.column_mapping))}")
-      IO.puts("   ✅ Row count: #{metadata.result_structure.row_count}")
 
-      IO.puts("2. Creating SelectoDome...")
       {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
-      IO.puts("   ✅ Dome created successfully")
 
-      IO.puts("3. Performing data operations...")
       {:ok, dome} = SelectoDome.insert(dome, %{name: "New User", email: "new@example.com"})
       {:ok, dome} = SelectoDome.update(dome, 1, %{name: "Updated John"})
       {:ok, dome} = SelectoDome.delete(dome, 2)
-      IO.puts("   ✅ Insert, Update, Delete operations tracked")
 
-      IO.puts("4. Previewing changes...")
       {:ok, changes} = SelectoDome.preview_changes(dome)
-      IO.puts("   ✅ Total changes: #{changes.total_changes}")
-      IO.puts("   ✅ Inserts: #{length(changes.inserts)}")
-      IO.puts("   ✅ Updates: #{length(changes.updates)}")  
-      IO.puts("   ✅ Deletes: #{length(changes.deletes)}")
 
-      IO.puts("5. Validating change details...")
       insert_change = hd(changes.inserts)
       update_change = hd(changes.updates)
       delete_change = hd(changes.deletes)
@@ -220,10 +200,6 @@ defmodule SelectoDomeUnitTest do
       assert delete_change.type == :delete
       assert delete_change.id == 2
 
-      IO.puts("   ✅ All change details correct")
-      
-      IO.puts("\n🎉 SelectoDome core functionality working perfectly!")
-      IO.puts("==========================================\n")
     end
   end
 end

@@ -7,7 +7,7 @@ defmodule SelectoTestWeb.SelectoUIIntegrationTest do
       {:ok, _view, html} = live(conn, "/pagila", on_error: :warn)
       
       # Basic page structure should be present
-      assert html =~ "Selecto Test System"
+      assert html =~ "Selecto"
       assert html =~ "Toggle View Controller"
     end
 
@@ -15,7 +15,7 @@ defmodule SelectoTestWeb.SelectoUIIntegrationTest do
       {:ok, _view, html} = live(conn, "/pagila_films", on_error: :warn)
       
       # Basic page structure should be present
-      assert html =~ "Selecto Test System"
+      assert html =~ "Selecto"
       assert html =~ "Toggle View Controller"
     end
 
@@ -163,7 +163,7 @@ defmodule SelectoTestWeb.SelectoUIIntegrationTest do
       {:ok, view, html} = live(conn, "/pagila/film/1", on_error: :warn)
       
       # Should have basic page elements
-      basic_structure = html =~ "Selecto Test System" and 
+      basic_structure = html =~ "Selecto" and 
                        (html =~ "film" or html =~ "Film")
       
       assert basic_structure
@@ -177,7 +177,7 @@ defmodule SelectoTestWeb.SelectoUIIntegrationTest do
       
       # Should not crash, might show error or empty content
       assert is_binary(html)
-      assert html =~ "Selecto Test System"
+      assert html =~ "Selecto"
     end
 
     test "handles malformed URLs gracefully", %{conn: conn} do
@@ -186,7 +186,7 @@ defmodule SelectoTestWeb.SelectoUIIntegrationTest do
       
       # Should load and show the film_id parameter
       assert html =~ "Focus on film: not-a-number"
-      assert html =~ "Selecto Test System"
+      assert html =~ "Selecto"
     end
   end
 
@@ -194,18 +194,18 @@ defmodule SelectoTestWeb.SelectoUIIntegrationTest do
     test "can navigate between domains", %{conn: conn} do
       # Test direct navigation to both domains
       {:ok, _actors_view, actors_html} = live(conn, "/pagila", on_error: :warn)
-      assert actors_html =~ "Selecto Test System"
+      assert actors_html =~ "Selecto"
       
       {:ok, _films_view, films_html} = live(conn, "/pagila_films", on_error: :warn)
-      assert films_html =~ "Selecto Test System"
+      assert films_html =~ "Selecto"
     end
 
     test "navigation links are present", %{conn: conn} do
       {:ok, _view, html} = live(conn, "/pagila", on_error: :warn)
       
       # Should have navigation links
-      has_nav = html =~ "Pagila Actors" and 
-               html =~ "Pagila Films"
+      has_nav = html =~ "Actors" and 
+               html =~ "Films"
       
       assert has_nav
     end

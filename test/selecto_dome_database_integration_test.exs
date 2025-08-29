@@ -34,7 +34,6 @@ defmodule SelectoDomeDatabaseIntegrationTest do
   end
 
   test "complete SelectoDome workflow with database operations", %{db_conn: db_conn} do
-    IO.puts("\n=== SelectoDome Database Integration Test ===")
 
     # Create domain for actor table
     domain = %{
@@ -55,12 +54,10 @@ defmodule SelectoDomeDatabaseIntegrationTest do
       schemas: %{}
     }
 
-    IO.puts("1. Creating Selecto query...")
     selecto = Selecto.configure(domain, db_conn)
     |> Selecto.select(["first_name", "last_name", "actor_id"])
     |> Selecto.filter({"actor_id", {"<", 5}})  # First 4 actors
 
-    IO.puts("2. Executing Selecto query...")
     {:ok, {rows, columns, aliases}} = Selecto.execute(selecto)
 
     assert is_list(rows)
@@ -69,19 +66,14 @@ defmodule SelectoDomeDatabaseIntegrationTest do
     assert "last_name" in columns
     assert "actor_id" in columns
 
-    IO.puts("   ✅ Query returned #{length(rows)} rows")
-    IO.puts("   ✅ Columns: #{inspect(columns)}")
 
-    IO.puts("3. Creating SelectoDome from query result...")
     {:ok, dome} = SelectoDome.from_result(selecto, {rows, columns, aliases}, db_conn)
 
     assert dome.selecto == selecto
     assert dome.result_metadata.source_table == "actor"
     refute SelectoDome.has_changes?(dome)
 
-    IO.puts("   ✅ SelectoDome created successfully")
 
-    IO.puts("4. Adding changes...")
     # Add insert
     {:ok, dome} = SelectoDome.insert(dome, %{
       first_name: "Test",
@@ -95,9 +87,7 @@ defmodule SelectoDomeDatabaseIntegrationTest do
     {:ok, dome} = SelectoDome.delete(dome, 2)
 
     assert SelectoDome.has_changes?(dome)
-    IO.puts("   ✅ Added insert, update, and delete operations")
 
-    IO.puts("5. Previewing changes...")
     {:ok, changes} = SelectoDome.preview_changes(dome)
 
     assert changes.total_changes == 3
@@ -105,12 +95,7 @@ defmodule SelectoDomeDatabaseIntegrationTest do
     assert length(changes.updates) == 1
     assert length(changes.deletes) == 1
 
-    IO.puts("   ✅ Total changes: #{changes.total_changes}")
-    IO.puts("   ✅ Inserts: #{length(changes.inserts)}")
-    IO.puts("   ✅ Updates: #{length(changes.updates)}")
-    IO.puts("   ✅ Deletes: #{length(changes.deletes)}")
 
-    IO.puts("6. Validating change details...")
     insert_change = hd(changes.inserts)
     update_change = hd(changes.updates)
     delete_change = hd(changes.deletes)
@@ -129,9 +114,7 @@ defmodule SelectoDomeDatabaseIntegrationTest do
     assert delete_change.table == "actor"
     assert delete_change.id == 2
 
-    IO.puts("   ✅ All change details validated correctly")
 
-    IO.puts("7. Testing metadata analysis...")
     metadata = SelectoDome.metadata(dome)
 
     assert metadata.source_table == "actor"
@@ -145,10 +128,7 @@ defmodule SelectoDomeDatabaseIntegrationTest do
     assert is_integer(metadata.result_structure.row_count)
     assert metadata.result_structure.row_count > 0
 
-    IO.puts("   ✅ Metadata analysis working correctly")
 
-    IO.puts("\n🎉 All SelectoDome database integration tests passed!")
-    IO.puts("===============================================")
   end
 
   test "SelectoDome handles query metadata correctly", %{db_conn: db_conn} do
@@ -190,7 +170,6 @@ defmodule SelectoDomeDatabaseIntegrationTest do
     assert film_table.primary_key == "film_id"
     assert is_map(film_table.columns)
 
-    IO.puts("✅ Query metadata handling verified for film table")
   end
 
   test "SelectoDome change tracking with complex scenarios", %{db_conn: db_conn} do
@@ -240,6 +219,5 @@ defmodule SelectoDomeDatabaseIntegrationTest do
     assert length(changes.updates) == 0
     assert length(changes.deletes) == 1
 
-    IO.puts("✅ Complex change tracking scenarios verified")
   end
 end

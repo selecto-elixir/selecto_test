@@ -511,14 +511,14 @@ defmodule SelectoComplexFiltersTest do
 
   describe "Range and Boundary Filters" do
     test "filters with multiple data types", %{film_selecto: selecto} do
-      # Test basic equality filters with different data types from our Pagila dataset
+      # Test basic equality filters with different data types from our test dataset
       filters = [
-        # Integer filter - test films from 2006
-        {{"release_year", 2006}, "release_year"},
-        # Decimal filter - test specific rental rates from our dataset
-        {{"rental_rate", [Decimal.new("2.99"), Decimal.new("4.99")]}, "rental_rate"},  
-        # Length filter - test specific lengths from our dataset
-        {{"length", [48, 86]}, "length"}
+        # Integer filter - test films from 2023 (matches test data)
+        {{"release_year", 2023}, "release_year"},
+        # Decimal filter - test specific rental rates from our test dataset
+        {{"rental_rate", [Decimal.new("3.99"), Decimal.new("4.99")]}, "rental_rate"},  
+        # Length filter - test specific lengths from our test dataset
+        {{"length", [120, 150]}, "length"}
       ]
 
       Enum.each(filters, fn {filter, select_field} ->
@@ -533,15 +533,15 @@ defmodule SelectoComplexFiltersTest do
         case select_field do
           "release_year" ->
             Enum.each(rows, fn [year] ->
-              assert year == 2006
+              assert year == 2023
             end)
           "rental_rate" ->
-            expected_rates = [Decimal.new("2.99"), Decimal.new("4.99")]
+            expected_rates = [Decimal.new("3.99"), Decimal.new("4.99")]
             Enum.each(rows, fn [rate] ->
               assert Enum.any?(expected_rates, &(Decimal.compare(&1, rate) == :eq))
             end)
           "length" ->
-            expected_lengths = [48, 86]
+            expected_lengths = [120, 150]
             Enum.each(rows, fn [length] ->
               if length do
                 assert length in expected_lengths

@@ -29,10 +29,6 @@ defmodule SelectoSubfilterLiveDataTest do
       assert sql =~ "WHERE category.film_id = film.film_id AND category.name = ?"
       assert params == ["Action"]
 
-      # Log the generated SQL for debugging
-      IO.puts("\n=== EXISTS Subfilter SQL ===")
-      IO.puts("SQL: #{sql}")
-      IO.puts("Params: #{inspect(params)}")
     end
 
     @tag :requires_database
@@ -50,9 +46,6 @@ defmodule SelectoSubfilterLiveDataTest do
       assert sql =~ "WHERE category.name IN (?, ?)"
       assert params == ["Action", "Comedy"]
 
-      IO.puts("\n=== IN Subfilter SQL ===")
-      IO.puts("SQL: #{sql}")
-      IO.puts("Params: #{inspect(params)}")
     end
 
     @tag :requires_database
@@ -71,9 +64,6 @@ defmodule SelectoSubfilterLiveDataTest do
       assert sql =~ "> ?)"
       assert params == [5]
 
-      IO.puts("\n=== Aggregation Subfilter SQL ===")
-      IO.puts("SQL: #{sql}")
-      IO.puts("Params: #{inspect(params)}")
     end
 
     @tag :requires_database
@@ -93,9 +83,6 @@ defmodule SelectoSubfilterLiveDataTest do
       assert sql =~ " AND "
       assert Enum.sort(params) == Enum.sort(["R", 2000])
 
-      IO.puts("\n=== Compound AND Subfilters SQL ===")
-      IO.puts("SQL: #{sql}")
-      IO.puts("Params: #{inspect(params)}")
     end
 
     @tag :requires_database
@@ -115,12 +102,6 @@ defmodule SelectoSubfilterLiveDataTest do
       assert is_number(analysis.performance_score)
       assert is_list(analysis.optimization_suggestions)
 
-      IO.puts("\n=== Registry Analysis ===")
-      IO.puts("Subfilter Count: #{analysis.subfilter_count}")
-      IO.puts("Join Complexity: #{analysis.join_complexity}")
-      IO.puts("Strategy Distribution: #{inspect(analysis.strategy_distribution)}")
-      IO.puts("Performance Score: #{analysis.performance_score}")
-      IO.puts("Optimization Suggestions: #{inspect(analysis.optimization_suggestions)}")
     end
 
     @tag :requires_database
@@ -139,7 +120,6 @@ defmodule SelectoSubfilterLiveDataTest do
           {:ok, spec} ->
             assert spec.relationship_path.path_segments != []
             assert spec.filter_spec != nil
-            IO.puts("✓ Parsed: #{path} with #{inspect(filter_spec)}")
 
           {:error, reason} ->
             flunk("Failed to parse #{path}: #{inspect(reason)}")
@@ -166,7 +146,6 @@ defmodule SelectoSubfilterLiveDataTest do
           {:ok, resolution} ->
             assert is_list(resolution.joins)
             assert resolution.target_table != nil
-            IO.puts("✓ Resolved path: #{path} -> #{resolution.target_table}")
 
           {:error, reason} ->
             flunk("Failed to resolve path #{path}: #{inspect(reason)}")
@@ -192,8 +171,6 @@ defmodule SelectoSubfilterLiveDataTest do
       assert sql =~ "WHERE (EXISTS ("
       assert not (sql =~ "IN (")
 
-      IO.puts("\n=== Strategy Override Test ===")
-      IO.puts("Overridden SQL: #{sql}")
     end
 
     @tag :requires_database
@@ -213,7 +190,6 @@ defmodule SelectoSubfilterLiveDataTest do
       {:ok, spec} = Parser.parse("film.rating", "R")
       assert {:error, _reason} = Selecto.Subfilter.JoinPathResolver.resolve(spec.relationship_path, :invalid_domain)
 
-      IO.puts("✓ Error handling tests passed")
     end
 
     @tag :requires_database
@@ -250,12 +226,6 @@ defmodule SelectoSubfilterLiveDataTest do
       assert byte_size(sql) > 0
       assert length(params) > 0
 
-      IO.puts("\n=== Performance Test ===")
-      IO.puts("Subfilters: #{analysis.subfilter_count}")
-      IO.puts("Processing Time: #{duration_ms}ms")
-      IO.puts("Join Complexity: #{analysis.join_complexity}")
-      IO.puts("Performance Score: #{analysis.performance_score}")
-      IO.puts("SQL Length: #{byte_size(sql)} bytes")
 
       # Performance assertion - should process quickly
       assert duration_ms < 100, "Subfilter processing took too long: #{duration_ms}ms"
@@ -277,9 +247,6 @@ defmodule SelectoSubfilterLiveDataTest do
       assert sql =~ "EXISTS"
       assert params == ["Action"]
 
-      IO.puts("\n=== Phase 1 Integration Test ===")
-      IO.puts("Generated SQL integrates with existing joins")
-      IO.puts("SQL: #{sql}")
     end
   end
 end

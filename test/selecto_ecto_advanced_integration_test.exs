@@ -285,11 +285,9 @@ defmodule SelectoEctoAdvancedIntegrationTest do
            |> Selecto.execute() do
         {:ok, {rows, _columns, _aliases}} ->
           assert is_list(rows)
-          IO.puts("✓ Join field access succeeded")
           
-        {:error, reason} ->
+        {:error, _reason} ->
           # This is acceptable - join field access might not be fully implemented
-          IO.puts("ℹ Join field access failed as expected: #{inspect(reason)}")
           :ok
       end
     end
@@ -303,10 +301,8 @@ defmodule SelectoEctoAdvancedIntegrationTest do
            |> Selecto.execute() do
         {:ok, {rows, _columns, _aliases}} ->
           assert is_list(rows)
-          IO.puts("✓ Literal select succeeded")
           
-        {:error, reason} ->
-          IO.puts("ℹ Literal select failed: #{inspect(reason)}")
+        {:error, _reason} ->
           :ok
       end
     end
@@ -321,11 +317,9 @@ defmodule SelectoEctoAdvancedIntegrationTest do
            |> Selecto.execute() do
         {:ok, {rows, _columns, _aliases}} ->
           assert is_list(rows)
-          IO.puts("✓ CONCAT function succeeded")
           
-        {:error, reason} ->
+        {:error, _reason} ->
           # CONCAT may fail due to PostgreSQL parameter type inference
-          IO.puts("ℹ CONCAT function failed as expected: #{inspect(reason)}")
           :ok
       end
     end
@@ -441,7 +435,7 @@ defmodule SelectoEctoAdvancedIntegrationTest do
         {:ok, _result} ->
           flunk("Expected error for non-existent field")
           
-        {:error, _reason} ->
+        {:error, reason} ->
           # Expected - should fail gracefully
           :ok
       end
@@ -457,7 +451,7 @@ defmodule SelectoEctoAdvancedIntegrationTest do
           # If it succeeds, that's also acceptable (might ignore invalid filters)
           :ok
           
-        {:error, _reason} ->
+        {:error, reason} ->
           # Expected - should fail gracefully
           :ok
       end
@@ -477,7 +471,7 @@ defmodule SelectoEctoAdvancedIntegrationTest do
           # If there are results, that's also fine (might be coincidental match)
           assert is_list(rows)
           
-        {:error, _reason} ->
+        {:error, reason} ->
           # Error is also acceptable
           :ok
       end
