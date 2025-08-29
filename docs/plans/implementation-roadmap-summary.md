@@ -23,9 +23,6 @@ This document summarizes all enhancement plans for the Selecto ecosystem and pro
   - ✅ Full SQL generation with PARTITION BY, ORDER BY, and frame specifications
   - ✅ Comprehensive test coverage with production-ready implementation
 
-### 🚧 NEXT PRIORITIES
-- **Phase 2.3: Set Operations** - Ready to begin implementation
-
 ## Plan Categories
 
 ### Core Selecto Query Engine Plans
