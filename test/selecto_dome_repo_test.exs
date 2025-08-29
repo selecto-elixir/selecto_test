@@ -40,17 +40,16 @@ defmodule SelectoDomeRepoTest do
       {:ok, result} ->
         {_rows, _columns, _aliases} = result
         
-        
-        # Try to create a dome
+        # Try to create a dome - should succeed
         case SelectoDome.from_result(selecto, result, SelectoTest.Repo) do
           {:ok, _dome} ->
             :ok
-          {:error, _reason} ->
-            :ok
+          {:error, reason} ->
+            flunk("SelectoDome creation failed: #{inspect(reason)}")
         end
         
-      {:error, _reason} ->
-        :ok
+      {:error, reason} ->
+        flunk("Selecto query failed: #{inspect(reason)}")
     end
   end
 
