@@ -1,7 +1,6 @@
 defmodule SelectoDomeIntegrationSimpleTest do
   use SelectoTest.SelectoCase, async: false
 
-  alias SelectoTest.Repo
   alias SelectoDome
 
   @moduletag timeout: 5_000
@@ -45,7 +44,7 @@ defmodule SelectoDomeIntegrationSimpleTest do
             assert changes.total_changes == 1
             assert length(changes.inserts) == 1
             
-          {:error, reason} ->
+          {:error, _reason} ->
             flunk("SelectoDome creation failed")
         end
         
