@@ -163,7 +163,11 @@
       "Bash(npm install)",
       "Bash(mix deps:*)",
       "Bash(mix:*)",
-      "Read(/private/tmp/**)"
+      "Read(/private/tmp/**)",
+      "Bash(MIX_ENV=test timeout 120 mix test)",
+      "Bash(MIX_ENV=test timeout 30 mix test test/selecto_test_web/live/selecto_components_ui_test.exs --max-cases 1)",
+      "Bash(MIX_ENV=test timeout 30 mix test test/selecto_test_web/live/rating_filter_ui_test.exs --max-cases 1)",
+      "Bash(MIX_ENV=test timeout 30 mix test test/selecto_dome_integration_simple_test.exs --max-cases 1)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

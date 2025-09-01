@@ -2,7 +2,7 @@ defmodule SelectoArrayOperationsSimpleTest do
   use ExUnit.Case, async: true
   
   alias Selecto.Advanced.ArrayOperations
-  alias Selecto.Builder.ArrayOperations, as: ArrayBuilder
+  alias Selecto.SQL.Params
   
   describe "Array Operations Specification" do
     test "creates array_agg specification" do
@@ -72,7 +72,8 @@ defmodule SelectoArrayOperationsSimpleTest do
   describe "SQL Generation" do
     test "generates ARRAY_AGG SQL" do
       spec = ArrayOperations.create_array_operation(:array_agg, "title", as: "titles")
-      {sql, params} = ArrayOperations.to_sql(spec, [])
+      {sql_iodata, _params} = ArrayOperations.to_sql(spec, [])
+      {sql, params} = Params.finalize(sql_iodata)
       
       assert sql == "ARRAY_AGG(title) AS titles"
       assert params == []
@@ -83,7 +84,8 @@ defmodule SelectoArrayOperationsSimpleTest do
         distinct: true,
         as: "unique_ratings"
       )
-      {sql, params} = ArrayOperations.to_sql(spec, [])
+      {sql_iodata, _params} = ArrayOperations.to_sql(spec, [])
+      {sql, params} = Params.finalize(sql_iodata)
       
       assert sql == "ARRAY_AGG(DISTINCT rating) AS unique_ratings"
       assert params == []
@@ -94,7 +96,8 @@ defmodule SelectoArrayOperationsSimpleTest do
         order_by: [{"year", :desc}, {"title", :asc}],
         as: "ordered_titles"
       )
-      {sql, params} = ArrayOperations.to_sql(spec, [])
+      {sql_iodata, _params} = ArrayOperations.to_sql(spec, [])
+      {sql, params} = Params.finalize(sql_iodata)
       
       assert sql == "ARRAY_AGG(title ORDER BY year DESC, title ASC) AS ordered_titles"
       assert params == []
@@ -105,7 +108,8 @@ defmodule SelectoArrayOperationsSimpleTest do
         delimiter: ", ",
         as: "names"
       )
-      {sql, params} = ArrayOperations.to_sql(spec, [])
+      {sql_iodata, _params} = ArrayOperations.to_sql(spec, [])
+      {sql, params} = Params.finalize(sql_iodata)
       
       assert sql == "STRING_AGG(name, $1) AS names"
       assert params == [", "]
@@ -113,7 +117,8 @@ defmodule SelectoArrayOperationsSimpleTest do
     
     test "generates array filter SQL" do
       spec = ArrayOperations.create_array_filter(:array_contains, "tags", ["new", "featured"])
-      {sql, params} = ArrayOperations.to_sql(spec, [])
+      {sql_iodata, _params} = ArrayOperations.to_sql(spec, [])
+      {sql, params} = Params.finalize(sql_iodata)
       
       assert sql == "tags @> $1"
       assert params == [["new", "featured"]]
@@ -121,7 +126,8 @@ defmodule SelectoArrayOperationsSimpleTest do
     
     test "generates array overlap SQL" do
       spec = ArrayOperations.create_array_filter(:array_overlap, "categories", ["tech", "science"])
-      {sql, params} = ArrayOperations.to_sql(spec, [])
+      {sql_iodata, _params} = ArrayOperations.to_sql(spec, [])
+      {sql, params} = Params.finalize(sql_iodata)
       
       assert sql == "categories && $1"
       assert params == [["tech", "science"]]
@@ -129,7 +135,8 @@ defmodule SelectoArrayOperationsSimpleTest do
     
     test "generates array contained SQL" do
       spec = ArrayOperations.create_array_filter(:array_contained, "permissions", ["read", "write", "admin"])
-      {sql, params} = ArrayOperations.to_sql(spec, [])
+      {sql_iodata, _params} = ArrayOperations.to_sql(spec, [])
+      {sql, params} = Params.finalize(sql_iodata)
       
       assert sql == "permissions <@ $1"
       assert params == [["read", "write", "admin"]]
@@ -137,7 +144,8 @@ defmodule SelectoArrayOperationsSimpleTest do
     
     test "generates ARRAY_LENGTH SQL" do
       spec = ArrayOperations.create_array_size(:array_length, "items", 1, as: "count")
-      {sql, params} = ArrayOperations.to_sql(spec, [])
+      {sql_iodata, _params} = ArrayOperations.to_sql(spec, [])
+      {sql, params} = Params.finalize(sql_iodata)
       
       assert sql == "ARRAY_LENGTH(items, 1) AS count"
       assert params == []
@@ -145,7 +153,8 @@ defmodule SelectoArrayOperationsSimpleTest do
     
     test "generates CARDINALITY SQL" do
       spec = ArrayOperations.create_array_size(:cardinality, "matrix", nil, as: "total")
-      {sql, params} = ArrayOperations.to_sql(spec, [])
+      {sql_iodata, _params} = ArrayOperations.to_sql(spec, [])
+      {sql, params} = Params.finalize(sql_iodata)
       
       assert sql == "CARDINALITY(matrix) AS total"
       assert params == []
@@ -153,7 +162,8 @@ defmodule SelectoArrayOperationsSimpleTest do
     
     test "generates UNNEST SQL" do
       spec = ArrayOperations.create_unnest("features", as: "feature")
-      {sql, params} = ArrayOperations.to_sql(spec, [])
+      {sql_iodata, _params} = ArrayOperations.to_sql(spec, [])
+      {sql, params} = Params.finalize(sql_iodata)
       
       assert sql == "UNNEST(features) AS feature"
       assert params == []
@@ -161,7 +171,8 @@ defmodule SelectoArrayOperationsSimpleTest do
     
     test "generates UNNEST WITH ORDINALITY SQL" do
       spec = ArrayOperations.create_unnest("tags", as: "tag", with_ordinality: true)
-      {sql, params} = ArrayOperations.to_sql(spec, [])
+      {sql_iodata, _params} = ArrayOperations.to_sql(spec, [])
+      {sql, params} = Params.finalize(sql_iodata)
       
       assert sql == "UNNEST(tags) WITH ORDINALITY AS tag(value, ordinality)"
       assert params == []
@@ -172,7 +183,8 @@ defmodule SelectoArrayOperationsSimpleTest do
         value: "new-tag",
         as: "updated_tags"
       )
-      {sql, params} = ArrayOperations.to_sql(spec, [])
+      {sql_iodata, _params} = ArrayOperations.to_sql(spec, [])
+      {sql, params} = Params.finalize(sql_iodata)
       
       assert sql == "ARRAY_APPEND(tags, $1) AS updated_tags"
       assert params == ["new-tag"]
@@ -183,7 +195,8 @@ defmodule SelectoArrayOperationsSimpleTest do
         value: "deprecated",
         as: "cleaned_tags"
       )
-      {sql, params} = ArrayOperations.to_sql(spec, [])
+      {sql_iodata, _params} = ArrayOperations.to_sql(spec, [])
+      {sql, params} = Params.finalize(sql_iodata)
       
       assert sql == "ARRAY_REMOVE(tags, $1) AS cleaned_tags"
       assert params == ["deprecated"]
@@ -194,7 +207,8 @@ defmodule SelectoArrayOperationsSimpleTest do
         value: ", ",
         as: "tag_string"
       )
-      {sql, params} = ArrayOperations.to_sql(spec, [])
+      {sql_iodata, _params} = ArrayOperations.to_sql(spec, [])
+      {sql, params} = Params.finalize(sql_iodata)
       
       assert sql == "ARRAY_TO_STRING(tags, $1) AS tag_string"
       assert params == [", "]

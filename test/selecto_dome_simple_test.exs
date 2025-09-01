@@ -2,7 +2,7 @@ defmodule SelectoDomeSimpleTest do
   use SelectoTest.SelectoCase, async: false
   
   alias SelectoTest.{Repo, PagilaDomain}
-  alias SelectoTest.Store.{Actor, Language}
+  alias SelectoTest.Store.Actor
   alias SelectoDome
 
   @moduletag timeout: 10_000

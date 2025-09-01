@@ -40,7 +40,7 @@ defmodule SelectoTestWeb.SelectoComponentsUITest do
     end
 
     test "displays film rating filter as dropdown", %{conn: conn} do
-      {:ok, view, html} = live(conn, "/pagila", on_error: :warn)
+      {:ok, _view, html} = live(conn, "/pagila", on_error: :warn)
       
       # Check for rating filter in UI - look for actual SelectoComponents structure
       # The rating filter might be in the SelectoComponents form or available as an option
@@ -88,7 +88,7 @@ defmodule SelectoTestWeb.SelectoComponentsUITest do
     end
 
     test "displays film-specific columns", %{conn: conn} do
-      {:ok, view, html} = live(conn, "/pagila_films", on_error: :warn)
+      {:ok, _view, html} = live(conn, "/pagila_films", on_error: :warn)
       
       # Should show film columns
       film_columns = html =~ "title" or html =~ "Title" or 
@@ -98,7 +98,7 @@ defmodule SelectoTestWeb.SelectoComponentsUITest do
     end
 
     test "shows rating filter as select options in films domain", %{conn: conn} do
-      {:ok, view, html} = live(conn, "/pagila_films", on_error: :warn)
+      {:ok, _view, html} = live(conn, "/pagila_films", on_error: :warn)
       
       # In films domain, should have film-related content
       film_content = html =~ "rating" or html =~ "Rating" or
@@ -157,7 +157,7 @@ defmodule SelectoTestWeb.SelectoComponentsUITest do
     end
 
     test "rating filter shows MPAA options when interacted with", %{conn: conn} do
-      {:ok, view, html} = live(conn, "/pagila", on_error: :warn)
+      {:ok, _view, html} = live(conn, "/pagila", on_error: :warn)
       
       # Check if rating options are present or can be triggered
       # This is a basic check - actual interaction depends on SelectoComponents UI
@@ -276,7 +276,7 @@ defmodule SelectoTestWeb.SelectoComponentsUITest do
     end
 
     test "displays film-specific information", %{conn: conn, film_id: film_id} do
-      {:ok, view, html} = live(conn, "/pagila/film/#{film_id}", on_error: :warn)
+      {:ok, _view, html} = live(conn, "/pagila/film/#{film_id}", on_error: :warn)
       
       # Should contain film-related content (be more flexible about what we expect)
       film_info = html =~ "rating" or html =~ "Rating" or

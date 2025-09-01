@@ -2,7 +2,6 @@ defmodule Selecto.Output.Transformers.CSVTest do
   use ExUnit.Case, async: true
 
   alias Selecto.Output.Transformers.CSV
-  alias Selecto.Error
 
   # Sample test data
   @sample_rows [

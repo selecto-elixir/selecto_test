@@ -192,7 +192,7 @@ defmodule SelectoTestWeb.RatingFilterUITest do
 
   describe "Rating filter option provider integration" do
     test "option provider loads MPAA ratings correctly", %{conn: conn} do
-      {:ok, view, html} = live(conn, "/pagila", on_error: :warn)
+      {:ok, _view, html} = live(conn, "/pagila", on_error: :warn)
       
       # Check that SelectoComponents.OptionProvider is working
       # by looking for rating options in the UI
