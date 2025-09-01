@@ -5,6 +5,12 @@ This document summarizes all enhancement plans for the Selecto ecosystem and pro
 
 ## Current Implementation Status (September 2025)
 
+### 📊 Implementation Summary
+- **Total Plans**: 30 documented enhancement plans
+- **Completed**: 8 core features fully implemented
+- **In Progress**: 1 (Advanced SQL Features - partially complete)
+- **Pending**: 21 features awaiting implementation
+
 ### ✅ COMPLETED PHASES
 - **Phase 1: Foundation & Core Infrastructure** - FULLY COMPLETED
   - ✅ Parameterized Joins & Dot Notation (100% working with backward compatibility)
@@ -26,24 +32,51 @@ This document summarizes all enhancement plans for the Selecto ecosystem and pro
 ## Plan Categories
 
 ### Core Selecto Query Engine Plans
-1. **Window Functions & Analytics** - Advanced SQL analytics and OLAP functions
-2. **Set Operations** - UNION, INTERSECT, EXCEPT operations  
-3. **Advanced SQL Features** - LATERAL joins, VALUES clauses, JSON operations
-4. **Query Performance Features** - Optimization hints, indexing, parallel execution
+1. **Window Functions & Analytics** ✅ - Advanced SQL analytics and OLAP functions
+   - Plan: `window-functions-analytics-plan.md`
+2. **Set Operations** ✅ - UNION, INTERSECT, EXCEPT operations  
+   - Plan: `set-operations-plan.md`
+3. **Advanced SQL Features** (Partial) - LATERAL joins, VALUES clauses, JSON operations
+   - Plan: `advanced-sql-features-plan.md`
+4. **Query Performance Features** ✅ - Optimization hints, indexing, parallel execution
+   - Plan: `query-performance-features-plan.md`
 5. **Temporal & Time-Series** - Time bucketing, gap filling, time-based analytics
-6. **Output Format Enhancement** - Maps, structs, JSON, CSV, streaming formats
-7. **Parameterized Joins & Dot Notation** - Dynamic joins with `table.field` syntax
-8. **Subfilter System** - EXISTS/IN subqueries without explicit joins
+   - Plan: `temporal-time-series-plan.md`
+6. **Output Format Enhancement** ✅ - Maps, structs, JSON, CSV, streaming formats
+   - Plan: `output-format-enhancement-plan.md`
+7. **Parameterized Joins & Dot Notation** ✅ - Dynamic joins with `table.field` syntax
+   - Plans: `selecto-parameterized-joins-dot-notation-plan.md`, `parameterized-joins-specification.md`
+8. **Subfilter System** ✅ - EXISTS/IN subqueries without explicit joins
+   - Plans: `selecto-subfilter-system-plan.md`, `subfilter-missing-features-plan.md`
 
 ### SelectoComponents UI Enhancement Plans
 1. **Subselects Integration** - Modal detail views with related data
+   - Plan: `selecto-components-subselects-integration-plan.md`
 2. **Modal Detail Views** - Drill-down from aggregate to detail views
+   - Plan: `selecto-components-modal-detail-views-plan.md`
 3. **Enhanced Table Presentation** - Advanced sorting, filtering, export
+   - Plan: `selecto-components-enhanced-table-presentation-plan.md`
 4. **Enhanced Forms** - Drag-and-drop filter builders and view configuration
+   - Plan: `selecto-components-enhanced-forms-plan.md`
 5. **Custom Styling & Theming** - Comprehensive theme system
+   - Plan: `selecto-components-custom-styling-theming-plan.md`
 6. **Dashboard Panels** - Embeddable HTML Custom Elements
+   - Plan: `selecto-components-dashboard-panels-plan.md`
 7. **Interactive Filter Panel** - Dynamic user-configurable filters
+   - Plan: `selecto-components-interactive-filter-panel-plan.md`
 8. **Shortened URLs** - Compact URL system without UUIDs
+   - Plan: `selecto-components-shortened-urls-plan.md`
+
+### Additional Plans & Documentation
+1. **Developer Experience Enhancement** - Plan: `DEVELOPER_EXPERIENCE_ENHANCEMENT_PLAN.md`
+2. **Database Support Extensions** - Plan: `SELECTO_MYSQL_MSSQL_PLAN.md`
+3. **TimescaleDB Integration** - Plan: `timescaledb-integration-plan.md`
+4. **Selecto ASH** - Plan: `SELECTO_ASH_PLAN.md`
+5. **Select Filter Options** - Plan: `SELECT_FILTER_OPTIONS_PLAN.md`
+6. **Test Coverage** - Plan: `TEST_COVERAGE_SUMMARY.md`
+7. **Unimplemented Functions** - Plan: `UNIMPLEMENTED_FUNCTIONS_INVENTORY.md`
+8. **Improvement Recommendations** - Plan: `SELECTO_IMPROVEMENT_RECOMMENDATIONS.md`
+9. **Additional Enhancements** - Plan: `additional-enhancements-overview.md`
 
 ## Implementation Phases
 
@@ -329,3 +362,66 @@ This roadmap prioritizes foundational improvements first, followed by high-impac
   - ⏳ Temporal & Time-Series (4.3): Pending
 
 Each phase delivers concrete value while building toward the comprehensive Selecto ecosystem vision.
+
+## Completed Features Reference
+
+### ✅ Fully Implemented Features (with Plan Files)
+
+1. **Parameterized Joins & Dot Notation** ✅
+   - Plans: `selecto-parameterized-joins-dot-notation-plan.md`, `parameterized-joins-specification.md`
+   - Status: Fully implemented with backward compatibility
+
+2. **Output Format Enhancement** ✅
+   - Plan: `output-format-enhancement-plan.md`
+   - Status: Complete with Maps, Structs, JSON, CSV support
+
+3. **Subfilter System** ✅
+   - Plans: `selecto-subfilter-system-plan.md`, `subfilter-missing-features-plan.md`
+   - Status: 41/41 tests passing, production-ready
+
+4. **Window Functions & Analytics** ✅
+   - Plan: `window-functions-analytics-plan.md`
+   - Status: All PostgreSQL window functions implemented
+
+5. **Set Operations** ✅
+   - Plan: `set-operations-plan.md`
+   - Status: UNION, INTERSECT, EXCEPT with full SQL generation
+
+6. **Query Performance Features** ✅
+   - Plan: `query-performance-features-plan.md`
+   - Status: Complete monitoring, caching, and optimization infrastructure
+
+7. **LATERAL Joins** ✅ (Part of Advanced SQL Features)
+   - Plan: `advanced-sql-features-plan.md` (partially complete)
+   - Status: 15/15 tests passing
+
+8. **VALUES Clauses** ✅ (Part of Advanced SQL Features)
+   - Plan: `advanced-sql-features-plan.md` (partially complete)
+   - Status: 40/40 tests passing
+
+### 🚧 Features In Progress
+
+- **Advanced SQL Features** (Partial)
+  - Plan: `advanced-sql-features-plan.md`
+  - Completed: LATERAL joins, VALUES clauses
+  - Pending: JSON operations, CTEs, CASE expressions, Array operations
+
+### 📋 Pending Features (SelectoComponents)
+
+All SelectoComponents UI features are pending implementation:
+- Modal Detail Views (`selecto-components-modal-detail-views-plan.md`)
+- Enhanced Table Presentation (`selecto-components-enhanced-table-presentation-plan.md`)
+- Enhanced Forms (`selecto-components-enhanced-forms-plan.md`)
+- Custom Styling & Theming (`selecto-components-custom-styling-theming-plan.md`)
+- Dashboard Panels (`selecto-components-dashboard-panels-plan.md`)
+- Interactive Filter Panel (`selecto-components-interactive-filter-panel-plan.md`)
+- Shortened URLs (`selecto-components-shortened-urls-plan.md`)
+- Subselects Integration (`selecto-components-subselects-integration-plan.md`)
+
+### 📋 Pending Features (Selecto Core)
+
+- Temporal & Time-Series (`temporal-time-series-plan.md`)
+- Database Support Extensions (`SELECTO_MYSQL_MSSQL_PLAN.md`)
+- TimescaleDB Integration (`timescaledb-integration-plan.md`)
+- Selecto ASH (`SELECTO_ASH_PLAN.md`)
+- Select Filter Options (`SELECT_FILTER_OPTIONS_PLAN.md`)
