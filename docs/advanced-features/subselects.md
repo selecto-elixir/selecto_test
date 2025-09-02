@@ -4,6 +4,8 @@
 
 Subselects in Selecto enable fetching related data as aggregated arrays, preventing result set denormalization while maintaining relational context. This feature is particularly useful for one-to-many relationships where you want to return related records as nested data structures rather than duplicating parent rows.
 
+**Important:** The `subselect` function takes an array of configuration maps. The string notation shown in some examples (like `"order[product_name]") is conceptual - the actual API requires map-based configuration.
+
 ## Core Concepts
 
 ### What are Subselects?
@@ -22,10 +24,18 @@ Subselects aggregate related data into arrays or JSON structures within the main
 ### Simple Field Specification
 
 ```elixir
-# Get attendees with their orders as JSON arrays
+# Get attendees with their orders as JSON arrays - CORRECT API
 selecto
-|> Selecto.select(["attendee[name]", "attendee[email]"])
-|> Selecto.subselect(["order[product_name]", "order[quantity]"])
+|> Selecto.select(["attendee.name", "attendee.email"])
+|> Selecto.subselect([
+  %{
+    fields: ["product_name", "quantity"],
+    target_schema: :orders,
+    format: :json_agg,
+    alias: "orders",
+    filter: [{"attendee_id", {:ref, "attendee.attendee_id"}}]
+  }
+])
 
 # This generates SQL like:
 # SELECT 
@@ -41,28 +51,39 @@ selecto
 ### Multiple Fields in One Specification
 
 ```elixir
-# Specify multiple fields from the same table
-selecto
-|> Selecto.subselect(["order[product_name, quantity, price]"])
-
-# Equivalent to:
+# Specify multiple fields from the same table - CORRECT API
 selecto
 |> Selecto.subselect([
-  "order[product_name]",
-  "order[quantity]", 
-  "order[price]"
+  %{
+    fields: ["product_name", "quantity", "price"],
+    target_schema: :orders,
+    format: :json_agg,
+    alias: "order_items"
+  }
 ])
 ```
 
 ### Multiple Subselects
 
 ```elixir
-# Fetch multiple related datasets
+# Fetch multiple related datasets - CORRECT API
 selecto
-|> Selecto.select(["event[name]", "event[date]"])
+|> Selecto.select(["event.name", "event.date"])
 |> Selecto.subselect([
-  "attendees[name, email]",      # All attendees
-  "sponsors[company, amount]"     # All sponsors
+  %{
+    fields: ["name", "email"],
+    target_schema: :attendees,
+    format: :json_agg,
+    alias: "attendees",
+    filter: [{"event_id", {:ref, "event.id"}}]
+  },
+  %{
+    fields: ["company", "amount"],
+    target_schema: :sponsors,
+    format: :json_agg,
+    alias: "sponsors",
+    filter: [{"event_id", {:ref, "event.id"}}]
+  }
 ])
 ```
 
@@ -102,9 +123,16 @@ selecto
 ### JSON Aggregation (Default)
 
 ```elixir
-# Returns JSON array of objects
+# Returns JSON array of objects - CORRECT API
 selecto
-|> Selecto.subselect(["order[product_name, quantity]"])
+|> Selecto.subselect([
+  %{
+    fields: ["product_name", "quantity"],
+    target_schema: :orders,
+    format: :json_agg,
+    alias: "order_items"
+  }
+])
 # Result: [{"product_name": "Widget", "quantity": 2}, ...]
 ```
 

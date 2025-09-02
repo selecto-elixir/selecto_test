@@ -4,6 +4,8 @@
 
 Subqueries and subfilters enable complex nested queries and advanced filtering patterns in Selecto. This guide covers scalar subqueries, correlated subqueries, EXISTS/IN patterns, and Selecto's powerful subfilter system for filtering on related data through joins.
 
+**Note:** The subquery patterns shown in this guide represent conceptual SQL patterns. Selecto's actual implementation may require using CTEs, joins, or other approaches to achieve similar results. Check the actual API documentation for supported patterns.
+
 ## Table of Contents
 
 1. [Scalar Subqueries](#scalar-subqueries)

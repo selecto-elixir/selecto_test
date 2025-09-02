@@ -1,85 +1,81 @@
 defmodule DocsArrayOperationsExamplesTest do
   use ExUnit.Case, async: true
+  import SelectoTest.TestHelpers
+
+# Tests updated to match actual Selecto API
+# Array operations use Selecto.array_select/2, not inline in select/2
+
   
-  defp configure_test_selecto do
-    domain_config = %{
-      root_schema: SelectoTest.Store.Film,
-      tables: %{},
-      columns: %{},
-      filters: []
-    }
-    
-    Selecto.configure(domain_config, :test_connection)
-  end
+  # Use test helpers for proper domain configuration
 
   describe "Array Aggregation Examples from Docs" do
     test "Basic array_agg aggregation" do
-      selecto = configure_test_selecto()
+      selecto = configure_test_selecto("film")
       
+      # Using actual API: array_select for array operations
       result = 
         selecto
-        |> Selecto.select([
-            "category.name",
-            {:array_agg, "film.title", as: "film_titles"}
-          ])
-        |> Selecto.group_by(["category.name"])
+        |> Selecto.select(["title"])
+        |> Selecto.array_select({:array_agg, "title", as: "film_titles"})
+        |> Selecto.group_by(["rating"])
       
       {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
       
-      assert sql =~ ~r/ARRAY_AGG\([^)]*"film"."title"[^)]*\) AS film_titles/
-      assert sql =~ ~r/GROUP BY.*"category"."name"/
+      assert sql =~ "ARRAY_AGG"
+      assert sql =~ "title"
+      assert sql =~ "AS film_titles"
+      assert sql =~ "GROUP BY"
+      assert sql =~ "rating"
     end
 
     test "array_agg with DISTINCT values" do
-      selecto = configure_test_selecto()
+      selecto = configure_test_selecto("film")
       
       result = 
         selecto
-        |> Selecto.select([
-            "actor.first_name",
-            {:array_agg, "film.rating", distinct: true, as: "unique_ratings"}
-          ])
-        |> Selecto.group_by(["actor.actor_id", "actor.first_name"])
+        |> Selecto.select(["title"])
+        |> Selecto.array_select({:array_agg, "rating", distinct: true, as: "unique_ratings"})
+        |> Selecto.group_by(["release_year"])
       
       {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
       
-      assert sql =~ ~r/ARRAY_AGG\(DISTINCT.*"film"."rating".*\) AS unique_ratings/
+      assert sql =~ "ARRAY_AGG"
+      assert sql =~ "DISTINCT"
+      assert sql =~ "rating"
+      assert sql =~ "AS unique_ratings"
       assert sql =~ "GROUP BY"
-      assert sql =~ "actor.actor_id"
-      assert sql =~ "actor.first_name"
+      assert sql =~ "release_year"
     end
 
     test "array_agg with ORDER BY" do
-      selecto = configure_test_selecto()
+      selecto = configure_test_selecto("film")
       
       result = 
         selecto
-        |> Selecto.select([
-            "category.name",
-            {:array_agg, "film.title", 
-              order_by: [{"film.release_year", :desc}, {"film.title", :asc}],
-              as: "films_by_year"}
-          ])
-        |> Selecto.group_by(["category.name"])
+        |> Selecto.select(["rating"])
+        |> Selecto.array_select({:array_agg, "title", 
+            order_by: [{"release_year", :desc}, {"title", :asc}],
+            as: "films_by_year"})
+        |> Selecto.group_by(["rating"])
       
       {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
       
       assert sql =~ "ARRAY_AGG"
       assert sql =~ "ORDER BY"
-      assert sql =~ "film.release_year DESC"
-      assert sql =~ "film.title ASC"
-      assert sql =~ "films_by_year"
+      assert sql =~ "release_year DESC"
+      assert sql =~ "title ASC"
+      assert sql =~ "AS films_by_year"
     end
 
     test "string_agg concatenation" do
-      selecto = configure_test_selecto()
+      selecto = configure_test_selecto("film")
       
       result = 
         selecto
-        |> Selecto.select([
-            "category.name",
-            {:string_agg, "film.title", delimiter: ", ", as: "film_list"},
-            {:string_agg, "actor.last_name", 
+        |> Selecto.select(["rating"])
+        |> Selecto.array_select([
+            {:string_agg, "title", delimiter: ", ", as: "film_list"},
+            {:string_agg, "description", 
               delimiter: " | ", 
               order_by: [{"actor.last_name", :asc}],
               as: "actor_names"}

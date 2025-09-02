@@ -4,6 +4,8 @@
 
 LATERAL joins are a powerful PostgreSQL feature that allows the right side of a join to reference columns from the left side, enabling correlated subqueries in the FROM clause. This is particularly useful for row-wise operations, top-N queries per group, and dynamic function calls.
 
+**Important:** LATERAL joins in Selecto use the `lateral_join` function. The callback receives a base Selecto instance that you should configure with your domain and connection. The third parameter is the alias for the lateral subquery, and the fourth (optional) parameter contains join conditions.
+
 ## Table of Contents
 
 1. [Understanding LATERAL](#understanding-lateral)
@@ -45,25 +47,27 @@ LEFT JOIN LATERAL (
 ### Simple Correlated Subquery
 
 ```elixir
-# Get the 3 most recent orders for each customer
+# Get the 3 most recent orders for each customer - CORRECT API
 selecto
+|> Selecto.lateral_join(
+    :left,
+    fn _base ->
+      Selecto.configure(order_domain, connection)
+      |> Selecto.select(["order_id", "order_date", "total"])
+      |> Selecto.from("orders")  # Specify the table
+      |> Selecto.filter([{"customer_id", {:ref, "customer.customer_id"}}])
+      |> Selecto.order_by([{"order_date", :desc}])
+      |> Selecto.limit(3)
+    end,
+    "recent_orders",  # Alias as string, not keyword list
+    []  # Optional join conditions
+  )
 |> Selecto.select([
     "customer.name",
     "recent_orders.order_id",
     "recent_orders.order_date",
     "recent_orders.total"
   ])
-|> Selecto.lateral_join(
-    :left,
-    fn base ->
-      Selecto.configure(order_domain, connection)
-      |> Selecto.select(["order_id", "order_date", "total"])
-      |> Selecto.filter([{"customer_id", {:ref, "customer.customer_id"}}])
-      |> Selecto.order_by([{"order_date", :desc}])
-      |> Selecto.limit(3)
-    end,
-    as: "recent_orders"
-  )
 ```
 
 **Generated SQL:**
@@ -85,16 +89,11 @@ LEFT JOIN LATERAL (
 ### Multiple Column References
 
 ```elixir
-# Find products similar to customer's previous purchases
+# Find products similar to customer's previous purchases - CORRECT API
 selecto
-|> Selecto.select([
-    "customer.name",
-    "similar_products.product_name",
-    "similar_products.similarity_score"
-  ])
 |> Selecto.lateral_join(
     :left,
-    fn base ->
+    fn _base ->
       Selecto.configure(product_domain, connection)
       |> Selecto.select([
           "product.name AS product_name",
@@ -130,8 +129,14 @@ selecto
       |> Selecto.order_by([{"similarity_score", :desc}])
       |> Selecto.limit(5)
     end,
-    as: "similar_products"
+    "similar_products",  # Alias as string
+    []  # Optional join conditions
   )
+|> Selecto.select([
+    "customer.name",
+    "similar_products.product_name",
+    "similar_products.similarity_score"
+  ])
 ```
 
 ## LATERAL with Subqueries

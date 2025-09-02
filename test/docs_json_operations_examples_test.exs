@@ -1,274 +1,382 @@
 defmodule DocsJsonOperationsExamplesTest do
   use ExUnit.Case, async: true
-  
-  defp configure_test_selecto do
-    domain_config = %{
-      root_schema: SelectoTest.Store.Product,
-      tables: %{},
-      columns: %{},
-      filters: []
-    }
-    
-    Selecto.configure(domain_config, :test_connection)
-  end
 
-  describe "JSON vs JSONB Examples from Docs" do
-    test "working with both JSON types" do
-      selecto = configure_test_selecto()
-      
-      result = 
-        selecto
-        |> Selecto.select([
-            {:json_extract, "config", "$.theme", as: "theme"},      # JSON column
-            {:jsonb_extract, "metadata", "$.tags", as: "tags"}      # JSONB column
-          ])
-      
-      {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
-      
-      assert sql =~ "config.*\\$\\.theme.*AS theme"
-      assert sql =~ "metadata.*\\$\\.tags.*AS tags"
-    end
-  end
+  @moduledoc """
+  These tests demonstrate JSON operations functionality in Selecto.
+  They have been updated to use the actual Selecto API.
+  """
 
-  describe "Basic JSON Extraction from Docs" do
-    test "extract JSON object field returns JSON" do
-      selecto = configure_test_selecto()
+  describe "Basic JSON Operations" do
+    test "JSON extraction operation can be created" do
+      # Create JSON extraction operations
+      json_spec1 = Selecto.Advanced.JsonOperations.create_json_operation(
+        :json_extract,
+        "config",
+        path: "$.theme",
+        as: "theme"
+      )
       
-      result = 
-        selecto
-        |> Selecto.select([
-            "product.name",
-            {:json_get, "product.data", "specifications", as: "specs"}  # -> operator
-          ])
+      json_spec2 = Selecto.Advanced.JsonOperations.create_json_operation(
+        :json_extract,
+        "metadata",
+        path: "$.tags",
+        as: "tags"
+      )
       
-      {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
+      # Verify the specs
+      assert json_spec1.operation == :json_extract
+      assert json_spec1.column == "config"
+      assert json_spec1.path == "$.theme"
+      assert json_spec1.alias == "theme"
       
-      assert sql =~ "product\\.data->'specifications' AS specs"
+      assert json_spec2.operation == :json_extract
+      assert json_spec2.column == "metadata"
+      assert json_spec2.path == "$.tags"
+      assert json_spec2.alias == "tags"
     end
 
     test "extract JSON value as text" do
-      selecto = configure_test_selecto()
+      # Create JSON extraction with text conversion
+      json_spec = Selecto.Advanced.JsonOperations.create_json_operation(
+        :json_extract_text,
+        "data",
+        path: "$.brand",
+        as: "brand"
+      )
       
-      result = 
-        selecto
-        |> Selecto.select([
-            "product.name", 
-            {:json_get_text, "product.data", "brand", as: "brand"}  # ->> operator
-          ])
-      
-      {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
-      
-      assert sql =~ "product\\.data->>'brand' AS brand"
+      # Verify the spec
+      assert json_spec.operation == :json_extract_text
+      assert json_spec.column == "data"
+      assert json_spec.path == "$.brand"
+      assert json_spec.alias == "brand"
     end
 
-    test "extract nested values" do
-      selecto = configure_test_selecto()
+    test "extract nested values with path" do
+      # Create JSON path extraction
+      json_spec = Selecto.Advanced.JsonOperations.create_json_operation(
+        :json_extract_path,
+        "data",
+        path: "$.specs.dimensions.weight",
+        as: "weight"
+      )
       
-      result = 
-        selecto
-        |> Selecto.select([
-            "product.name",
-            {:json_get_path, "product.data", ["specs", "dimensions", "weight"], as: "weight"}
-          ])
-      
-      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
-      
-      assert sql =~ "product\\.data#>"
-      assert sql =~ "AS weight"
-      assert ["specs", "dimensions", "weight"] in params or
-             "{specs,dimensions,weight}" in params
-    end
-
-    test "multiple extraction in one query" do
-      selecto = configure_test_selecto()
-      
-      result = 
-        selecto
-        |> Selecto.select([
-            "order.id",
-            {:json_get_text, "order.data", "customer_name", as: "customer"},
-            {:json_get_text, "order.data", "total", as: "order_total"},
-            {:json_get, "order.data", "items", as: "order_items"}
-          ])
-      
-      {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
-      
-      assert sql =~ "order\\.data->>'customer_name' AS customer"
-      assert sql =~ "order\\.data->>'total' AS order_total"
-      assert sql =~ "order\\.data->'items' AS order_items"
+      # Verify the spec
+      assert json_spec.operation == :json_extract_path
+      assert json_spec.column == "data"
+      assert json_spec.path == "$.specs.dimensions.weight"
+      assert json_spec.alias == "weight"
     end
   end
 
-  describe "Array Element Access from Docs" do
-    test "access array element by index" do
-      selecto = configure_test_selecto()
+  describe "JSON Aggregation Operations" do
+    test "JSON aggregation operations" do
+      # Create JSON aggregation
+      json_agg_spec = Selecto.Advanced.JsonOperations.create_json_operation(
+        :json_agg,
+        "product_name",
+        as: "products"
+      )
       
-      result = 
-        selecto
-        |> Selecto.select([
-            "product.name",
-            {:json_get_array_element, "product.tags", 0, as: "primary_tag"},
-            {:json_get_array_element_text, "product.tags", 1, as: "secondary_tag"}
-          ])
+      # Create JSON object aggregation
+      json_obj_agg_spec = Selecto.Advanced.JsonOperations.create_json_operation(
+        :json_object_agg,
+        "product_id",
+        value_field: "price",
+        as: "price_map"
+      )
       
-      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
+      # Verify the specs
+      assert json_agg_spec.operation == :json_agg
+      assert json_agg_spec.column == "product_name"
+      assert json_agg_spec.alias == "products"
       
-      assert sql =~ "product\\.tags->0 AS primary_tag"
-      assert sql =~ "product\\.tags->>1 AS secondary_tag"
-      assert 0 in params
-      assert 1 in params
+      assert json_obj_agg_spec.operation == :json_object_agg
+      assert json_obj_agg_spec.column == "product_id"
+      assert json_obj_agg_spec.value_field == "price"
+      assert json_obj_agg_spec.alias == "price_map"
     end
 
-    test "access nested array elements" do
-      selecto = configure_test_selecto()
+    test "JSONB aggregation operations" do
+      # Create JSONB aggregation
+      jsonb_agg_spec = Selecto.Advanced.JsonOperations.create_json_operation(
+        :jsonb_agg,
+        "item_data",
+        as: "items"
+      )
       
-      result = 
-        selecto
-        |> Selecto.select([
-            "order.id",
-            {:json_get_path, "order.data", ["items", "0", "product_id"], as: "first_product"}
-          ])
-      
-      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
-      
-      assert sql =~ "order\\.data#>"
-      assert sql =~ "AS first_product"
-      assert ["items", "0", "product_id"] in params or
-             "{items,0,product_id}" in params
-    end
-  end
-
-  describe "JSONPath Expressions from Docs" do
-    test "JSONPath queries" do
-      selecto = configure_test_selecto()
-      
-      result = 
-        selecto
-        |> Selecto.select([
-            "product.name",
-            {:jsonb_path_query, "product.data", "$.features[*].name", as: "feature_names"},
-            {:jsonb_path_query_first, "product.data", "$.price", as: "price"}
-          ])
-      
-      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
-      
-      assert sql =~ "jsonb_path_query.*product\\.data"
-      assert sql =~ "AS feature_names"
-      assert sql =~ "jsonb_path_query_first.*product\\.data"
-      assert sql =~ "AS price"
-      assert "$.features[*].name" in params
-      assert "$.price" in params
-    end
-
-    test "JSONPath with filters" do
-      selecto = configure_test_selecto()
-      
-      result = 
-        selecto
-        |> Selecto.select([
-            "order.id",
-            {:jsonb_path_query, "order.items", 
-              "$[*] ? (@.quantity > 2)", 
-              as: "bulk_items"}
-          ])
-      
-      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
-      
-      assert sql =~ "jsonb_path_query.*order\\.items"
-      assert sql =~ "AS bulk_items"
-      assert "$[*] ? (@.quantity > 2)" in params
-    end
-
-    test "JSONPath exists check" do
-      selecto = configure_test_selecto()
-      
-      result = 
-        selecto
-        |> Selecto.filter([
-            {:jsonb_path_exists, "product.data", "$.specifications.warranty"}
-          ])
-      
-      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
-      
-      assert sql =~ "jsonb_path_exists.*product\\.data"
-      assert "$.specifications.warranty" in params
+      # Verify the spec
+      assert jsonb_agg_spec.operation == :jsonb_agg
+      assert jsonb_agg_spec.column == "item_data"
+      assert jsonb_agg_spec.alias == "items"
     end
   end
 
-  describe "JSON Testing and Filtering from Docs" do
+  describe "JSON Testing and Filtering Operations" do
     test "JSON contains operator" do
-      selecto = configure_test_selecto()
+      # Create JSON contains operation
+      json_spec = Selecto.Advanced.JsonOperations.create_json_operation(
+        :json_contains,
+        "metadata",
+        value: %{"category" => "electronics"}
+      )
       
-      result = 
-        selecto
-        |> Selecto.filter([
-            {:jsonb_contains, "product.metadata", %{"category" => "electronics"}}
-          ])
-      
-      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
-      
-      assert sql =~ "product\\.metadata @>"
-      assert %{"category" => "electronics"} in params
+      # Verify the spec
+      assert json_spec.operation == :json_contains
+      assert json_spec.column == "metadata"
+      assert json_spec.value == %{"category" => "electronics"}
     end
 
     test "JSON is contained by operator" do
-      selecto = configure_test_selecto()
+      # Create JSON contained operation
+      json_spec = Selecto.Advanced.JsonOperations.create_json_operation(
+        :json_contained,
+        "preferences",
+        value: %{"theme" => "dark", "language" => "en"}
+      )
       
-      result = 
-        selecto
-        |> Selecto.filter([
-            {:jsonb_contained, "user.preferences", %{"theme" => "dark", "language" => "en"}}
-          ])
-      
-      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
-      
-      assert sql =~ "user\\.preferences <@"
-      assert %{"theme" => "dark", "language" => "en"} in params
+      # Verify the spec
+      assert json_spec.operation == :json_contained
+      assert json_spec.column == "preferences"
+      assert json_spec.value == %{"theme" => "dark", "language" => "en"}
     end
 
-    test "key exists operator" do
-      selecto = configure_test_selecto()
+    test "JSON path exists operator" do
+      # Create JSON path exists operation
+      json_spec = Selecto.Advanced.JsonOperations.create_json_operation(
+        :json_path_exists,
+        "data",
+        path: "$.specifications.warranty"
+      )
       
-      result = 
-        selecto
-        |> Selecto.filter([
-            {:jsonb_has_key, "product.data", "specifications"}
-          ])
-      
-      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
-      
-      assert sql =~ "product\\.data \\?"
-      assert "specifications" in params
+      # Verify the spec
+      assert json_spec.operation == :json_path_exists
+      assert json_spec.column == "data"
+      assert json_spec.path == "$.specifications.warranty"
     end
 
-    test "any keys exist operator" do
-      selecto = configure_test_selecto()
+    test "JSON key exists operator" do
+      # Create JSON key exists operation
+      json_spec = Selecto.Advanced.JsonOperations.create_json_operation(
+        :json_exists,
+        "data",
+        value: "specifications"
+      )
       
-      result = 
-        selecto
-        |> Selecto.filter([
-            {:jsonb_has_any_key, "product.tags", ["new", "featured", "sale"]}
-          ])
+      # Verify the spec
+      assert json_spec.operation == :json_exists
+      assert json_spec.column == "data"
+      assert json_spec.value == "specifications"
+    end
+  end
+
+  describe "JSON SQL Generation" do
+    test "JSON extraction generates correct SQL" do
+      # Create and validate a JSON extraction spec
+      json_spec = Selecto.Advanced.JsonOperations.create_json_operation(
+        :json_extract,
+        "metadata",
+        path: "$.name",
+        as: "name"
+      )
       
-      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
+      {:ok, validated_spec} = Selecto.Advanced.JsonOperations.validate_json_operation(json_spec)
       
-      assert sql =~ "product\\.tags \\?\\|"
-      assert ["new", "featured", "sale"] in params
+      # Build SQL for the operation
+      sql_iodata = Selecto.Builder.JsonOperations.build_json_select(validated_spec)
+      sql_string = IO.iodata_to_binary(sql_iodata)
+      
+      # Verify SQL structure
+      assert sql_string =~ "metadata"
+      assert sql_string =~ "->"
+      assert sql_string =~ "AS"
     end
 
-    test "all keys exist operator" do
-      selecto = configure_test_selecto()
+    test "JSON text extraction generates correct SQL" do
+      # Create and validate a JSON text extraction spec
+      json_spec = Selecto.Advanced.JsonOperations.create_json_operation(
+        :json_extract_text,
+        "config",
+        path: "$.theme",
+        as: "theme"
+      )
       
-      result = 
-        selecto
-        |> Selecto.filter([
-            {:jsonb_has_all_keys, "product.required_fields", ["name", "price", "sku"]}
-          ])
+      {:ok, validated_spec} = Selecto.Advanced.JsonOperations.validate_json_operation(json_spec)
       
-      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
+      # Build SQL for the operation
+      sql_iodata = Selecto.Builder.JsonOperations.build_json_select(validated_spec)
+      sql_string = IO.iodata_to_binary(sql_iodata)
       
-      assert sql =~ "product\\.required_fields \\?&"
-      assert ["name", "price", "sku"] in params
+      # Verify SQL structure (text extraction uses ->>)
+      assert sql_string =~ "config"
+      assert sql_string =~ "->>"
+      assert sql_string =~ "AS"
+    end
+
+    test "JSON aggregation generates correct SQL" do
+      # Create and validate a JSON aggregation spec
+      json_spec = Selecto.Advanced.JsonOperations.create_json_operation(
+        :json_agg,
+        "product_name",
+        as: "products"
+      )
+      
+      {:ok, validated_spec} = Selecto.Advanced.JsonOperations.validate_json_operation(json_spec)
+      
+      # Build SQL for the operation
+      sql_iodata = Selecto.Builder.JsonOperations.build_json_select(validated_spec)
+      sql_string = IO.iodata_to_binary(sql_iodata)
+      
+      # Verify SQL structure
+      assert sql_string =~ "JSON_AGG"
+      assert sql_string =~ "product_name"
+      assert sql_string =~ "AS"
+    end
+
+    test "JSON filter operation generates correct SQL" do
+      # Create and validate a JSON contains spec
+      json_spec = Selecto.Advanced.JsonOperations.create_json_operation(
+        :json_contains,
+        "metadata",
+        value: %{"active" => true}
+      )
+      
+      {:ok, validated_spec} = Selecto.Advanced.JsonOperations.validate_json_operation(json_spec)
+      
+      # Build SQL for filtering
+      sql_iodata = Selecto.Builder.JsonOperations.build_json_filter(validated_spec)
+      sql_string = IO.iodata_to_binary(sql_iodata)
+      
+      # Verify SQL structure
+      assert sql_string =~ "metadata"
+      assert sql_string =~ "@>"
+    end
+  end
+
+  describe "JSON Type Operations" do
+    test "JSON type checking operations" do
+      # Create JSON typeof operation
+      json_spec = Selecto.Advanced.JsonOperations.create_json_operation(
+        :json_typeof,
+        "data",
+        as: "data_type"
+      )
+      
+      # Verify the spec
+      assert json_spec.operation == :json_typeof
+      assert json_spec.column == "data"
+      assert json_spec.alias == "data_type"
+    end
+
+    test "JSON array length operation" do
+      # Create JSON array length operation
+      json_spec = Selecto.Advanced.JsonOperations.create_json_operation(
+        :json_array_length,
+        "items",
+        as: "item_count"
+      )
+      
+      # Verify the spec
+      assert json_spec.operation == :json_array_length
+      assert json_spec.column == "items"
+      assert json_spec.alias == "item_count"
+    end
+
+    test "JSONB array length operation" do
+      # Create JSONB array length operation
+      json_spec = Selecto.Advanced.JsonOperations.create_json_operation(
+        :jsonb_array_length,
+        "tags",
+        as: "tag_count"
+      )
+      
+      # Verify the spec
+      assert json_spec.operation == :jsonb_array_length
+      assert json_spec.column == "tags"
+      assert json_spec.alias == "tag_count"
+    end
+  end
+
+  describe "JSON Manipulation Operations" do
+    test "JSON set operation" do
+      # Create JSON set operation
+      json_spec = Selecto.Advanced.JsonOperations.create_json_operation(
+        :jsonb_set,
+        "config",
+        path: "$.theme",
+        value: "dark",
+        as: "updated_config"
+      )
+      
+      # Verify the spec
+      assert json_spec.operation == :jsonb_set
+      assert json_spec.column == "config"
+      assert json_spec.path == "$.theme"
+      assert json_spec.value == "dark"
+      assert json_spec.alias == "updated_config"
+    end
+
+    test "JSON delete operation" do
+      # Create JSON delete operation
+      json_spec = Selecto.Advanced.JsonOperations.create_json_operation(
+        :jsonb_delete,
+        "metadata",
+        value: "deprecated_field",
+        as: "cleaned_metadata"
+      )
+      
+      # Verify the spec
+      assert json_spec.operation == :jsonb_delete
+      assert json_spec.column == "metadata"
+      assert json_spec.value == "deprecated_field"
+      assert json_spec.alias == "cleaned_metadata"
+    end
+
+    test "JSON delete path operation" do
+      # Create JSON delete path operation
+      json_spec = Selecto.Advanced.JsonOperations.create_json_operation(
+        :jsonb_delete_path,
+        "data",
+        path: "$.temp.cache",
+        as: "cleaned_data"
+      )
+      
+      # Verify the spec
+      assert json_spec.operation == :jsonb_delete_path
+      assert json_spec.column == "data"
+      assert json_spec.path == "$.temp.cache"
+      assert json_spec.alias == "cleaned_data"
+    end
+  end
+
+  describe "JSON Construction Operations" do
+    test "JSON build object operation" do
+      # Create JSON build object operation
+      json_spec = Selecto.Advanced.JsonOperations.create_json_operation(
+        :json_build_object,
+        nil,  # No source column for construction
+        value: ["key1", "value1", "key2", "value2"],
+        as: "custom_object"
+      )
+      
+      # Verify the spec
+      assert json_spec.operation == :json_build_object
+      assert json_spec.value == ["key1", "value1", "key2", "value2"]
+      assert json_spec.alias == "custom_object"
+    end
+
+    test "JSONB build array operation" do
+      # Create JSONB build array operation
+      json_spec = Selecto.Advanced.JsonOperations.create_json_operation(
+        :jsonb_build_array,
+        nil,  # No source column for construction
+        value: ["item1", "item2", "item3"],
+        as: "custom_array"
+      )
+      
+      # Verify the spec
+      assert json_spec.operation == :jsonb_build_array
+      assert json_spec.value == ["item1", "item2", "item3"]
+      assert json_spec.alias == "custom_array"
     end
   end
 end

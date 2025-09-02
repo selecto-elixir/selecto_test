@@ -1,8 +1,12 @@
 # CASE Expressions Guide
 
+## ⚠️ NOT YET IMPLEMENTED
+
+**Important:** CASE expressions are not yet implemented in Selecto. This documentation describes the planned API and functionality. This is the only major SQL feature that still needs to be implemented.
+
 ## Overview
 
-CASE expressions provide conditional logic within SQL queries, allowing you to transform data based on conditions. Selecto supports both simple CASE (comparing a single expression) and searched CASE (evaluating multiple conditions) expressions, enabling powerful data transformations directly in your queries.
+CASE expressions will provide conditional logic within SQL queries, allowing you to transform data based on conditions. Selecto will support both simple CASE (comparing a single expression) and searched CASE (evaluating multiple conditions) expressions, enabling powerful data transformations directly in your queries.
 
 ## Table of Contents
 
@@ -14,14 +18,14 @@ CASE expressions provide conditional logic within SQL queries, allowing you to t
 6. [Performance Considerations](#performance-considerations)
 7. [Best Practices](#best-practices)
 
-## Simple CASE Expressions
+## Simple CASE Expressions (Planned)
 
 ### Basic Simple CASE
 
-Simple CASE expressions compare a single expression against multiple values.
+Simple CASE expressions will compare a single expression against multiple values.
 
 ```elixir
-# Basic value mapping
+# Basic value mapping (PLANNED API)
 selecto
 |> Selecto.select([
     "film.title",
@@ -120,14 +124,14 @@ selecto
   ])
 ```
 
-## Searched CASE Expressions
+## Searched CASE Expressions (Planned)
 
 ### Basic Searched CASE
 
-Searched CASE expressions evaluate boolean conditions rather than comparing a single value.
+Searched CASE expressions will evaluate boolean conditions rather than comparing a single value.
 
 ```elixir
-# Multiple condition evaluation
+# Multiple condition evaluation (PLANNED API)
 selecto
 |> Selecto.select([
     "customer.name",
