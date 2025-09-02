@@ -166,7 +166,7 @@ defmodule DocsWindowFunctionsExamplesTest do
       
       {sql, _aliases, _params} = Sql.build(result, [])
       
-      assert sql =~ "ROW_NUMBER\\(\\) OVER \\(ORDER BY.*rental_rate.*DESC.*\\) AS rental_rank"
+      assert sql =~ "ROW_NUMBER() OVER (ORDER BY film.rental_rate DESC) AS rental_rank"
     end
     
     test "RANK and DENSE_RANK for films by rating and rental rate" do
@@ -184,8 +184,8 @@ defmodule DocsWindowFunctionsExamplesTest do
       
       {sql, _aliases, _params} = Sql.build(result, [])
       
-      assert sql =~ "RANK\\(\\) OVER \\(PARTITION BY.*rating.*ORDER BY.*rental_rate.*DESC.*\\) AS rate_rank"
-      assert sql =~ "DENSE_RANK\\(\\) OVER \\(PARTITION BY.*rating.*ORDER BY.*rental_rate.*DESC.*\\) AS rate_dense_rank"
+      assert sql =~ "RANK() OVER (PARTITION BY film.rating ORDER BY film.rental_rate DESC) AS rate_rank"
+      assert sql =~ "DENSE_RANK() OVER (PARTITION BY film.rating ORDER BY film.rental_rate DESC) AS rate_dense_rank"
     end
     
     test "PERCENT_RANK for percentile ranking" do
@@ -200,7 +200,7 @@ defmodule DocsWindowFunctionsExamplesTest do
       
       {sql, _aliases, _params} = Sql.build(result, [])
       
-      assert sql =~ "PERCENT_RANK\\(\\) OVER \\(ORDER BY.*replacement_cost.*\\) AS cost_percentile"
+      assert sql =~ "PERCENT_RANK() OVER (ORDER BY film.replacement_cost ASC) AS cost_percentile"
     end
     
     test "NTILE for quartiles" do
@@ -215,7 +215,7 @@ defmodule DocsWindowFunctionsExamplesTest do
       
       {sql, _aliases, params} = Sql.build(result, [])
       
-      assert sql =~ "NTILE\\(.*\\) OVER \\(ORDER BY.*length.*\\) AS length_quartile"
+      assert sql =~ "NTILE($1) OVER (ORDER BY film.length ASC) AS length_quartile"
       assert 4 in params
     end
   end
@@ -233,7 +233,7 @@ defmodule DocsWindowFunctionsExamplesTest do
       
       {sql, _aliases, _params} = Sql.build(result, [])
       
-      assert sql =~ "COUNT\\(.*\\*.*\\) OVER \\(ORDER BY.*release_year.*title.*\\) AS cumulative_count"
+      assert sql =~ "COUNT(*) OVER (ORDER BY film.release_year ASC, film.title ASC) AS cumulative_count"
     end
     
     test "moving averages with frame specification" do
@@ -251,7 +251,7 @@ defmodule DocsWindowFunctionsExamplesTest do
       
       {sql, _aliases, _params} = Sql.build(result, [])
       
-      assert sql =~ "AVG\\(.*rental_rate.*\\) OVER \\(.*ORDER BY.*release_year.*ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING.*\\) AS moving_avg_5"
+      assert sql =~ "AVG(film.rental_rate) OVER (ORDER BY film.release_year ASC ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING) AS moving_avg_5"
     end
   end
   
@@ -278,8 +278,8 @@ defmodule DocsWindowFunctionsExamplesTest do
       
       assert sql =~ "title"
       assert sql =~ "rental_rate"
-      assert sql =~ "LAG\\(.*rental_rate.*\\) OVER \\(ORDER BY.*title.*\\) AS prev_rate"
-      assert sql =~ "LEAD\\(.*rental_rate.*\\) OVER \\(ORDER BY.*title.*\\) AS next_rate"
+      assert sql =~ "LAG(film.rental_rate, $1) OVER (ORDER BY film.title ASC) AS prev_rate"
+      assert sql =~ "LEAD(film.rental_rate, $2) OVER (ORDER BY film.title ASC) AS next_rate"
       assert sql =~ "rate_diff"
       assert sql =~ "rate_change_pct"
       assert 1 in params
@@ -311,8 +311,8 @@ defmodule DocsWindowFunctionsExamplesTest do
       assert sql =~ "rating"
       assert sql =~ "title"
       assert sql =~ "rental_rate"
-      assert sql =~ "FIRST_VALUE\\(.*title.*\\) OVER \\(PARTITION BY.*rating.*ORDER BY.*rental_rate.*DESC.*\\) AS highest_rate_film"
-      assert sql =~ "LAST_VALUE\\(.*title.*\\) OVER \\(PARTITION BY.*rating.*ORDER BY.*rental_rate.*DESC.*RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING.*\\) AS lowest_rate_film"
+      assert sql =~ "FIRST_VALUE(film.title) OVER (PARTITION BY film.rating ORDER BY film.rental_rate DESC) AS highest_rate_film"
+      assert sql =~ "LAST_VALUE(film.title) OVER (PARTITION BY film.rating ORDER BY film.rental_rate DESC RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS lowest_rate_film"
     end
     
     test "NTH_VALUE function for specific positions" do
@@ -337,8 +337,8 @@ defmodule DocsWindowFunctionsExamplesTest do
       assert sql =~ "rating"
       assert sql =~ "title"
       assert sql =~ "length"
-      assert sql =~ "NTH_VALUE\\(.*title.*\\) OVER \\(PARTITION BY.*rating.*ORDER BY.*length.*DESC.*\\) AS second_longest"
-      assert sql =~ "NTH_VALUE\\(.*title.*\\) OVER \\(PARTITION BY.*rating.*ORDER BY.*length.*DESC.*\\) AS third_longest"
+      assert sql =~ "NTH_VALUE(film.title, $1) OVER (PARTITION BY film.rating ORDER BY film.length DESC) AS second_longest"
+      assert sql =~ "NTH_VALUE(film.title, $2) OVER (PARTITION BY film.rating ORDER BY film.length DESC) AS third_longest"
       assert 2 in params
       assert 3 in params
     end
@@ -371,8 +371,8 @@ defmodule DocsWindowFunctionsExamplesTest do
       
       assert sql =~ "title"
       assert sql =~ "rental_rate"
-      assert sql =~ "SUM\\(.*rental_rate.*\\) OVER \\(.*ORDER BY.*title.*ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING.*\\) AS sum_5_films"
-      assert sql =~ "AVG\\(.*rental_rate.*\\) OVER \\(.*ORDER BY.*title.*ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW.*\\) AS cumulative_avg"
+      assert sql =~ "SUM(film.rental_rate) OVER (ORDER BY film.title ASC ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING) AS sum_5_films"
+      assert sql =~ "AVG(film.rental_rate) OVER (ORDER BY film.title ASC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS cumulative_avg"
     end
     
     test "RANGE frame specification for value ranges" do
@@ -403,8 +403,8 @@ defmodule DocsWindowFunctionsExamplesTest do
       assert sql =~ "title"
       assert sql =~ "release_year"
       assert sql =~ "rental_rate"
-      assert sql =~ "SUM\\(.*rental_rate.*\\) OVER \\(.*ORDER BY.*release_year.*RANGE BETWEEN 1 PRECEDING AND 1 FOLLOWING.*\\) AS rate_sum_3yr_window"
-      assert sql =~ "COUNT\\(.*\\*.*\\) OVER \\(.*ORDER BY.*release_year.*RANGE BETWEEN 2 PRECEDING AND 2 FOLLOWING.*\\) AS count_5yr_window"
+      assert sql =~ "SUM(film.rental_rate) OVER (ORDER BY film.release_year ASC RANGE BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS rate_sum_3yr_window"
+      assert sql =~ "COUNT(*) OVER (ORDER BY film.release_year ASC RANGE BETWEEN 2 PRECEDING AND 2 FOLLOWING) AS count_5yr_window"
     end
   end
   
@@ -427,8 +427,8 @@ defmodule DocsWindowFunctionsExamplesTest do
       {sql, _aliases, params} = Sql.build(result, [])
       
       assert sql =~ "release_year"
-      assert sql =~ "COUNT\\(\\*\\) AS film_count"
-      assert sql =~ "LAG\\(.*COUNT\\(\\*\\).*\\) OVER \\(.*ORDER BY.*release_year.*\\) AS prev_year_count"
+      assert sql =~ "COUNT(\\*) AS film_count"
+      assert sql =~ "LAG(COUNT(\\*), \\$1) OVER \\(ORDER BY film.release_year ASC\\) AS prev_year_count"
       assert sql =~ "yoy_growth"
       assert sql =~ "GROUP BY"
       assert 1 in params
@@ -455,7 +455,7 @@ defmodule DocsWindowFunctionsExamplesTest do
       assert sql =~ "rating"
       assert sql =~ "title"
       assert sql =~ "rental_rate"
-      assert sql =~ "ROW_NUMBER\\(\\) OVER \\(PARTITION BY.*rating.*ORDER BY.*rental_rate.*DESC.*\\) AS rate_rank"
+      assert sql =~ "ROW_NUMBER() OVER (PARTITION BY film.rating ORDER BY film.rental_rate DESC) AS rate_rank"
       assert sql =~ "WHERE"
       assert 3 in params
     end
@@ -480,8 +480,8 @@ defmodule DocsWindowFunctionsExamplesTest do
       
       assert sql =~ "title"
       assert sql =~ "replacement_cost"
-      assert sql =~ "CUME_DIST\\(\\) OVER \\(ORDER BY.*replacement_cost.*\\) AS cost_cume_dist"
-      assert sql =~ "PERCENT_RANK\\(\\) OVER \\(ORDER BY.*replacement_cost.*\\) AS cost_percent_rank"
+      assert sql =~ "CUME_DIST() OVER (ORDER BY film.replacement_cost ASC) AS cost_cume_dist"
+      assert sql =~ "PERCENT_RANK() OVER (ORDER BY film.replacement_cost ASC) AS cost_percent_rank"
     end
   end
   
@@ -513,9 +513,9 @@ defmodule DocsWindowFunctionsExamplesTest do
       assert sql =~ "title"
       assert sql =~ "rental_duration"
       assert sql =~ "rental_rate"
-      assert sql =~ "AVG\\(.*rental_duration.*\\) OVER \\(PARTITION BY.*rating.*\\) AS avg_duration_by_rating"
-      assert sql =~ "RANK\\(\\) OVER \\(PARTITION BY.*rating.*ORDER BY.*rental_rate.*DESC.*\\) AS rate_rank_in_rating"
-      assert sql =~ "COUNT\\(.*\\*.*\\) OVER \\(PARTITION BY.*rating.*\\) AS films_in_rating"
+      assert sql =~ "AVG(film.rental_duration) OVER (PARTITION BY film.rating) AS avg_duration_by_rating"
+      assert sql =~ "RANK() OVER (PARTITION BY film.rating ORDER BY film.rental_rate DESC) AS rate_rank_in_rating"
+      assert sql =~ "COUNT(\\*) OVER (PARTITION BY film.rating) AS films_in_rating"
     end
     
     test "revenue potential scoring" do
@@ -542,8 +542,8 @@ defmodule DocsWindowFunctionsExamplesTest do
       assert sql =~ "rental_rate"
       assert sql =~ "rental_duration"
       assert sql =~ "monthly_revenue_potential"
-      assert sql =~ "NTILE\\(.*\\) OVER \\(ORDER BY.*rental_rate.*\\*.*30\\.0.*\\/.*rental_duration.*\\) AS revenue_decile"
-      assert sql =~ "PERCENT_RANK\\(\\) OVER \\(ORDER BY.*rental_rate.*\\*.*30\\.0.*\\/.*rental_duration.*\\) AS revenue_percentile"
+      assert sql =~ "NTILE(\\$1) OVER \\(ORDER BY film.rental_rate \\* \\(30.0 / film.rental_duration\\) ASC\\) AS revenue_decile"
+      assert sql =~ "PERCENT_RANK\\(\\) OVER \\(ORDER BY film.rental_rate \\* \\(30.0 / film.rental_duration\\) ASC\\) AS revenue_percentile"
       assert 10 in params
     end
   end
@@ -580,9 +580,9 @@ defmodule DocsWindowFunctionsExamplesTest do
       
       assert sql =~ "title"
       assert sql =~ "length"
-      assert sql =~ "AVG\\(.*length.*\\) OVER \\(.*ORDER BY.*title.*ROWS BETWEEN 5 PRECEDING AND 5 FOLLOWING.*\\) AS local_avg_length"
-      assert sql =~ "STDDEV\\(.*length.*\\) OVER \\(.*ORDER BY.*title.*ROWS BETWEEN 5 PRECEDING AND 5 FOLLOWING.*\\) AS local_stddev"
-      assert sql =~ "ABS\\(length"
+      assert sql =~ "AVG(film.length) OVER (ORDER BY film.title ASC ROWS BETWEEN 5 PRECEDING AND 5 FOLLOWING) AS local_avg_length"
+      assert sql =~ "STDDEV(film.length) OVER (ORDER BY film.title ASC ROWS BETWEEN 5 PRECEDING AND 5 FOLLOWING) AS local_stddev"
+      assert sql =~ "ABS(length"
     end
     
     test "partitioned ranking for large datasets" do
@@ -610,8 +610,8 @@ defmodule DocsWindowFunctionsExamplesTest do
       assert sql =~ "rating"
       assert sql =~ "title"
       assert sql =~ "replacement_cost"
-      assert sql =~ "DENSE_RANK\\(\\) OVER \\(PARTITION BY.*rating.*ORDER BY.*replacement_cost.*DESC.*\\) AS cost_rank"
-      assert sql =~ "DENSE_RANK\\(\\) OVER \\(PARTITION BY rating ORDER BY replacement_cost DESC\\) <= "
+      assert sql =~ "DENSE_RANK() OVER (PARTITION BY film.rating ORDER BY film.replacement_cost DESC) AS cost_rank"
+      assert sql =~ "DENSE_RANK() OVER (PARTITION BY rating ORDER BY replacement_cost DESC) <= "
       assert 10 in params
     end
   end
