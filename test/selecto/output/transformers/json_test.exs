@@ -80,7 +80,7 @@ defmodule Selecto.Output.Transformers.JsonTest do
       assert {:ok, json} = Json.transform(rows, columns, aliases, include_meta: true)
       assert {:ok, response} = Jason.decode(json)
 
-      assert %{"data" => data, "meta" => meta} = response
+      assert %{"data" => data, "meta" => _meta} = response
       assert length(data) == 1
       assert %{"meta" => %{
         "total_rows" => 1,

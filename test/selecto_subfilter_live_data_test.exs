@@ -79,7 +79,7 @@ defmodule SelectoSubfilterLiveDataTest do
       {:ok, sql, params} = SQL.generate(registry)
 
       # Validate SQL structure for compound operations
-      assert sql =~ "WHERE"
+      assert sql =~ ~r/where/i
       assert sql =~ " AND "
       assert Enum.sort(params) == Enum.sort(["R", 2000])
 
@@ -243,7 +243,7 @@ defmodule SelectoSubfilterLiveDataTest do
       {:ok, sql, params} = SQL.generate(registry)
 
       # Validate that the subfilter SQL is properly structured
-      assert sql =~ "WHERE"
+      assert sql =~ ~r/where/i
       assert sql =~ "EXISTS"
       assert params == ["Action"]
 

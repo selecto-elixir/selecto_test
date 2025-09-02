@@ -1,5 +1,6 @@
 defmodule DocsLateralJoinsExamplesTest do
   use ExUnit.Case, async: true
+  import SelectoTest.TestHelpers
 
   @moduledoc """
   These tests demonstrate LATERAL join functionality in Selecto.
@@ -8,7 +9,7 @@ defmodule DocsLateralJoinsExamplesTest do
 
   describe "Basic LATERAL Joins" do
     test "simple correlated subquery - recent orders per customer" do
-      selecto = create_base_selecto("customer")
+      selecto = configure_test_selecto("customer")
       
       # Add a lateral join with correlated subquery
       result = 
@@ -72,7 +73,7 @@ defmodule DocsLateralJoinsExamplesTest do
     end
 
     test "lateral join with aggregation" do
-      selecto = create_base_selecto("film")
+      selecto = configure_test_selecto("film")
       
       result = 
         selecto
@@ -134,7 +135,7 @@ defmodule DocsLateralJoinsExamplesTest do
     end
 
     test "lateral join with table function" do
-      selecto = create_base_selecto("film")
+      selecto = configure_test_selecto("film")
       
       # Add a lateral join using unnest table function
       result = 
@@ -245,7 +246,7 @@ defmodule DocsLateralJoinsExamplesTest do
 
   describe "Multiple LATERAL Joins" do
     test "multiple lateral joins can be added" do
-      selecto = create_base_selecto("customer")
+      selecto = configure_test_selecto("customer")
       
       # Add multiple lateral joins
       result = 
@@ -344,29 +345,5 @@ defmodule DocsLateralJoinsExamplesTest do
   end
 
   # Helper to create a base selecto structure
-  defp create_base_selecto(table) do
-    %{
-      set: %{
-        selected: [],
-        from: table
-      },
-      domain: %{},
-      config: %{
-        source: %{
-          table: table,
-          fields: [],
-          columns: %{},
-          redact_fields: []
-        },
-        joins: %{},
-        columns: %{}
-      },
-      source: %{
-        table: table,
-        fields: [],
-        columns: %{},
-        redact_fields: []
-      }
-    }
-  end
+  # Removed create_base_selecto - using configure_test_selecto from TestHelpers instead
 end

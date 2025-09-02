@@ -7,7 +7,6 @@ defmodule DocsSetOperationsExamplesTest do
   """
 
   alias Selecto.SetOperations
-  alias Selecto.Builder.Sql
   
   # Helper to create a basic configured selecto for testing
   defp create_base_selecto(table) do

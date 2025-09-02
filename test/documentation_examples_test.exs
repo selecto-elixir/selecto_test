@@ -131,10 +131,10 @@ defmodule DocumentationExamplesTest do
       
       {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
       
-      assert sql =~ "WHERE"
-      assert sql =~ "rating.*IN"
-      assert sql =~ "rental_rate.*<"
-      assert sql =~ "ORDER BY.*title"
+      assert sql =~ ~r/where/i
+      assert sql =~ ~r/rating.*=.*ANY/i
+      assert sql =~ ~r/rental_rate.*</
+      assert sql =~ ~r/order by.*title/i
       assert ["PG", "PG-13"] in params
       assert 5.0 in params
     end
@@ -158,13 +158,13 @@ defmodule DocumentationExamplesTest do
       
       {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
       
-      assert sql =~ "SELECT"
+      assert sql =~ ~r/select/i
       assert sql =~ "first_name"
       assert sql =~ "last_name"
       assert sql =~ "COUNT.*actor_id"
-      assert sql =~ "WHERE.*last_name.*LIKE"
-      assert sql =~ "GROUP BY.*first_name.*last_name"
-      assert sql =~ "ORDER BY.*last_name.*ASC"
+      assert sql =~ ~r/where.*last_name.*like/i
+      assert sql =~ ~r/group by.*first_name.*last_name/i
+      assert sql =~ ~r/order by.*last_name.*asc/i
     end
   end
 end

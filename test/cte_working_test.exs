@@ -112,7 +112,7 @@ defmodule CteWorkingTest do
       
       # Verify WITH clause is present
       assert sql =~ "WITH test_cte AS"
-      assert sql =~ "SELECT"
+      assert sql =~ ~r/select/i
       
       # The filter parameter should be in params
       assert "G" in params

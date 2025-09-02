@@ -1,14 +1,14 @@
 defmodule SelectoDomeAdvancedTest do
   use SelectoTest.SelectoCase, async: false
-  
+
   alias SelectoTest.{Repo, PagilaDomain}
-  alias SelectoTest.Store.{Actor, Film, Language, FilmActor}
+  alias SelectoTest.Store.{Actor, Language}
   alias SelectoDome
 
   describe "SelectoDome with filtered queries" do
     setup do
       {:ok, english} = %Language{name: "English"} |> Repo.insert()
-      
+
       # Create actors with different first name patterns
       {:ok, john} = %Actor{first_name: "John", last_name: "Doe"} |> Repo.insert()
       {:ok, jane} = %Actor{first_name: "Jane", last_name: "Smith"} |> Repo.insert()
@@ -31,12 +31,12 @@ defmodule SelectoDomeAdvancedTest do
     test "respects query filters in results", %{selecto: selecto, actors: actors} do
       {:ok, result} = Selecto.execute(selecto)
       {rows, _columns, _aliases} = result
-      
+
       # Should only include John and Jane (names starting with 'J')
       assert length(rows) == 2
-      
+
       {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
-      
+
       # Insert an actor whose name starts with 'J' - should be included
       {:ok, dome} = SelectoDome.insert(dome, %{
         first_name: "Jack",
@@ -151,7 +151,7 @@ defmodule SelectoDomeAdvancedTest do
       {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
       metadata = SelectoDome.metadata(dome)
-      
+
       # Should have captured the required filters as constraints
       assert is_list(metadata.constraints)
       # The exact structure depends on QueryAnalyzer implementation
@@ -275,7 +275,7 @@ defmodule SelectoDomeAdvancedTest do
   describe "SelectoDome metadata analysis" do
     setup do
       {:ok, english} = %Language{name: "English"} |> Repo.insert()
-      
+
       # Create a complex query (without joins for now to avoid API issues)
       domain = PagilaDomain.actors_domain()
       selecto = Selecto.configure(domain, SelectoTest.Repo)
@@ -295,7 +295,7 @@ defmodule SelectoDomeAdvancedTest do
 
       # Should have column mapping information
       assert is_map(metadata.column_mapping)
-      
+
       # Should have result structure information
       assert metadata.result_structure.row_count >= 0
       assert is_list(metadata.result_structure.columns)

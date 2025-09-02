@@ -211,7 +211,7 @@ defmodule DocsSubqueriesSubfiltersExamplesTest do
       assert sql =~ "first_name"
       assert sql =~ "last_name"
       # Subselect generates correlated subquery
-      assert sql =~ "SELECT"
+      assert sql =~ ~r/select/i
       assert sql =~ "FROM film"
     end
     

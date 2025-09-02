@@ -127,10 +127,10 @@ defmodule SelectoPivotSubselectSimpleTest do
       
       # Should contain subselect with JSON aggregation
       assert sql =~ "json_agg"
-      assert sql =~ "SELECT" # Subquery SELECT
+      assert sql =~ ~r/select/i # Subquery SELECT
       
       # Should contain correlation condition
-      assert sql =~ "WHERE"
+      assert sql =~ ~r/where/i
       assert sql =~ "=" # Correlation join
       
     end

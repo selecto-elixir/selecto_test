@@ -35,7 +35,7 @@ defmodule SelectoPivotSubselectCombinedTest do
           assert "film_details" in columns
 
           [first_row | _] = rows
-          [title, rating, year, film_json] = first_row
+          [title, rating, _year, film_json] = first_row
 
           # Verify we have film data
           assert is_binary(title)
@@ -172,7 +172,7 @@ defmodule SelectoPivotSubselectCombinedTest do
             assert "related_films" in columns
 
             [first_row | _] = rows
-            [title, rating, length, related_films] = first_row
+            [title, rating, _length, related_films] = first_row
 
             assert rating == "PG"  # Should match our additional filter
 
@@ -210,7 +210,7 @@ defmodule SelectoPivotSubselectCombinedTest do
           assert "film_titles" in columns
 
           [first_row | _] = rows
-          [title, _description, film_titles] = first_row
+          [_title, _description, film_titles] = first_row
 
           # Should include film titles
           if film_titles do

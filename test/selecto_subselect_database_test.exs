@@ -259,15 +259,15 @@ defmodule SelectoSubselectDatabaseTest do
       {sql, params} = Selecto.to_sql(selecto)
 
       # Should contain main SELECT
-      assert sql =~ "SELECT"
+      assert sql =~ ~r/select/i
       assert sql =~ "first_name"
 
       # Should contain subselect with JSON aggregation
       assert sql =~ "json_agg" or sql =~ "array_agg"
-      assert sql =~ "SELECT" # Subquery SELECT
+      assert sql =~ ~r/select/i # Subquery SELECT
 
       # Should contain correlation condition
-      assert sql =~ "WHERE"
+      assert sql =~ ~r/where/i
       assert sql =~ "=" # Correlation join
 
       # Should have parameter for filter

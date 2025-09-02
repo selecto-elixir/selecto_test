@@ -9,8 +9,6 @@ defmodule DocsSubselectsExamplesTest do
   without denormalizing the result set.
   """
   
-  alias Selecto.Builder.Sql
-  
   # Helper to configure test Selecto instance with proper domain structure
   defp configure_test_selecto(table \\ "attendees") do
     domain_config = case table do
