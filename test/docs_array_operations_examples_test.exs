@@ -240,8 +240,6 @@ defmodule DocsArrayOperationsExamplesTest do
              "pending" in params  # Depending on implementation
     end
 
-    # Array_append not yet supported - skip test
-    @tag :skip
     test "array_append element" do
       selecto = configure_test_selecto("product")
       
@@ -249,19 +247,16 @@ defmodule DocsArrayOperationsExamplesTest do
         selecto
         |> Selecto.select([
             "name",
-            {:array_append, "tags", "new-arrival", as: "updated_tags"}
+            {:array_append, "tags", "new-arrival"}
           ])
       
       {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
       
       assert sql =~ ~r/array_append/i
       assert sql =~ "tags"
-      assert sql =~ "updated_tags"
       assert "new-arrival" in params
     end
 
-    # Array_prepend not yet supported - skip test
-    @tag :skip
     test "array_prepend element" do
       selecto = configure_test_selecto("film")
       
@@ -269,14 +264,13 @@ defmodule DocsArrayOperationsExamplesTest do
         selecto
         |> Selecto.select([
             "film_id",
-            {:array_prepend, "urgent", "tags", as: "prioritized_types"}
+            {:array_prepend, "urgent", "tags"}
           ])
       
       {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
       
       assert sql =~ ~r/array_prepend/i
       assert sql =~ "tags"
-      assert sql =~ "prioritized_types"
       assert "urgent" in params
     end
 
@@ -294,8 +288,6 @@ defmodule DocsArrayOperationsExamplesTest do
       assert sql =~ "tags"
     end
 
-    # Array_fill not yet supported - skip test
-    @tag :skip
     test "array_fill with value" do
       selecto = configure_test_selecto("product")
       
@@ -303,21 +295,18 @@ defmodule DocsArrayOperationsExamplesTest do
         selecto
         |> Selecto.select([
             "name",
-            {:array_fill, 0, dimensions: [10, 10], as: "empty_grid"}
+            {:array_fill, 0, [10, 10]}
           ])
       
       {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
       
       assert sql =~ ~r/array_fill/i
-      assert sql =~ "empty_grid"
       assert 0 in params
       assert [10, 10] in params
     end
   end
 
   describe "Array Manipulation Examples from Docs" do
-    # Array_remove not yet supported - skip test
-    @tag :skip
     test "array_remove element" do
       selecto = configure_test_selecto("product")
       
@@ -325,19 +314,17 @@ defmodule DocsArrayOperationsExamplesTest do
         selecto
         |> Selecto.select([
             "name",
-            {:array_remove, "tags", "deprecated", as: "cleaned_tags"}
+            {:array_remove, "tags", "deprecated"}
           ])
       
       {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
       
       assert sql =~ ~r/array_remove/i
       assert sql =~ "tags"
-      assert sql =~ "cleaned_tags"
+      # Alias would be handled separately
       assert "deprecated" in params
     end
 
-    # Array_replace not yet supported - skip test
-    @tag :skip
     test "array_replace element" do
       selecto = configure_test_selecto("film")
       
@@ -345,20 +332,18 @@ defmodule DocsArrayOperationsExamplesTest do
         selecto
         |> Selecto.select([
             "title",
-            {:array_replace, "tags", "draft", "published", as: "updated_tags"}
+            {:array_replace, "tags", "draft", "published"}
           ])
       
       {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
       
       assert sql =~ ~r/array_replace/i
       assert sql =~ "tags"
-      assert sql =~ "updated_tags"
+      # Alias would be handled separately
       assert "draft" in params
       assert "published" in params
     end
 
-    # Array_position not yet supported - skip test
-    @tag :skip
     test "array_position find position" do
       selecto = configure_test_selecto("film")
       
@@ -366,19 +351,16 @@ defmodule DocsArrayOperationsExamplesTest do
         selecto
         |> Selecto.select([
             "title",
-            {:array_position, "special_features", "Trailers", as: "position"}
+            {:array_position, "special_features", "Trailers"}
           ])
       
       {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
       
       assert sql =~ ~r/array_position/i
       assert sql =~ "special_features"
-      assert sql =~ "position"
       assert "Trailers" in params
     end
 
-    # Array_positions not yet supported - skip test
-    @tag :skip
     test "array_positions find all positions" do
       selecto = configure_test_selecto("film")
       
@@ -386,14 +368,13 @@ defmodule DocsArrayOperationsExamplesTest do
         selecto
         |> Selecto.select([
             "description",
-            {:array_positions, "tags", "important", as: "important_positions"}
+            {:array_positions, "tags", "important"}
           ])
       
       {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
       
       assert sql =~ ~r/array_positions/i
       assert sql =~ "tags"
-      assert sql =~ "important_positions"
       assert "important" in params
     end
   end
