@@ -94,10 +94,8 @@ defmodule DocsArrayOperationsExamplesTest do
   end
 
   describe "Array Testing and Filtering Examples from Docs" do
-    # Array filter operations not yet supported - skip test
-    @tag :skip
     test "array_contains filter" do
-      selecto = configure_test_selecto()
+      selecto = configure_test_selecto("film")
       
       result = 
         selecto
@@ -111,15 +109,13 @@ defmodule DocsArrayOperationsExamplesTest do
       assert ["Trailers", "Deleted Scenes"] in params
     end
 
-    # Array filter operations not yet supported - skip test
-    @tag :skip
     test "array_contained filter" do
-      selecto = configure_test_selecto("customer")
+      selecto = configure_test_selecto("product")
       
       result = 
         selecto
         |> Selecto.filter([
-            {:array_contained, "customer.preferences", ["read", "write", "admin"]}
+            {:array_contained, "tags", ["read", "write", "admin"]}
           ])
       
       {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
@@ -128,8 +124,6 @@ defmodule DocsArrayOperationsExamplesTest do
       assert ["read", "write", "admin"] in params
     end
 
-    # Array filter operations not yet supported - skip test
-    @tag :skip
     test "array_overlap filter" do
       selecto = configure_test_selecto("product")
       
@@ -145,8 +139,6 @@ defmodule DocsArrayOperationsExamplesTest do
       assert ["electronics", "computers", "tablets"] in params
     end
 
-    # Array filter operations not yet supported - skip test
-    @tag :skip
     test "array_eq filter" do
       selecto = configure_test_selecto()
       
