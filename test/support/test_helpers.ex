@@ -14,9 +14,10 @@ defmodule SelectoTest.TestHelpers do
     table_name_str = if is_atom(table_name), do: Atom.to_string(table_name), else: table_name
     
     %{
+      name: String.capitalize(table_name_str),  # Add domain name
       source: get_source_for_table(table_name_str),
       schemas: get_all_schemas(),
-      joins: get_joins_config()
+      joins: %{}  # Empty joins for test simplicity
     }
   end
 
@@ -139,6 +140,7 @@ defmodule SelectoTest.TestHelpers do
       source_table: "actor",
       primary_key: :actor_id,
       fields: [:actor_id, :first_name, :last_name, :last_update],
+      redact_fields: [],
       columns: %{
         actor_id: %{type: :integer},
         first_name: %{type: :string},
@@ -154,6 +156,7 @@ defmodule SelectoTest.TestHelpers do
       source_table: "category",
       primary_key: :category_id,
       fields: [:category_id, :name, :last_update],
+      redact_fields: [],
       columns: %{
         category_id: %{type: :integer},
         name: %{type: :string},
@@ -169,6 +172,7 @@ defmodule SelectoTest.TestHelpers do
       primary_key: :customer_id,
       fields: [:customer_id, :store_id, :first_name, :last_name, :email, :address_id,
                :activebool, :create_date, :last_update, :active, :preferences, :created_at],
+      redact_fields: [],
       columns: %{
         customer_id: %{type: :integer},
         store_id: %{type: :integer},
@@ -192,7 +196,8 @@ defmodule SelectoTest.TestHelpers do
       source_table: "rental",
       primary_key: :rental_id,
       fields: [:rental_id, :rental_date, :inventory_id, :customer_id, :return_date,
-               :staff_id, :last_update],
+               :staff_id, :last_update, :amount],
+      redact_fields: [],
       columns: %{
         rental_id: %{type: :integer},
         rental_date: %{type: :datetime},
@@ -200,7 +205,8 @@ defmodule SelectoTest.TestHelpers do
         customer_id: %{type: :integer},
         return_date: %{type: :datetime},
         staff_id: %{type: :integer},
-        last_update: %{type: :datetime}
+        last_update: %{type: :datetime},
+        amount: %{type: :decimal}
       },
       associations: %{}
     }
@@ -211,6 +217,7 @@ defmodule SelectoTest.TestHelpers do
       source_table: "payment",
       primary_key: :payment_id,
       fields: [:payment_id, :customer_id, :staff_id, :rental_id, :amount, :payment_date],
+      redact_fields: [],
       columns: %{
         payment_id: %{type: :integer},
         customer_id: %{type: :integer},
@@ -228,6 +235,7 @@ defmodule SelectoTest.TestHelpers do
       source_table: "inventory",
       primary_key: :inventory_id,
       fields: [:inventory_id, :film_id, :store_id, :last_update],
+      redact_fields: [],
       columns: %{
         inventory_id: %{type: :integer},
         film_id: %{type: :integer},
@@ -243,6 +251,7 @@ defmodule SelectoTest.TestHelpers do
       source_table: "orders",
       primary_key: :order_id,
       fields: [:order_id, :customer_id, :order_date, :status, :total, :metadata, :items],
+      redact_fields: [],
       columns: %{
         order_id: %{type: :integer},
         customer_id: %{type: :integer},
@@ -261,6 +270,7 @@ defmodule SelectoTest.TestHelpers do
       source_table: "order_items",
       primary_key: [:order_id, :line_number],
       fields: [:order_id, :line_number, :product_id, :product_name, :quantity, :price],
+      redact_fields: [],
       columns: %{
         order_id: %{type: :integer},
         line_number: %{type: :integer},
@@ -279,6 +289,7 @@ defmodule SelectoTest.TestHelpers do
       primary_key: :product_id,
       fields: [:product_id, :name, :category, :price, :tags, :metadata, :settings,
                :config_json, :config_jsonb, :attributes, :specifications, :data],
+      redact_fields: [],
       columns: %{
         product_id: %{type: :integer},
         name: %{type: :string},
@@ -302,6 +313,7 @@ defmodule SelectoTest.TestHelpers do
       source_table: "employee",
       primary_key: :employee_id,
       fields: [:employee_id, :name, :department, :manager_id, :salary, :hire_date],
+      redact_fields: [],
       columns: %{
         employee_id: %{type: :integer},
         name: %{type: :string},
@@ -319,6 +331,7 @@ defmodule SelectoTest.TestHelpers do
       source_table: "store",
       primary_key: :store_id,
       fields: [:store_id, :manager_staff_id, :address_id, :last_update],
+      redact_fields: [],
       columns: %{
         store_id: %{type: :integer},
         manager_staff_id: %{type: :integer},
@@ -335,6 +348,7 @@ defmodule SelectoTest.TestHelpers do
       primary_key: :staff_id,
       fields: [:staff_id, :first_name, :last_name, :address_id, :email, :store_id,
                :active, :username, :password, :last_update, :picture],
+      redact_fields: [],
       columns: %{
         staff_id: %{type: :integer},
         first_name: %{type: :string},

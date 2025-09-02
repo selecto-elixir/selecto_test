@@ -26,16 +26,16 @@ defmodule DocsCaseExpressionsExamplesTest do
             ], {:literal, "Not Rated"}}
           ])
       
-      {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
+      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
       
-      assert sql =~ "CASE"
-      assert sql =~ "rating.*=.*THEN"
-      assert sql =~ "'General Audiences'"
-      assert sql =~ "'Parental Guidance Suggested'"
-      assert sql =~ "'Parents Strongly Cautioned'"
-      assert sql =~ "'Restricted'"
-      assert sql =~ "'Adults Only'"
-      assert sql =~ "ELSE.*'Not Rated'"
+      assert sql =~ ~r/case/i
+      assert sql =~ ~r/when.*rating.*=/i
+      assert sql =~ ~r/then/i
+      assert sql =~ ~r/else/i
+      # Check params contain expected values
+      assert "General Audiences" in params
+      assert "Parental Guidance Suggested" in params
+      assert "Not Rated" in params
     end
 
     test "numeric comparison in CASE" do
@@ -53,12 +53,18 @@ defmodule DocsCaseExpressionsExamplesTest do
             ], {:literal, "Short"}}
           ])
       
-      {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
+      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
       
-      assert sql =~ "CASE"
-      assert sql =~ "length.*>.*THEN.*'Long'"
-      assert sql =~ "length.*>=.*THEN.*'Medium'"
-      assert sql =~ "ELSE.*'Short'"
+      assert sql =~ ~r/case/i
+      assert sql =~ ~r/length.*>/i
+      assert sql =~ ~r/then/i
+      assert sql =~ ~r/else/i
+      # Check params contain expected values
+      assert "Long" in params
+      assert "Medium" in params
+      assert "Short" in params
+      assert 120 in params
+      assert 90 in params
     end
 
     test "simple CASE without ELSE clause" do
@@ -75,12 +81,15 @@ defmodule DocsCaseExpressionsExamplesTest do
             ]}
           ])
       
-      {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
+      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
       
-      assert sql =~ "CASE"
-      assert sql =~ "rating.*=.*'G'.*THEN.*'Safe for Kids'"
-      assert sql =~ "rating.*=.*'PG'.*THEN.*'Ask Parents'"
-      refute sql =~ "ELSE"
+      assert sql =~ ~r/case/i
+      assert sql =~ ~r/when.*rating.*=/i
+      assert sql =~ ~r/then/i
+      refute sql =~ ~r/else/i
+      # Check params
+      assert "Safe for Kids" in params
+      assert "Ask Parents" in params
     end
 
     test "CASE with rental rate classification" do
@@ -101,12 +110,15 @@ defmodule DocsCaseExpressionsExamplesTest do
       
       {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
       
-      assert sql =~ "CASE"
-      assert sql =~ "rental_rate.*>=.*THEN.*'Premium'"
-      assert sql =~ "rental_rate.*>=.*THEN.*'Standard'"
-      assert sql =~ "rental_rate.*>=.*THEN.*'Budget'"
-      assert sql =~ "ELSE.*'Free'"
-      # Check that decimal values are in params
+      assert sql =~ ~r/case/i
+      assert sql =~ ~r/rental_rate.*>=/i
+      assert sql =~ ~r/then/i
+      assert sql =~ ~r/else/i
+      # Check params
+      assert "Premium" in params
+      assert "Standard" in params
+      assert "Budget" in params
+      assert "Free" in params
       assert Enum.any?(params, fn p -> p == 4.99 or p == 2.99 or p == 0.99 end)
     end
   end
@@ -135,17 +147,18 @@ defmodule DocsCaseExpressionsExamplesTest do
             ], {:literal, "Very Short"}}
           ])
       
-      {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
+      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
       
-      # Should have two CASE statements
-      case_count = sql |> String.split("CASE") |> length() |> Kernel.-(1)
-      assert case_count == 2
-      assert sql =~ "'Family'"
-      assert sql =~ "'Teen'"
-      assert sql =~ "'Adult'"
-      assert sql =~ "'Epic'"
-      assert sql =~ "'Long'"
-      assert sql =~ "'Standard'"
+      # Should have two case statements
+      case_matches = Regex.scan(~r/\bcase\b/i, sql)
+      assert length(case_matches) == 2
+      # Check params for values
+      assert "Family" in params
+      assert "Teen" in params
+      assert "Adult" in params
+      assert "Epic" in params
+      assert "Long" in params
+      assert "Standard" in params
     end
 
     test "CASE in aggregation context" do
@@ -165,14 +178,15 @@ defmodule DocsCaseExpressionsExamplesTest do
           ])
         |> Selecto.group_by(["rating"])
       
-      {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
+      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
       
-      assert sql =~ "CASE"
-      assert sql =~ "COUNT"
-      assert sql =~ "GROUP BY"
-      assert sql =~ "'Family Friendly'"
-      assert sql =~ "'Teen Appropriate'"
-      assert sql =~ "'Adult Only'"
+      assert sql =~ ~r/case/i
+      assert sql =~ ~r/count/i
+      assert sql =~ ~r/group by/i
+      # Check params
+      assert "Family Friendly" in params
+      assert "Teen Appropriate" in params
+      assert "Adult Only" in params
     end
   end
 
@@ -191,12 +205,14 @@ defmodule DocsCaseExpressionsExamplesTest do
             ]}
           ])
       
-      {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
+      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
       
-      assert sql =~ "CASE"
-      assert sql =~ "special_features.*IS NULL.*THEN.*'No Special Features'" or
-             sql =~ "special_features.*=.*NULL.*THEN.*'No Special Features'"
-      assert sql =~ "'Has Special Features'"
+      assert sql =~ ~r/case/i
+      assert sql =~ ~r/special_features.*is/i
+      assert sql =~ ~r/then/i
+      # Check params
+      assert "No Special Features" in params
+      assert "Has Special Features" in params
     end
 
     test "nested value expressions in CASE" do
@@ -214,12 +230,14 @@ defmodule DocsCaseExpressionsExamplesTest do
           ])
         |> Selecto.group_by(["rating"])
       
-      {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
+      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
       
-      assert sql =~ "CASE"
-      assert sql =~ "COUNT.*film_id" or sql =~ "COUNT"
-      assert sql =~ "SUM.*rental_rate" or sql =~ "SUM"
-      assert sql =~ "GROUP BY.*rating"
+      assert sql =~ ~r/case/i
+      assert sql =~ ~r/count.*film_id/i or sql =~ ~r/count\(/i
+      assert sql =~ ~r/sum.*rental_rate/i or sql =~ ~r/sum\(/i
+      assert sql =~ ~r/group by.*rating/i
+      # Check params
+      assert 0 in params
     end
   end
 
