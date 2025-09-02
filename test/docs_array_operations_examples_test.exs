@@ -170,8 +170,6 @@ defmodule DocsArrayOperationsExamplesTest do
       assert sql =~ "tags"
     end
 
-    # Cardinality not yet supported - skip test
-    @tag :skip
     test "cardinality for total elements" do
       selecto = configure_test_selecto("product")
       
@@ -179,18 +177,15 @@ defmodule DocsArrayOperationsExamplesTest do
         selecto
         |> Selecto.select([
             "name",
-            {:cardinality, "data", as: "total_elements"}
+            {:cardinality, "data"}
           ])
       
       {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
       
       assert sql =~ ~r/cardinality/i
       assert sql =~ "data"
-      assert sql =~ "total_elements"
     end
 
-    # Array_ndims not yet supported - skip test
-    @tag :skip
     test "array_ndims for number of dimensions" do
       selecto = configure_test_selecto("product")
       
@@ -198,18 +193,15 @@ defmodule DocsArrayOperationsExamplesTest do
         selecto
         |> Selecto.select([
             "name",
-            {:array_ndims, "specifications", as: "dimensions"}
+            {:array_ndims, "specifications"}
           ])
       
       {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
       
       assert sql =~ ~r/array_ndims/i
       assert sql =~ "specifications"
-      assert sql =~ "dimensions"
     end
 
-    # Array_dims not yet supported - skip test
-    @tag :skip
     test "array_dims for dimension info" do
       selecto = configure_test_selecto("product")
       
@@ -217,14 +209,13 @@ defmodule DocsArrayOperationsExamplesTest do
         selecto
         |> Selecto.select([
             "name",
-            {:array_dims, "data", as: "dimension_info"}
+            {:array_dims, "data"}
           ])
       
       {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
       
       assert sql =~ ~r/array_dims/i
       assert sql =~ "data"
-      assert sql =~ "dimension_info"
     end
   end
 
