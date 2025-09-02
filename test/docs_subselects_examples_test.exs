@@ -1,247 +1,398 @@
 defmodule DocsSubselectsExamplesTest do
   use ExUnit.Case, async: true
 
-# Skip all tests in this module since they use aspirational API
-@moduletag :skip
-@moduledoc """
-These tests are for documentation examples that use aspirational/planned API.
-The actual Selecto API differs from what's shown in documentation.
-These tests are skipped until either:
-1. The Selecto API is updated to match documentation, or
-2. The documentation is updated to match the actual API
-
-Key differences:
-- Selecto.from/1 and Selecto.join/4 don't exist as standalone functions
-- Window functions use window_function/3 then select, not inline in select
-- Set operations take two complete queries, not chained methods
-- Many other API differences
-"""
-
+  @moduledoc """
+  These tests demonstrate the subselect functionality in Selecto.
+  They have been updated to use the actual Selecto API.
+  
+  Subselects allow fetching related data as aggregated arrays (JSON, PostgreSQL arrays, etc.)
+  without denormalizing the result set.
+  """
   
   alias Selecto.Builder.Sql
   
-  # Helper to configure test Selecto instance
+  # Helper to configure test Selecto instance with proper domain structure
   defp configure_test_selecto(table \\ "attendees") do
-    domain_config = %{
-      source: %{
-        module: SelectoTest.Store.Attendee,
-        table: table
-      },
-      schemas: %{
-        "attendees" => SelectoTest.Store.Attendee,
-        "attendee" => SelectoTest.Store.Attendee,
-        "orders" => SelectoTest.Store.Order,
-        "order" => SelectoTest.Store.Order,
-        "events" => SelectoTest.Store.Event,
-        "event" => SelectoTest.Store.Event,
-        "sponsors" => SelectoTest.Store.Sponsor,
-        "products" => SelectoTest.Store.Product,
-        "tags" => SelectoTest.Store.Tag,
-        "comments" => SelectoTest.Store.Comment,
-        "posts" => SelectoTest.Store.Post,
-        "users" => SelectoTest.Store.User,
-        "films" => SelectoTest.Store.Film,
-        "actors" => SelectoTest.Store.Actor,
-        "film_actors" => SelectoTest.Store.FilmActor,
-        "customers" => SelectoTest.Store.Customer,
-        "orders_2024" => SelectoTest.Store.Order2024,
-        "categories" => SelectoTest.Store.Category,
-        "product_categories" => SelectoTest.Store.ProductCategory,
-        "order_items" => SelectoTest.Store.OrderItem,
-        "reviews" => SelectoTest.Store.Review,
-        "audit_logs" => SelectoTest.Store.AuditLog,
-        "inventory_snapshots" => SelectoTest.Store.InventorySnapshot
-      },
-      joins: %{},
-      filters: []
-    }
+    domain_config = case table do
+      "attendees" ->
+        %{
+          name: "Attendees",
+          source: %{
+            source_table: "attendees",
+            primary_key: :attendee_id,
+            fields: [:attendee_id, :name, :email, :event_id],
+            redact_fields: [],
+            columns: %{
+              attendee_id: %{type: :integer},
+              name: %{type: :string},
+              email: %{type: :string},
+              event_id: %{type: :integer}
+            },
+            associations: %{
+              orders: %{
+                queryable: :orders,
+                field: :orders,
+                owner_key: :attendee_id,
+                related_key: :attendee_id
+              }
+            }
+          },
+          schemas: %{
+            orders: %{
+              source_table: "orders",
+              primary_key: :order_id,
+              fields: [:order_id, :attendee_id, :product_name, :quantity, :price, :status, :total, :created_at],
+              redact_fields: [],
+              columns: %{
+                order_id: %{type: :integer},
+                attendee_id: %{type: :integer},
+                product_name: %{type: :string},
+                quantity: %{type: :integer},
+                price: %{type: :decimal},
+                status: %{type: :string},
+                total: %{type: :decimal},
+                created_at: %{type: :utc_datetime}
+              },
+              associations: %{}
+            }
+          },
+          joins: %{}
+        }
+        
+      "events" ->
+        %{
+          name: "Events",
+          source: %{
+            source_table: "events",
+            primary_key: :event_id,
+            fields: [:event_id, :name, :date],
+            redact_fields: [],
+            columns: %{
+              event_id: %{type: :integer},
+              name: %{type: :string},
+              date: %{type: :date}
+            },
+            associations: %{
+              attendees: %{
+                queryable: :attendees,
+                field: :attendees,
+                owner_key: :event_id,
+                related_key: :event_id
+              },
+              sponsors: %{
+                queryable: :sponsors,
+                field: :sponsors,
+                owner_key: :event_id,
+                related_key: :event_id
+              }
+            }
+          },
+          schemas: %{
+            attendees: %{
+              source_table: "attendees",
+              primary_key: :attendee_id,
+              fields: [:attendee_id, :name, :email, :event_id],
+              redact_fields: [],
+              columns: %{
+                attendee_id: %{type: :integer},
+                name: %{type: :string},
+                email: %{type: :string},
+                event_id: %{type: :integer}
+              },
+              associations: %{}
+            },
+            sponsors: %{
+              source_table: "sponsors",
+              primary_key: :sponsor_id,
+              fields: [:sponsor_id, :event_id, :company, :amount],
+              redact_fields: [],
+              columns: %{
+                sponsor_id: %{type: :integer},
+                event_id: %{type: :integer},
+                company: %{type: :string},
+                amount: %{type: :decimal}
+              },
+              associations: %{}
+            }
+          },
+          joins: %{}
+        }
+        
+      "posts" ->
+        %{
+          name: "Posts",
+          source: %{
+            source_table: "posts",
+            primary_key: :post_id,
+            fields: [:post_id, :title, :content, :author_id],
+            redact_fields: [],
+            columns: %{
+              post_id: %{type: :integer},
+              title: %{type: :string},
+              content: %{type: :string},
+              author_id: %{type: :integer}
+            },
+            associations: %{
+              comments: %{
+                queryable: :comments,
+                field: :comments,
+                owner_key: :post_id,
+                related_key: :post_id
+              },
+              tags: %{
+                queryable: :tags,
+                field: :tags,
+                owner_key: :post_id,
+                related_key: :post_id
+              }
+            }
+          },
+          schemas: %{
+            comments: %{
+              source_table: "comments",
+              primary_key: :comment_id,
+              fields: [:comment_id, :post_id, :comment_text, :created_at],
+              redact_fields: [],
+              columns: %{
+                comment_id: %{type: :integer},
+                post_id: %{type: :integer},
+                comment_text: %{type: :string},
+                created_at: %{type: :utc_datetime}
+              },
+              associations: %{}
+            },
+            tags: %{
+              source_table: "tags",
+              primary_key: :tag_id,
+              fields: [:tag_id, :post_id, :tag_name],
+              redact_fields: [],
+              columns: %{
+                tag_id: %{type: :integer},
+                post_id: %{type: :integer},
+                tag_name: %{type: :string}
+              },
+              associations: %{}
+            }
+          },
+          joins: %{}
+        }
+        
+      _ ->
+        %{
+          name: "Default",
+          source: %{
+            source_table: table,
+            primary_key: :id,
+            fields: [:id],
+            redact_fields: [],
+            columns: %{
+              id: %{type: :integer}
+            },
+            associations: %{}
+          },
+          schemas: %{},
+          joins: %{}
+        }
+    end
     
     Selecto.configure(domain_config, :test_connection)
   end
   
-  describe "Basic Usage" do
-    test "simple field specification" do
-      selecto = configure_test_selecto()
+  describe "Basic Subselect Usage" do
+    test "simple subselect with JSON aggregation" do
+      selecto = configure_test_selecto("attendees")
       
       result = 
         selecto
-        |> Selecto.select(["attendee.name", "attendee.email"])
-        |> Selecto.subselect(["order.product_name", "order.quantity"])
+        |> Selecto.select(["name", "email"])
+        |> Selecto.subselect([
+          %{
+            target_schema: :orders,
+            fields: [:product_name, :quantity],
+            format: :json_agg,
+            alias: "orders",
+            filters: [],
+            order_by: []
+          }
+        ])
       
-      {sql, _aliases, _params} = Sql.build(result, [])
+      # Verify subselect was added
+      assert result.set[:subselected] != nil
+      assert length(result.set[:subselected]) == 1
       
-      assert sql =~ "attendee.name"
-      assert sql =~ "attendee.email"
-      assert sql =~ "SELECT json_agg(json_build_object"
-      assert sql =~ "'product_name', o.product_name"
-      assert sql =~ "'quantity', o.quantity"
-      assert sql =~ "FROM orders o WHERE o.attendee_id = attendee.attendee_id"
+      [subselect | _] = result.set[:subselected]
+      assert subselect.target_schema == :orders
+      assert subselect.fields == [:product_name, :quantity]
+      assert subselect.format == :json_agg
     end
     
-    test "multiple fields in one specification" do
-      selecto = configure_test_selecto()
+    test "multiple fields in subselect" do
+      selecto = configure_test_selecto("attendees")
       
       result = 
         selecto
-        |> Selecto.subselect(["order.product_name", "order.quantity", "order.price"])
+        |> Selecto.subselect([
+          %{
+            target_schema: :orders,
+            fields: [:product_name, :quantity, :price],
+            format: :json_agg,
+            alias: "order_details",
+            filters: [],
+            order_by: []
+          }
+        ])
       
-      {sql, _aliases, _params} = Sql.build(result, [])
-      
-      assert sql =~ "json_build_object"
-      assert sql =~ "'product_name', o.product_name"
-      assert sql =~ "'quantity', o.quantity"
-      assert sql =~ "'price', o.price"
+      assert result.set[:subselected] != nil
+      [subselect | _] = result.set[:subselected]
+      assert length(subselect.fields) == 3
+      assert :price in subselect.fields
     end
     
-    test "multiple subselects" do
+    test "multiple subselects for different relationships" do
       selecto = configure_test_selecto("events")
       
       result = 
         selecto
-        |> Selecto.select(["event.name", "event.date"])
+        |> Selecto.select(["name", "date"])
         |> Selecto.subselect([
-          "attendees.name",
-          "attendees.email",
-          "sponsors.company",
-          "sponsors.amount"
+          %{
+            target_schema: :attendees,
+            fields: [:name, :email],
+            format: :json_agg,
+            alias: "attendees",
+            filters: [],
+            order_by: []
+          },
+          %{
+            target_schema: :sponsors,
+            fields: [:company, :amount],
+            format: :json_agg,
+            alias: "sponsors",
+            filters: [],
+            order_by: []
+          }
         ])
       
-      {sql, _aliases, _params} = Sql.build(result, [])
+      assert result.set[:subselected] != nil
+      assert length(result.set[:subselected]) == 2
       
-      assert sql =~ "event.name"
-      assert sql =~ "event.date"
-      # Would generate subqueries for attendees and sponsors
-      assert sql =~ "SELECT"
+      [attendees_subselect, sponsors_subselect] = result.set[:subselected]
+      assert attendees_subselect.target_schema == :attendees
+      assert sponsors_subselect.target_schema == :sponsors
     end
   end
   
-  describe "Advanced Configuration" do
-    test "map-based configuration with ordering" do
-      selecto = configure_test_selecto()
+  describe "Advanced Subselect Configuration" do
+    test "subselect with ordering" do
+      selecto = configure_test_selecto("attendees")
       
       result = 
         selecto
         |> Selecto.subselect([
           %{
-            fields: ["product_name", "quantity", "price"],
-            target_schema: :order,
+            target_schema: :orders,
+            fields: [:product_name, :quantity, :price],
             format: :json_agg,
             alias: "order_items",
-            order_by: [{"created_at", :desc}]
+            filters: [],
+            order_by: [{:desc, :created_at}]
           }
         ])
       
-      {sql, _aliases, _params} = Sql.build(result, [])
-      
-      assert sql =~ "json_agg"
-      assert sql =~ "product_name"
-      assert sql =~ "quantity"
-      assert sql =~ "price"
-      assert sql =~ "ORDER BY created_at DESC"
-      assert sql =~ "AS order_items"
+      assert result.set[:subselected] != nil
+      [subselect | _] = result.set[:subselected]
+      assert subselect.order_by == [{:desc, :created_at}]
     end
     
     test "subselect with filter conditions" do
-      selecto = configure_test_selecto()
+      selecto = configure_test_selecto("attendees")
       
       result = 
         selecto
         |> Selecto.subselect([
           %{
-            fields: ["product_name", "quantity"],
-            target_schema: :order,
-            filter: [{"status", "completed"}, {"total", {:>, 100}}]
-          }
-        ])
-      
-      {sql, _aliases, params} = Sql.build(result, [])
-      
-      assert sql =~ "json_agg"
-      assert sql =~ "status = $"
-      assert sql =~ "total > $"
-      assert "completed" in params
-      assert 100 in params
-    end
-    
-    test "subselect with limit" do
-      selecto = configure_test_selecto()
-      
-      result = 
-        selecto
-        |> Selecto.subselect([
-          %{
-            fields: ["comment_text", "created_at"],
-            target_schema: :comments,
+            target_schema: :orders,
+            fields: [:product_name, :quantity],
             format: :json_agg,
-            order_by: [{"created_at", :desc}],
-            limit: 5
+            alias: "completed_orders",
+            filters: [{"status", "completed"}, {"total", {:>, 100}}],
+            order_by: []
           }
         ])
       
-      {sql, _aliases, params} = Sql.build(result, [])
-      
-      assert sql =~ "json_agg"
-      assert sql =~ "comment_text"
-      assert sql =~ "created_at"
-      assert sql =~ "ORDER BY created_at DESC"
-      assert sql =~ "LIMIT $"
-      assert 5 in params
+      assert result.set[:subselected] != nil
+      [subselect | _] = result.set[:subselected]
+      assert length(subselect.filters) == 2
+      assert {"status", "completed"} in subselect.filters
+      assert {"total", {:>, 100}} in subselect.filters
     end
   end
   
-  describe "Aggregation Formats" do
+  describe "Different Aggregation Formats" do
     test "JSON aggregation (default)" do
-      selecto = configure_test_selecto()
-      
-      result = 
-        selecto
-        |> Selecto.subselect(["order.product_name", "order.quantity"])
-      
-      {sql, _aliases, _params} = Sql.build(result, [])
-      
-      assert sql =~ "json_agg(json_build_object"
-      assert sql =~ "'product_name'"
-      assert sql =~ "'quantity'"
-    end
-    
-    test "PostgreSQL array aggregation" do
-      selecto = configure_test_selecto()
+      selecto = configure_test_selecto("attendees")
       
       result = 
         selecto
         |> Selecto.subselect([
           %{
-            fields: ["product_name"],
-            target_schema: :order,
-            format: :array_agg
+            target_schema: :orders,
+            fields: [:product_name, :quantity],
+            format: :json_agg,
+            alias: "orders_json",
+            filters: [],
+            order_by: []
           }
         ])
       
-      {sql, _aliases, _params} = Sql.build(result, [])
-      
-      assert sql =~ "ARRAY_AGG"
-      assert sql =~ "product_name"
+      assert result.set[:subselected] != nil
+      [subselect | _] = result.set[:subselected]
+      assert subselect.format == :json_agg
     end
     
-    test "string aggregation with delimiter" do
+    test "PostgreSQL array aggregation" do
+      selecto = configure_test_selecto("attendees")
+      
+      result = 
+        selecto
+        |> Selecto.subselect([
+          %{
+            target_schema: :orders,
+            fields: [:product_name],
+            format: :array_agg,
+            alias: "product_names",
+            filters: [],
+            order_by: []
+          }
+        ])
+      
+      assert result.set[:subselected] != nil
+      [subselect | _] = result.set[:subselected]
+      assert subselect.format == :array_agg
+      assert length(subselect.fields) == 1
+    end
+    
+    test "string aggregation with separator" do
       selecto = configure_test_selecto("posts")
       
       result = 
         selecto
         |> Selecto.subselect([
           %{
-            fields: ["tag_name"],
             target_schema: :tags,
+            fields: [:tag_name],
             format: :string_agg,
-            delimiter: ", "
+            alias: "tag_list",
+            separator: ", ",
+            filters: [],
+            order_by: []
           }
         ])
       
-      {sql, _aliases, params} = Sql.build(result, [])
-      
-      assert sql =~ "STRING_AGG"
-      assert sql =~ "tag_name"
-      assert ", " in params
+      assert result.set[:subselected] != nil
+      [subselect | _] = result.set[:subselected]
+      assert subselect.format == :string_agg
+      assert subselect.separator == ", "
     end
     
     test "count aggregation" do
@@ -252,274 +403,134 @@ Key differences:
         |> Selecto.subselect([
           %{
             target_schema: :comments,
+            fields: [:comment_id],
             format: :count,
-            alias: "comment_count"
+            alias: "comment_count",
+            filters: [],
+            order_by: []
           }
         ])
       
-      {sql, _aliases, _params} = Sql.build(result, [])
-      
-      assert sql =~ "COUNT(*)"
-      assert sql =~ "AS comment_count"
+      assert result.set[:subselected] != nil
+      [subselect | _] = result.set[:subselected]
+      assert subselect.format == :count
+      assert subselect.alias == "comment_count"
     end
   end
   
-  describe "Complex Examples" do
+  describe "Complex Subselect Examples" do
     test "e-commerce order with nested items" do
-      selecto = configure_test_selecto("orders")
+      selecto = configure_test_selecto("attendees")
       
       result = 
         selecto
-        |> Selecto.select(["order_id", "customer_id", "order_date", "total"])
+        |> Selecto.select(["attendee_id", "name", "email"])
         |> Selecto.subselect([
           %{
-            fields: ["product_id", "product_name", "quantity", "unit_price"],
-            target_schema: :order_items,
+            target_schema: :orders,
+            fields: [:order_id, :product_name, :quantity, :price],
             format: :json_agg,
             alias: "items",
-            order_by: [{"line_number", :asc}]
+            filters: [{"status", "completed"}],
+            order_by: [{:asc, :created_at}]
           }
         ])
-        |> Selecto.filter([{"status", "completed"}])
+        |> Selecto.filter([{"event_id", 123}])
       
-      {sql, _aliases, params} = Sql.build(result, [])
+      # Verify the structure
+      assert result.set[:subselected] != nil
+      assert result.set[:selected] == ["attendee_id", "name", "email"]
+      assert result.set[:filtered] == [{"event_id", 123}]
       
-      assert sql =~ "order_id"
-      assert sql =~ "customer_id"
-      assert sql =~ "json_agg"
-      assert sql =~ "product_id"
-      assert sql =~ "product_name"
-      assert sql =~ "ORDER BY line_number ASC"
-      assert sql =~ "status = $"
-      assert "completed" in params
+      [subselect | _] = result.set[:subselected]
+      assert subselect.alias == "items"
+      assert {"status", "completed"} in subselect.filters
     end
     
-    test "film with actors through junction table" do
-      selecto = configure_test_selecto("films")
+    test "user profile with multiple related data" do
+      selecto = configure_test_selecto("events")
       
       result = 
         selecto
-        |> Selecto.select(["film.title", "film.release_year"])
+        |> Selecto.select(["event_id", "name", "date"])
         |> Selecto.subselect([
           %{
-            fields: ["actor.first_name", "actor.last_name", "fa.character_name"],
-            target_schema: :actors,
-            through: :film_actors,
+            target_schema: :attendees,
+            fields: [:name, :email],
             format: :json_agg,
-            alias: "cast",
-            order_by: [{"fa.billing_order", :asc}]
-          }
-        ])
-      
-      {sql, _aliases, _params} = Sql.build(result, [])
-      
-      assert sql =~ "film.title"
-      assert sql =~ "film.release_year"
-      assert sql =~ "json_agg"
-      assert sql =~ "first_name"
-      assert sql =~ "last_name"
-      assert sql =~ "character_name"
-      assert sql =~ "ORDER BY fa.billing_order ASC"
-    end
-    
-    test "user profile with recent activity" do
-      selecto = configure_test_selecto("users")
-      
-      result = 
-        selecto
-        |> Selecto.select(["user.id", "user.name", "user.email"])
-        |> Selecto.subselect([
-          %{
-            fields: ["post.title", "post.created_at"],
-            target_schema: :posts,
-            format: :json_agg,
-            alias: "recent_posts",
-            filter: [{"published", true}],
-            order_by: [{"created_at", :desc}],
-            limit: 5
+            alias: "attendee_list",
+            filters: [],
+            order_by: [{:asc, :name}]
           },
           %{
-            fields: ["comment.text", "comment.created_at"],
-            target_schema: :comments,
+            target_schema: :sponsors,
+            fields: [:company, :amount],
             format: :json_agg,
-            alias: "recent_comments",
-            order_by: [{"created_at", :desc}],
-            limit: 10
+            alias: "sponsor_list",
+            filters: [{"amount", {:>=, 1000}}],
+            order_by: [{:desc, :amount}]
           }
         ])
       
-      {sql, _aliases, params} = Sql.build(result, [])
+      assert result.set[:subselected] != nil
+      assert length(result.set[:subselected]) == 2
       
-      assert sql =~ "user.id"
-      assert sql =~ "user.name"
-      assert sql =~ "AS recent_posts"
-      assert sql =~ "AS recent_comments"
-      assert sql =~ "published = $"
-      assert sql =~ "LIMIT"
-      assert true in params
-      assert 5 in params
-      assert 10 in params
+      [attendees, sponsors] = result.set[:subselected]
+      assert attendees.alias == "attendee_list"
+      assert sponsors.alias == "sponsor_list"
+      assert {"amount", {:>=, 1000}} in sponsors.filters
     end
   end
   
-  describe "Performance Patterns" do
-    test "conditional subselects" do
-      selecto = configure_test_selecto("customers")
+  describe "Subselect Format Validation" do
+    test "all aggregation formats are accepted" do
+      selecto = configure_test_selecto("attendees")
       
-      # Only fetch orders for VIP customers
+      formats = [:json_agg, :array_agg, :string_agg, :count]
+      
+      Enum.each(formats, fn format ->
+        result = 
+          selecto
+          |> Selecto.subselect([
+            %{
+              target_schema: :orders,
+              fields: [:order_id],
+              format: format,
+              alias: "#{format}_test",
+              filters: [],
+              order_by: []
+            }
+          ])
+        
+        assert result.set[:subselected] != nil
+        [subselect | _] = result.set[:subselected]
+        assert subselect.format == format
+      end)
+    end
+    
+    test "subselect preserves selecto structure" do
+      selecto = configure_test_selecto("attendees")
+      
+      original_keys = Map.keys(selecto)
+      
       result = 
         selecto
-        |> Selecto.select(["customer.*"])
         |> Selecto.subselect([
           %{
-            fields: ["order_id", "total", "order_date"],
             target_schema: :orders,
-            format: :json_agg,
-            alias: "recent_orders",
-            filter: [{"order_date", {:>, "2024-01-01"}}],
-            when: {:field, "customer.tier", "VIP"}
+            fields: [:order_id],
+            format: :count,
+            alias: "order_count",
+            filters: [],
+            order_by: []
           }
         ])
       
-      {sql, _aliases, _params} = Sql.build(result, [])
+      # All original keys should still be present
+      assert Map.keys(result) == original_keys
       
-      assert sql =~ "customer.*"
-      assert sql =~ "CASE WHEN customer.tier = 'VIP'"
-      assert sql =~ "json_agg"
-      assert sql =~ "order_date > '2024-01-01'"
-    end
-    
-    test "batch subselects with CTE" do
-      selecto = configure_test_selecto("products")
-      
-      result = 
-        selecto
-        |> Selecto.with_cte("product_stats", fn ->
-            Selecto.select([
-                "product_id",
-                {:count, "review_id", as: "review_count"},
-                {:avg, "rating", as: "avg_rating"}
-              ])
-            |> Selecto.from("reviews")
-            |> Selecto.group_by(["product_id"])
-          end)
-        |> Selecto.select(["product.*", "ps.review_count", "ps.avg_rating"])
-        |> Selecto.join(:left, "product_stats AS ps", on: "product.id = ps.product_id")
-        |> Selecto.subselect([
-          %{
-            fields: ["category_name"],
-            target_schema: :categories,
-            through: :product_categories,
-            format: :array_agg,
-            alias: "categories"
-          }
-        ])
-      
-      {sql, _aliases, _params} = Sql.build(result, [])
-      
-      assert sql =~ "WITH product_stats AS"
-      assert sql =~ "COUNT(review_id) AS review_count"
-      assert sql =~ "AVG(rating) AS avg_rating"
-      assert sql =~ "LEFT JOIN product_stats AS ps"
-      assert sql =~ "ARRAY_AGG"
-      assert sql =~ "category_name"
-    end
-  end
-  
-  describe "Domain-Specific Patterns" do
-    test "analytics dashboard with time-series subselects" do
-      selecto = configure_test_selecto("customers")
-      
-      result = 
-        selecto
-        |> Selecto.select(["customer_id", "customer_name"])
-        |> Selecto.subselect([
-          %{
-            fields: [
-              "DATE_TRUNC('month', order_date) AS month",
-              "SUM(total) AS monthly_total",
-              "COUNT(*) AS order_count"
-            ],
-            target_schema: :orders_2024,
-            format: :json_agg,
-            alias: "monthly_stats",
-            group_by: ["DATE_TRUNC('month', order_date)"],
-            order_by: [{"month", :asc}]
-          }
-        ])
-      
-      {sql, _aliases, _params} = Sql.build(result, [])
-      
-      assert sql =~ "customer_id"
-      assert sql =~ "customer_name"
-      assert sql =~ "DATE_TRUNC('month', order_date)"
-      assert sql =~ "SUM(total) AS monthly_total"
-      assert sql =~ "COUNT(*) AS order_count"
-      assert sql =~ "GROUP BY DATE_TRUNC('month', order_date)"
-      assert sql =~ "ORDER BY month ASC"
-    end
-    
-    test "audit trail with nested changes" do
-      selecto = configure_test_selecto("orders")
-      
-      result = 
-        selecto
-        |> Selecto.select(["order_id", "status", "updated_at"])
-        |> Selecto.subselect([
-          %{
-            fields: ["field_name", "old_value", "new_value", "changed_at", "changed_by"],
-            target_schema: :audit_logs,
-            format: :json_agg,
-            alias: "audit_trail",
-            order_by: [{"changed_at", :desc}]
-          }
-        ])
-        |> Selecto.filter([{"updated_at", {:>, "2024-01-01"}}])
-      
-      {sql, _aliases, _params} = Sql.build(result, [])
-      
-      assert sql =~ "order_id"
-      assert sql =~ "status"
-      assert sql =~ "json_agg"
-      assert sql =~ "field_name"
-      assert sql =~ "old_value"
-      assert sql =~ "new_value"
-      assert sql =~ "changed_at"
-      assert sql =~ "changed_by"
-      assert sql =~ "ORDER BY changed_at DESC"
-    end
-    
-    test "inventory with historical snapshots" do
-      selecto = configure_test_selecto("products")
-      
-      result = 
-        selecto
-        |> Selecto.select(["product.id", "product.name", "product.current_stock"])
-        |> Selecto.subselect([
-          %{
-            fields: ["snapshot_date", "quantity", "location"],
-            target_schema: :inventory_snapshots,
-            format: :json_agg,
-            alias: "stock_history",
-            filter: [{"snapshot_date", {:>=, "CURRENT_DATE - INTERVAL '30 days'"}}],
-            order_by: [{"snapshot_date", :desc}],
-            limit: 30
-          }
-        ])
-      
-      {sql, _aliases, params} = Sql.build(result, [])
-      
-      assert sql =~ "product.id"
-      assert sql =~ "product.name"
-      assert sql =~ "product.current_stock"
-      assert sql =~ "json_agg"
-      assert sql =~ "snapshot_date"
-      assert sql =~ "quantity"
-      assert sql =~ "location"
-      assert sql =~ "snapshot_date >= 'CURRENT_DATE - INTERVAL '30 days'"
-      assert sql =~ "ORDER BY snapshot_date DESC"
-      assert sql =~ "LIMIT $"
-      assert 30 in params
+      # Subselected field should be added to set
+      assert Map.has_key?(result.set, :subselected)
     end
   end
 end
