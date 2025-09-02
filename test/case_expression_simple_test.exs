@@ -15,8 +15,27 @@ defmodule CaseExpressionSimpleTest do
         as: "rating_label"
       )
       
+      # Create a minimal selecto context for testing
+      selecto = %{
+        source: %{
+          fields: [:rating],
+          redact_fields: [],
+          columns: %{rating: %{type: :string}}
+        },
+        config: %{
+          source: %{
+            fields: [:rating],
+            redact_fields: [],
+            columns: %{rating: %{type: :string}}
+          },
+          joins: %{},
+          columns: %{"rating" => %{name: "rating", field: "rating", requires_join: nil}}
+        },
+        set: %{}
+      }
+      
       # Build SQL directly
-      {sql_iodata, params} = Selecto.Builder.CaseExpression.build_case_for_select(case_spec)
+      {sql_iodata, params} = Selecto.Builder.CaseExpression.build_case_for_select(case_spec, selecto)
       
       # The SQL is iodata with param tokens - finalize to get SQL string
       {sql_string, final_params} = Selecto.SQL.Params.finalize(sql_iodata)
@@ -52,10 +71,17 @@ defmodule CaseExpressionSimpleTest do
         set: %{},
         source: %{
           fields: [:price],
+          redact_fields: [],
           columns: %{price: %{type: :decimal}}
         },
         domain: %{},
         config: %{
+          source: %{
+            fields: [:price],
+            redact_fields: [],
+            columns: %{price: %{type: :decimal}}
+          },
+          joins: %{},
           columns: %{"price" => %{name: "price", field: "price", requires_join: nil}}
         }
       }
@@ -66,9 +92,9 @@ defmodule CaseExpressionSimpleTest do
       
       # Verify SQL structure
       assert sql_string =~ "CASE"
-      assert sql_string =~ "WHEN price >= $1 THEN $2"
-      assert sql_string =~ "WHEN price >= $3 THEN $4"
-      assert sql_string =~ "WHEN price > $5 THEN $6"
+      assert sql_string =~ "selecto_root\".\"price\" >= $1"
+      assert sql_string =~ "selecto_root\".\"price\" >= $3"
+      assert sql_string =~ "selecto_root\".\"price\" > $5"
       assert sql_string =~ "ELSE $7"
       assert sql_string =~ "END AS price_tier"
       
@@ -99,6 +125,7 @@ defmodule CaseExpressionSimpleTest do
         set: %{},
         source: %{
           fields: [:status, :priority, :vip],
+          redact_fields: [],
           columns: %{
             status: %{type: :string},
             priority: %{type: :integer},
@@ -107,6 +134,16 @@ defmodule CaseExpressionSimpleTest do
         },
         domain: %{},
         config: %{
+          source: %{
+            fields: [:status, :priority, :vip],
+            redact_fields: [],
+            columns: %{
+              status: %{type: :string},
+              priority: %{type: :integer},
+              vip: %{type: :boolean}
+            }
+          },
+          joins: %{},
           columns: %{
             "status" => %{name: "status", field: "status", requires_join: nil},
             "priority" => %{name: "priority", field: "priority", requires_join: nil},
@@ -121,10 +158,12 @@ defmodule CaseExpressionSimpleTest do
       
       # Verify SQL structure for complex conditions
       assert sql_string =~ "CASE"
-      assert sql_string =~ "status = $1 AND (priority = $2 OR vip = $3)"
+      assert sql_string =~ "selecto_root\".\"status\" = $1"
+      assert sql_string =~ "selecto_root\".\"priority\" = $2"
+      assert sql_string =~ "selecto_root\".\"vip\" = $3"
       assert sql_string =~ "THEN $4"
-      assert sql_string =~ "WHEN status = $5 THEN $6"
-      assert sql_string =~ "WHEN status = $7 THEN $8"
+      assert sql_string =~ "selecto_root\".\"status\" = $5"
+      assert sql_string =~ "selecto_root\".\"status\" = $7"
       assert sql_string =~ "ELSE $9"
       assert sql_string =~ "END AS handling"
       

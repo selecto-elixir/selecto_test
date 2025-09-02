@@ -11,14 +11,11 @@ defmodule CteSimpleTest do
           %{
             set: %{
               selected: ["customer_id", "name"],
-              filtered: [{"active", true}],
-              group_by: [],
-              order_by: []
+              filter: [{"active", true}]
             },
             domain: %{},
             source: %{
               fields: [:customer_id, :name, :active],
-              redact_fields: [],
               columns: %{
                 customer_id: %{type: :integer},
                 name: %{type: :string},
@@ -26,21 +23,13 @@ defmodule CteSimpleTest do
               }
             },
             config: %{
-              source_table: "customers",
               source: %{
                 fields: [:customer_id, :name, :active],
-                redact_fields: [],
                 columns: %{
                   customer_id: %{type: :integer},
                   name: %{type: :string},
                   active: %{type: :boolean}
                 }
-              },
-              joins: %{},
-              columns: %{
-                "customer_id" => %{name: "customer_id", field: "customer_id", requires_join: nil},
-                "name" => %{name: "name", field: "name", requires_join: nil},
-                "active" => %{name: "active", field: "active", requires_join: nil}
               }
             }
           }
@@ -55,7 +44,7 @@ defmodule CteSimpleTest do
       
       # Verify SQL structure
       assert sql_string =~ "active_customers AS"
-      assert sql_string =~ "select"
+      assert sql_string =~ "SELECT"
       
       # The query builder function would need actual implementation
       # For now we're just testing the CTE builder structure
@@ -69,31 +58,22 @@ defmodule CteSimpleTest do
           # Create a minimal selecto query
           %{
             set: %{
-              selected: ["customer_id", {:literal, "COUNT(*) AS order_count"}],
-              group_by: ["customer_id"],
-              filtered: [],
-              order_by: []
+              selected: ["customer_id", {:count, "*", as: "order_count"}],
+              group_by: ["customer_id"]
             },
             domain: %{},
             source: %{
               fields: [:customer_id],
-              redact_fields: [],
               columns: %{
                 customer_id: %{type: :integer}
               }
             },
             config: %{
-              source_table: "customers",
               source: %{
                 fields: [:customer_id],
-                redact_fields: [],
                 columns: %{
                   customer_id: %{type: :integer}
                 }
-              },
-              joins: %{},
-              columns: %{
-                "customer_id" => %{name: "customer_id", field: "customer_id", requires_join: nil}
               }
             }
           }
@@ -115,14 +95,11 @@ defmodule CteSimpleTest do
           %{
             set: %{
               selected: ["customer_id", "name"],
-              filtered: [{"status", "active"}],
-              group_by: [],
-              order_by: []
+              filter: [{"status", "active"}]
             },
             domain: %{},
             source: %{
               fields: [:customer_id, :name, :status],
-              redact_fields: [],
               columns: %{
                 customer_id: %{type: :integer},
                 name: %{type: :string},
@@ -130,21 +107,13 @@ defmodule CteSimpleTest do
               }
             },
             config: %{
-              source_table: "customers",
               source: %{
                 fields: [:customer_id, :name, :status],
-                redact_fields: [],
                 columns: %{
                   customer_id: %{type: :integer},
                   name: %{type: :string},
                   status: %{type: :string}
                 }
-              },
-              joins: %{},
-              columns: %{
-                "customer_id" => %{name: "customer_id", field: "customer_id", requires_join: nil},
-                "name" => %{name: "name", field: "name", requires_join: nil},
-                "status" => %{name: "status", field: "status", requires_join: nil}
               }
             }
           }
@@ -156,31 +125,22 @@ defmodule CteSimpleTest do
         fn ->
           %{
             set: %{
-              selected: ["customer_id", {:literal, "COUNT(*) AS total_orders"}],
-              group_by: ["customer_id"],
-              filtered: [],
-              order_by: []
+              selected: ["customer_id", {:count, "*", as: "total_orders"}],
+              group_by: ["customer_id"]
             },
             domain: %{},
             source: %{
               fields: [:customer_id],
-              redact_fields: [],
               columns: %{
                 customer_id: %{type: :integer}
               }
             },
             config: %{
-              source_table: "customers",
               source: %{
                 fields: [:customer_id],
-                redact_fields: [],
                 columns: %{
                   customer_id: %{type: :integer}
                 }
-              },
-              joins: %{},
-              columns: %{
-                "customer_id" => %{name: "customer_id", field: "customer_id", requires_join: nil}
               }
             }
           }
@@ -208,15 +168,12 @@ defmodule CteSimpleTest do
         base_query: fn ->
           %{
             set: %{
-              selected: ["employee_id", "name", "manager_id", {:literal, "0 AS level"}],
-              filtered: [{"manager_id", nil}],
-              group_by: [],
-              order_by: []
+              selected: ["employee_id", "name", "manager_id", "0 AS level"],
+              filter: [{"manager_id", nil}]
             },
             domain: %{},
             source: %{
               fields: [:employee_id, :name, :manager_id],
-              redact_fields: [],
               columns: %{
                 employee_id: %{type: :integer},
                 name: %{type: :string},
@@ -224,21 +181,13 @@ defmodule CteSimpleTest do
               }
             },
             config: %{
-              source_table: "employees",
               source: %{
                 fields: [:employee_id, :name, :manager_id],
-                redact_fields: [],
                 columns: %{
                   employee_id: %{type: :integer},
                   name: %{type: :string},
                   manager_id: %{type: :integer}
                 }
-              },
-              joins: %{},
-              columns: %{
-                "employee_id" => %{name: "employee_id", field: "employee_id", requires_join: nil},
-                "name" => %{name: "name", field: "name", requires_join: nil},
-                "manager_id" => %{name: "manager_id", field: "manager_id", requires_join: nil}
               }
             }
           }
@@ -246,17 +195,13 @@ defmodule CteSimpleTest do
         recursive_query: fn cte_ref ->
           %{
             set: %{
-              selected: ["e.employee_id", "e.name", "e.manager_id", {:literal, "h.level + 1"}],
+              selected: ["e.employee_id", "e.name", "e.manager_id", "h.level + 1"],
               from: "employee e",
-              joins: [{:inner, cte_ref, on: "e.manager_id = h.employee_id"}],
-              filtered: [],
-              group_by: [],
-              order_by: []
+              joins: [{:inner, cte_ref, on: "e.manager_id = h.employee_id"}]
             },
             domain: %{},
             source: %{
               fields: [:employee_id, :name, :manager_id],
-              redact_fields: [],
               columns: %{
                 employee_id: %{type: :integer},
                 name: %{type: :string},
@@ -264,21 +209,13 @@ defmodule CteSimpleTest do
               }
             },
             config: %{
-              source_table: "employees",
               source: %{
                 fields: [:employee_id, :name, :manager_id],
-                redact_fields: [],
                 columns: %{
                   employee_id: %{type: :integer},
                   name: %{type: :string},
                   manager_id: %{type: :integer}
                 }
-              },
-              joins: %{},
-              columns: %{
-                "employee_id" => %{name: "employee_id", field: "employee_id", requires_join: nil},
-                "name" => %{name: "name", field: "name", requires_join: nil},
-                "manager_id" => %{name: "manager_id", field: "manager_id", requires_join: nil}
               }
             }
           }
@@ -300,31 +237,21 @@ defmodule CteSimpleTest do
         base_query: fn ->
           %{
             set: %{
-              selected: [{:literal, "1 AS n"}],
-              filtered: [],
-              group_by: [],
-              order_by: []
+              selected: ["1 AS n"]
             },
             domain: %{},
             source: %{
               fields: [:n],
-              redact_fields: [],
               columns: %{
                 n: %{type: :integer}
               }
             },
             config: %{
-              source_table: "numbers",
               source: %{
                 fields: [:n],
-                redact_fields: [],
                 columns: %{
                   n: %{type: :integer}
                 }
-              },
-              joins: %{},
-              columns: %{
-                "n" => %{name: "n", field: "n", requires_join: nil}
               }
             }
           }
@@ -332,32 +259,23 @@ defmodule CteSimpleTest do
         recursive_query: fn _cte_ref ->
           %{
             set: %{
-              selected: [{:literal, "n + 1"}],
+              selected: ["n + 1"],
               from: "number_series",
-              filtered: [{"n", {:<, 10}}],
-              group_by: [],
-              order_by: []
+              filter: [{"n", {:<, 10}}]
             },
             domain: %{},
             source: %{
               fields: [:n],
-              redact_fields: [],
               columns: %{
                 n: %{type: :integer}
               }
             },
             config: %{
-              source_table: "numbers",
               source: %{
                 fields: [:n],
-                redact_fields: [],
                 columns: %{
                   n: %{type: :integer}
                 }
-              },
-              joins: %{},
-              columns: %{
-                "n" => %{name: "n", field: "n", requires_join: nil}
               }
             }
           }
@@ -398,7 +316,7 @@ defmodule CteSimpleTest do
             set: %{
               selected: ["id", "value"],
               from: "source_table",
-              filtered: [{"active", true}]
+              filter: [{"active", true}]
             },
             domain: %{},
             config: %{}
