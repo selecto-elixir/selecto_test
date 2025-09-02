@@ -297,8 +297,6 @@ defmodule DocsArrayOperationsExamplesTest do
       assert "urgent" in params
     end
 
-    # Array_cat not yet supported - skip test
-    @tag :skip
     test "array_cat concatenation" do
       selecto = configure_test_selecto("product")
       
@@ -418,8 +416,6 @@ defmodule DocsArrayOperationsExamplesTest do
   end
 
   describe "Array Transformation Examples from Docs" do
-    # Array_to_string not yet supported - skip test
-    @tag :skip
     test "array_to_string conversion" do
       selecto = configure_test_selecto("product")
       
@@ -435,8 +431,6 @@ defmodule DocsArrayOperationsExamplesTest do
       assert ", " in params
     end
 
-    # String_to_array not yet supported - skip test
-    @tag :skip
     test "string_to_array conversion" do
       selecto = configure_test_selecto("film")
       
