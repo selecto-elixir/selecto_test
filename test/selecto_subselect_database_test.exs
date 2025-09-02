@@ -381,16 +381,16 @@ defmodule SelectoSubselectDatabaseTest do
     |> Selecto.configure(SelectoTest.Repo, validate: false)
   end
 
-  defp get_postgrex_opts do
-    Application.get_env(:selecto_test, SelectoTest.Repo)[:postgrex_opts] ||
-      [
-        hostname: System.get_env("DB_HOST", "localhost"),
-        port: String.to_integer(System.get_env("DB_PORT", "5432")),
-        database: System.get_env("DB_NAME", "selecto_test"),
-        username: System.get_env("DB_USER", "postgres"),
-        password: System.get_env("DB_PASS", "postgres")
-      ]
-  end
+  # defp get_postgrex_opts do
+  #   Application.get_env(:selecto_test, SelectoTest.Repo)[:postgrex_opts] ||
+  #     [
+  #       hostname: System.get_env("DB_HOST", "localhost"),
+  #       port: String.to_integer(System.get_env("DB_PORT", "5432")),
+  #       database: System.get_env("DB_NAME", "selecto_test"),
+  #       username: System.get_env("DB_USER", "postgres"),
+  #       password: System.get_env("DB_PASS", "postgres")
+  #     ]
+  # end
 
   defp setup_test_database do
     # Ensure database is set up - this should be handled by existing test setup

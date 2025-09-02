@@ -4,13 +4,13 @@ defmodule DocsSubselectsExamplesTest do
   @moduledoc """
   These tests demonstrate the subselect functionality in Selecto.
   They have been updated to use the actual Selecto API.
-  
+
   Subselects allow fetching related data as aggregated arrays (JSON, PostgreSQL arrays, etc.)
   without denormalizing the result set.
   """
-  
+
   # Helper to configure test Selecto instance with proper domain structure
-  defp configure_test_selecto(table \\ "attendees") do
+  defp configure_test_selecto(table) do
     domain_config = case table do
       "attendees" ->
         %{
@@ -56,7 +56,7 @@ defmodule DocsSubselectsExamplesTest do
           },
           joins: %{}
         }
-        
+
       "events" ->
         %{
           name: "Events",
@@ -115,7 +115,7 @@ defmodule DocsSubselectsExamplesTest do
           },
           joins: %{}
         }
-        
+
       "posts" ->
         %{
           name: "Posts",
@@ -174,7 +174,7 @@ defmodule DocsSubselectsExamplesTest do
           },
           joins: %{}
         }
-        
+
       _ ->
         %{
           name: "Default",
@@ -192,15 +192,15 @@ defmodule DocsSubselectsExamplesTest do
           joins: %{}
         }
     end
-    
+
     Selecto.configure(domain_config, :test_connection)
   end
-  
+
   describe "Basic Subselect Usage" do
     test "simple subselect with JSON aggregation" do
       selecto = configure_test_selecto("attendees")
-      
-      result = 
+
+      result =
         selecto
         |> Selecto.select(["name", "email"])
         |> Selecto.subselect([
@@ -213,21 +213,21 @@ defmodule DocsSubselectsExamplesTest do
             order_by: []
           }
         ])
-      
+
       # Verify subselect was added
       assert result.set[:subselected] != nil
       assert length(result.set[:subselected]) == 1
-      
+
       [subselect | _] = result.set[:subselected]
       assert subselect.target_schema == :orders
       assert subselect.fields == [:product_name, :quantity]
       assert subselect.format == :json_agg
     end
-    
+
     test "multiple fields in subselect" do
       selecto = configure_test_selecto("attendees")
-      
-      result = 
+
+      result =
         selecto
         |> Selecto.subselect([
           %{
@@ -239,17 +239,17 @@ defmodule DocsSubselectsExamplesTest do
             order_by: []
           }
         ])
-      
+
       assert result.set[:subselected] != nil
       [subselect | _] = result.set[:subselected]
       assert length(subselect.fields) == 3
       assert :price in subselect.fields
     end
-    
+
     test "multiple subselects for different relationships" do
       selecto = configure_test_selecto("events")
-      
-      result = 
+
+      result =
         selecto
         |> Selecto.select(["name", "date"])
         |> Selecto.subselect([
@@ -270,21 +270,21 @@ defmodule DocsSubselectsExamplesTest do
             order_by: []
           }
         ])
-      
+
       assert result.set[:subselected] != nil
       assert length(result.set[:subselected]) == 2
-      
+
       [attendees_subselect, sponsors_subselect] = result.set[:subselected]
       assert attendees_subselect.target_schema == :attendees
       assert sponsors_subselect.target_schema == :sponsors
     end
   end
-  
+
   describe "Advanced Subselect Configuration" do
     test "subselect with ordering" do
       selecto = configure_test_selecto("attendees")
-      
-      result = 
+
+      result =
         selecto
         |> Selecto.subselect([
           %{
@@ -296,16 +296,16 @@ defmodule DocsSubselectsExamplesTest do
             order_by: [{:desc, :created_at}]
           }
         ])
-      
+
       assert result.set[:subselected] != nil
       [subselect | _] = result.set[:subselected]
       assert subselect.order_by == [{:desc, :created_at}]
     end
-    
+
     test "subselect with filter conditions" do
       selecto = configure_test_selecto("attendees")
-      
-      result = 
+
+      result =
         selecto
         |> Selecto.subselect([
           %{
@@ -317,7 +317,7 @@ defmodule DocsSubselectsExamplesTest do
             order_by: []
           }
         ])
-      
+
       assert result.set[:subselected] != nil
       [subselect | _] = result.set[:subselected]
       assert length(subselect.filters) == 2
@@ -325,12 +325,12 @@ defmodule DocsSubselectsExamplesTest do
       assert {"total", {:>, 100}} in subselect.filters
     end
   end
-  
+
   describe "Different Aggregation Formats" do
     test "JSON aggregation (default)" do
       selecto = configure_test_selecto("attendees")
-      
-      result = 
+
+      result =
         selecto
         |> Selecto.subselect([
           %{
@@ -342,16 +342,16 @@ defmodule DocsSubselectsExamplesTest do
             order_by: []
           }
         ])
-      
+
       assert result.set[:subselected] != nil
       [subselect | _] = result.set[:subselected]
       assert subselect.format == :json_agg
     end
-    
+
     test "PostgreSQL array aggregation" do
       selecto = configure_test_selecto("attendees")
-      
-      result = 
+
+      result =
         selecto
         |> Selecto.subselect([
           %{
@@ -363,17 +363,17 @@ defmodule DocsSubselectsExamplesTest do
             order_by: []
           }
         ])
-      
+
       assert result.set[:subselected] != nil
       [subselect | _] = result.set[:subselected]
       assert subselect.format == :array_agg
       assert length(subselect.fields) == 1
     end
-    
+
     test "string aggregation with separator" do
       selecto = configure_test_selecto("posts")
-      
-      result = 
+
+      result =
         selecto
         |> Selecto.subselect([
           %{
@@ -386,17 +386,17 @@ defmodule DocsSubselectsExamplesTest do
             order_by: []
           }
         ])
-      
+
       assert result.set[:subselected] != nil
       [subselect | _] = result.set[:subselected]
       assert subselect.format == :string_agg
       assert subselect.separator == ", "
     end
-    
+
     test "count aggregation" do
       selecto = configure_test_selecto("posts")
-      
-      result = 
+
+      result =
         selecto
         |> Selecto.subselect([
           %{
@@ -408,19 +408,19 @@ defmodule DocsSubselectsExamplesTest do
             order_by: []
           }
         ])
-      
+
       assert result.set[:subselected] != nil
       [subselect | _] = result.set[:subselected]
       assert subselect.format == :count
       assert subselect.alias == "comment_count"
     end
   end
-  
+
   describe "Complex Subselect Examples" do
     test "e-commerce order with nested items" do
       selecto = configure_test_selecto("attendees")
-      
-      result = 
+
+      result =
         selecto
         |> Selecto.select(["attendee_id", "name", "email"])
         |> Selecto.subselect([
@@ -434,21 +434,21 @@ defmodule DocsSubselectsExamplesTest do
           }
         ])
         |> Selecto.filter([{"event_id", 123}])
-      
+
       # Verify the structure
       assert result.set[:subselected] != nil
       assert result.set[:selected] == ["attendee_id", "name", "email"]
       assert result.set[:filtered] == [{"event_id", 123}]
-      
+
       [subselect | _] = result.set[:subselected]
       assert subselect.alias == "items"
       assert {"status", "completed"} in subselect.filters
     end
-    
+
     test "user profile with multiple related data" do
       selecto = configure_test_selecto("events")
-      
-      result = 
+
+      result =
         selecto
         |> Selecto.select(["event_id", "name", "date"])
         |> Selecto.subselect([
@@ -469,25 +469,25 @@ defmodule DocsSubselectsExamplesTest do
             order_by: [{:desc, :amount}]
           }
         ])
-      
+
       assert result.set[:subselected] != nil
       assert length(result.set[:subselected]) == 2
-      
+
       [attendees, sponsors] = result.set[:subselected]
       assert attendees.alias == "attendee_list"
       assert sponsors.alias == "sponsor_list"
       assert {"amount", {:>=, 1000}} in sponsors.filters
     end
   end
-  
+
   describe "Subselect Format Validation" do
     test "all aggregation formats are accepted" do
       selecto = configure_test_selecto("attendees")
-      
+
       formats = [:json_agg, :array_agg, :string_agg, :count]
-      
+
       Enum.each(formats, fn format ->
-        result = 
+        result =
           selecto
           |> Selecto.subselect([
             %{
@@ -499,19 +499,19 @@ defmodule DocsSubselectsExamplesTest do
               order_by: []
             }
           ])
-        
+
         assert result.set[:subselected] != nil
         [subselect | _] = result.set[:subselected]
         assert subselect.format == format
       end)
     end
-    
+
     test "subselect preserves selecto structure" do
       selecto = configure_test_selecto("attendees")
-      
+
       original_keys = Map.keys(selecto)
-      
-      result = 
+
+      result =
         selecto
         |> Selecto.subselect([
           %{
@@ -523,10 +523,10 @@ defmodule DocsSubselectsExamplesTest do
             order_by: []
           }
         ])
-      
+
       # All original keys should still be present
       assert Map.keys(result) == original_keys
-      
+
       # Subselected field should be added to set
       assert Map.has_key?(result.set, :subselected)
     end

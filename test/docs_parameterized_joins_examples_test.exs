@@ -10,7 +10,6 @@ defmodule DocsParameterizedJoinsExamplesTest do
   """
 
   alias Selecto.Schema.ParameterizedJoin
-  #alias Selecto.FieldResolver.ParameterizedParser
 
   describe "Parameterized Join Processing" do
     test "basic parameterized join configuration" do

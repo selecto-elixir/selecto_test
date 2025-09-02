@@ -274,7 +274,7 @@ defmodule DocsWindowFunctionsExamplesTest do
           ])
         # Window function results (prev_rate, next_rate) are included automatically
 
-      {sql, _aliases, params} = Sql.build(result, [])
+      {sql, _aliases, _params} = Sql.build(result, [])
 
       assert sql =~ "title"
       assert sql =~ "rental_rate"
@@ -607,7 +607,7 @@ defmodule DocsWindowFunctionsExamplesTest do
             # This would need to be done in a subquery or CTE
           ])
 
-      {sql, _aliases, params} = Sql.build(result, [])
+      {sql, _aliases, _params} = Sql.build(result, [])
 
       assert sql =~ "rating"
       assert sql =~ "title"

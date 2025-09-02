@@ -5,11 +5,11 @@ defmodule DocsSubqueriesSubfiltersExamplesTest do
   These tests demonstrate subqueries and subfilters functionality in Selecto.
   They have been updated to use the actual Selecto API.
   """
-  
+
   alias Selecto.Builder.Sql
-  
+
   # Helper to configure test Selecto instance
-  defp configure_test_selecto(table \\ "customer") do
+  defp configure_test_selecto(table) do
     # Build a proper domain configuration structure
     domain_config = case table do
       "actor" ->
@@ -68,7 +68,7 @@ defmodule DocsSubqueriesSubfiltersExamplesTest do
           },
           joins: %{}
         }
-        
+
       "film" ->
         %{
           name: "Film",
@@ -105,7 +105,7 @@ defmodule DocsSubqueriesSubfiltersExamplesTest do
           },
           joins: %{}
         }
-        
+
       "customer" ->
         %{
           name: "Customer",
@@ -164,7 +164,7 @@ defmodule DocsSubqueriesSubfiltersExamplesTest do
           },
           joins: %{}
         }
-        
+
       _ ->
         %{
           name: "Default",
@@ -181,16 +181,16 @@ defmodule DocsSubqueriesSubfiltersExamplesTest do
           schemas: %{}
         }
     end
-    
+
     Selecto.configure(domain_config, :test_connection)
   end
-  
+
   describe "Subselect functionality" do
     test "subselect with JSON aggregation" do
       selecto = configure_test_selecto("actor")
-      
+
       # Use Selecto.subselect for correlated subqueries
-      result = 
+      result =
         selecto
         |> Selecto.subselect([
           %{
@@ -203,10 +203,10 @@ defmodule DocsSubqueriesSubfiltersExamplesTest do
           }
         ])
         |> Selecto.select(["actor_id", "first_name", "last_name"])
-      
+
       # The subselect should be included in the generated SQL
       {sql, _aliases, _params} = Sql.build(result, [])
-      
+
       assert sql =~ "actor_id"
       assert sql =~ "first_name"
       assert sql =~ "last_name"
@@ -214,11 +214,11 @@ defmodule DocsSubqueriesSubfiltersExamplesTest do
       assert sql =~ ~r/select/i
       assert sql =~ "FROM film"
     end
-    
+
     test "subselect with count aggregation" do
       selecto = configure_test_selecto("customer")
-      
-      result = 
+
+      result =
         selecto
         |> Selecto.subselect([
           %{
@@ -231,17 +231,17 @@ defmodule DocsSubqueriesSubfiltersExamplesTest do
           }
         ])
         |> Selecto.select(["customer_id", "first_name", "last_name"])
-      
+
       # The subselect should generate a COUNT subquery
       # Note: actual SQL generation may vary, but the structure should be present
       assert result.set[:subselected] != nil
       assert length(result.set[:subselected]) == 1
     end
-    
+
     test "subselect with array aggregation" do
       selecto = configure_test_selecto("film")
-      
-      result = 
+
+      result =
         selecto
         |> Selecto.subselect([
           %{
@@ -254,20 +254,20 @@ defmodule DocsSubqueriesSubfiltersExamplesTest do
           }
         ])
         |> Selecto.select(["film_id", "title"])
-      
+
       # Check that subselect was added
       assert result.set[:subselected] != nil
       assert length(result.set[:subselected]) == 1
-      
+
       [subselect_config | _] = result.set[:subselected]
       assert subselect_config.format == :array_agg
       assert subselect_config.alias == "actor_ids"
     end
-    
+
     test "multiple subselects" do
       selecto = configure_test_selecto("customer")
-      
-      result = 
+
+      result =
         selecto
         |> Selecto.subselect([
           %{
@@ -288,22 +288,22 @@ defmodule DocsSubqueriesSubfiltersExamplesTest do
           }
         ])
         |> Selecto.select(["customer_id", "first_name", "last_name"])
-      
+
       # Check that both subselects were added
       assert result.set[:subselected] != nil
       assert length(result.set[:subselected]) == 2
-      
+
       [first_subselect, second_subselect] = result.set[:subselected]
       assert first_subselect.alias == "orders"
       assert second_subselect.alias == "payments"
     end
   end
-  
+
   describe "Additional Subselect Features" do
     test "subselect with string aggregation" do
       selecto = configure_test_selecto("actor")
-      
-      result = 
+
+      result =
         selecto
         |> Selecto.subselect([
           %{
@@ -317,18 +317,18 @@ defmodule DocsSubqueriesSubfiltersExamplesTest do
           }
         ])
         |> Selecto.select(["actor_id", "first_name", "last_name"])
-      
+
       # Check that string_agg subselect was added
       assert result.set[:subselected] != nil
       [subselect_config | _] = result.set[:subselected]
       assert subselect_config.format == :string_agg
       assert subselect_config.separator == ", "
     end
-    
+
     test "subselect with filters" do
       selecto = configure_test_selecto("customer")
-      
-      result = 
+
+      result =
         selecto
         |> Selecto.subselect([
           %{
@@ -341,7 +341,7 @@ defmodule DocsSubqueriesSubfiltersExamplesTest do
           }
         ])
         |> Selecto.select(["customer_id", "first_name", "last_name"])
-      
+
       # Check that filters were included
       assert result.set[:subselected] != nil
       [subselect_config | _] = result.set[:subselected]
@@ -350,16 +350,16 @@ defmodule DocsSubqueriesSubfiltersExamplesTest do
       assert {"total", {:>, 100}} in subselect_config.filters
     end
   end
-  
+
   describe "Subselect with different configurations" do
     test "subselect field format validation" do
       selecto = configure_test_selecto("actor")
-      
+
       # Test that various formats are accepted
       formats = [:json_agg, :array_agg, :string_agg, :count]
-      
+
       Enum.each(formats, fn format ->
-        result = 
+        result =
           selecto
           |> Selecto.subselect([
             %{
@@ -371,19 +371,19 @@ defmodule DocsSubqueriesSubfiltersExamplesTest do
               order_by: []
             }
           ])
-        
+
         assert result.set[:subselected] != nil
         [subselect | _] = result.set[:subselected]
         assert subselect.format == format
       end)
     end
-    
+
     test "subselect preserves original selecto structure" do
       selecto = configure_test_selecto("customer")
-      
+
       original_keys = Map.keys(selecto)
-      
-      result = 
+
+      result =
         selecto
         |> Selecto.subselect([
           %{
@@ -395,10 +395,10 @@ defmodule DocsSubqueriesSubfiltersExamplesTest do
             order_by: []
           }
         ])
-      
+
       # Ensure all original keys are still present
       assert Map.keys(result) == original_keys
-      
+
       # Ensure subselected field was added to set
       assert Map.has_key?(result.set, :subselected)
     end

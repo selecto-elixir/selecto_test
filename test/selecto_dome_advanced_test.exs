@@ -28,7 +28,7 @@ defmodule SelectoDomeAdvancedTest do
       }
     end
 
-    test "respects query filters in results", %{selecto: selecto, actors: actors} do
+    test "respects query filters in results", %{selecto: selecto, actors: _actors} do
       {:ok, result} = Selecto.execute(selecto)
       {rows, _columns, _aliases} = result
 

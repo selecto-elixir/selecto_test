@@ -78,19 +78,19 @@ defmodule SelectoPivotSubselectSimpleTest do
       |> Selecto.select(["posts[title]", "posts[content]"])
 
       {sql, params} = Selecto.to_sql(selecto)
-      
+
       # Should pivot to posts table
       assert sql =~ "from posts"
-      
+
       # Should contain subquery structure
       assert sql =~ "IN (" or sql =~ "EXISTS ("
-      
+
       # Should contain original table in subquery
       assert sql =~ "users"
-      
+
       # Should have parameter for filter
       assert "Alice" in params
-      
+
     end
 
     test "different pivot strategies produce different SQL" do
@@ -102,14 +102,14 @@ defmodule SelectoPivotSubselectSimpleTest do
       in_selecto = base_selecto |> Selecto.pivot(:posts, subquery_strategy: :in)
       {in_sql, _} = Selecto.to_sql(in_selecto)
 
-      # EXISTS strategy  
+      # EXISTS strategy
       exists_selecto = base_selecto |> Selecto.pivot(:posts, subquery_strategy: :exists)
       {exists_sql, _} = Selecto.to_sql(exists_selecto)
 
       # Should have different patterns
       assert in_sql =~ "IN ("
       assert exists_sql =~ "EXISTS ("
-      
+
     end
   end
 
@@ -119,20 +119,20 @@ defmodule SelectoPivotSubselectSimpleTest do
       |> Selecto.select(["name", "email"])
       |> Selecto.subselect(["posts[title]"])
 
-      {sql, params} = Selecto.to_sql(selecto)
-      
+      {sql, _params} = Selecto.to_sql(selecto)
+
       # Should have main SELECT fields
       assert sql =~ "name"
       assert sql =~ "email"
-      
+
       # Should contain subselect with JSON aggregation
       assert sql =~ "json_agg"
       assert sql =~ ~r/select/i # Subquery SELECT
-      
+
       # Should contain correlation condition
       assert sql =~ ~r/where/i
       assert sql =~ "=" # Correlation join
-      
+
     end
 
     test "different aggregation formats produce different SQL" do
@@ -176,7 +176,7 @@ defmodule SelectoPivotSubselectSimpleTest do
          ])
 
       {sql, _params} = Selecto.to_sql(selecto)
-      
+
       # Should have both subselects
       assert sql =~ "json_agg"
       assert sql =~ "count"
@@ -202,16 +202,16 @@ defmodule SelectoPivotSubselectSimpleTest do
          ])
 
       {sql, params} = Selecto.to_sql(selecto)
-      
+
       # Should have pivot structure (from posts)
       assert sql =~ "from posts"
-      
+
       # Should have pivot subquery
       assert sql =~ "IN (" or sql =~ "EXISTS ("
-      
+
       # Should have subselect
       assert sql =~ "json_agg"
-      
+
       # Should have filter parameter
       assert "Charlie" in params
 
@@ -244,19 +244,19 @@ defmodule SelectoPivotSubselectSimpleTest do
   describe "API functionality" do
     test "pivot API functions work correctly" do
       selecto = create_test_selecto()
-      
+
       # Initially no pivot
       refute Selecto.Pivot.has_pivot?(selecto)
       assert Selecto.Pivot.get_pivot_config(selecto) == nil
-      
+
       # Add pivot
       pivoted = Selecto.pivot(selecto, :posts)
       assert Selecto.Pivot.has_pivot?(pivoted)
-      
+
       config = Selecto.Pivot.get_pivot_config(pivoted)
       assert config.target_schema == :posts
       assert config.preserve_filters == true
-      
+
       # Reset pivot
       reset = Selecto.Pivot.reset_pivot(pivoted)
       refute Selecto.Pivot.has_pivot?(reset)
@@ -264,22 +264,22 @@ defmodule SelectoPivotSubselectSimpleTest do
 
     test "subselect API functions work correctly" do
       selecto = create_test_selecto()
-      
+
       # Initially no subselects
       refute Selecto.Subselect.has_subselects?(selecto)
       assert Selecto.Subselect.get_subselect_configs(selecto) == []
-      
+
       # Add subselects
       subselected = Selecto.subselect(selecto, ["posts[title]"])
       assert Selecto.Subselect.has_subselects?(subselected)
-      
+
       configs = Selecto.Subselect.get_subselect_configs(subselected)
       assert length(configs) == 1
-      
+
       [config] = configs
       assert config.target_schema == :posts
       assert config.fields == ["title"]
-      
+
       # Clear subselects
       cleared = Selecto.Subselect.clear_subselects(subselected)
       refute Selecto.Subselect.has_subselects?(cleared)

@@ -12,7 +12,7 @@ defmodule SelectoTest.TestHelpers do
   def get_test_domain(table_name \\ "film") do
     # Convert atom to string if needed
     table_name_str = if is_atom(table_name), do: Atom.to_string(table_name), else: table_name
-    
+
     %{
       name: String.capitalize(table_name_str),  # Add domain name
       source: get_source_for_table(table_name_str),
@@ -28,43 +28,49 @@ defmodule SelectoTest.TestHelpers do
   defp get_source_for_table(table_name) do
     # Get the schema for this table to extract fields and columns
     schema = get_schema_for_table(table_name)
-    
+
     base_source = case table_name do
       "film" ->
         %{
           source_table: "film",
           primary_key: :film_id
         }
-      
+
       "product" ->
         %{
           source_table: "product",
           primary_key: :product_id
         }
-      
+
       "customer" ->
         %{
           source_table: "customer",
           primary_key: :customer_id
         }
-      
+
       "orders" ->
         %{
           source_table: "orders",
           primary_key: :order_id
         }
-        
+
+      "rental" ->
+        %{
+          source_table: "rental",
+          primary_key: :rental_id
+        }
+
       _ ->
         %{
           source_table: table_name,
           primary_key: :id
         }
     end
-    
+
     # Merge in fields and columns from schema
     Map.merge(base_source, Map.take(schema, [:fields, :columns, :redact_fields, :associations]))
   end
-  
+
   defp get_schema_for_table(table_name) do
     case table_name do
       "film" -> film_schema()
@@ -73,7 +79,8 @@ defmodule SelectoTest.TestHelpers do
       "product" -> product_schema()
       "employee" -> employee_schema()
       "orders" -> orders_schema()
-      _ -> 
+      "rental" -> rental_schema()
+      _ ->
         # Default schema structure
         %{
           source_table: table_name,
@@ -103,7 +110,7 @@ defmodule SelectoTest.TestHelpers do
       staff: staff_schema()
     }
   end
-  
+
   defp film_schema do
     %{
       source_table: "film",
@@ -134,7 +141,7 @@ defmodule SelectoTest.TestHelpers do
       associations: %{}
     }
   end
-  
+
   defp actor_schema do
     %{
       source_table: "actor",
@@ -150,7 +157,7 @@ defmodule SelectoTest.TestHelpers do
       associations: %{}
     }
   end
-  
+
   defp category_schema do
     %{
       source_table: "category",
@@ -165,7 +172,7 @@ defmodule SelectoTest.TestHelpers do
       associations: %{}
     }
   end
-  
+
   defp customer_schema do
     %{
       source_table: "customer",
@@ -190,7 +197,7 @@ defmodule SelectoTest.TestHelpers do
       associations: %{}
     }
   end
-  
+
   defp rental_schema do
     %{
       source_table: "rental",
@@ -211,7 +218,7 @@ defmodule SelectoTest.TestHelpers do
       associations: %{}
     }
   end
-  
+
   defp payment_schema do
     %{
       source_table: "payment",
@@ -229,7 +236,7 @@ defmodule SelectoTest.TestHelpers do
       associations: %{}
     }
   end
-  
+
   defp inventory_schema do
     %{
       source_table: "inventory",
@@ -245,7 +252,7 @@ defmodule SelectoTest.TestHelpers do
       associations: %{}
     }
   end
-  
+
   defp orders_schema do
     %{
       source_table: "orders",
@@ -264,7 +271,7 @@ defmodule SelectoTest.TestHelpers do
       associations: %{}
     }
   end
-  
+
   defp order_items_schema do
     %{
       source_table: "order_items",
@@ -282,7 +289,7 @@ defmodule SelectoTest.TestHelpers do
       associations: %{}
     }
   end
-  
+
   defp product_schema do
     %{
       source_table: "product",
@@ -307,7 +314,7 @@ defmodule SelectoTest.TestHelpers do
       associations: %{}
     }
   end
-  
+
   defp employee_schema do
     %{
       source_table: "employee",
@@ -325,7 +332,7 @@ defmodule SelectoTest.TestHelpers do
       associations: %{}
     }
   end
-  
+
   defp store_schema do
     %{
       source_table: "store",
@@ -341,7 +348,7 @@ defmodule SelectoTest.TestHelpers do
       associations: %{}
     }
   end
-  
+
   defp staff_schema do
     %{
       source_table: "staff",
@@ -365,41 +372,41 @@ defmodule SelectoTest.TestHelpers do
       associations: %{}
     }
   end
-  
-  defp get_joins_config do
-    %{
-      "actor" => %{
-        type: :inner,
-        through: "film_actor",
-        on: "film.film_id = film_actor.film_id AND film_actor.actor_id = actor.actor_id"
-      },
-      "category" => %{
-        type: :inner,
-        through: "film_category",
-        on: "film.film_id = film_category.film_id AND film_category.category_id = category.category_id"
-      },
-      "inventory" => %{
-        type: :inner,
-        on: "film.film_id = inventory.film_id"
-      },
-      "rental" => %{
-        type: :inner,
-        through: "inventory",
-        on: "film.film_id = inventory.film_id AND inventory.inventory_id = rental.inventory_id"
-      },
-      "customer" => %{
-        type: :inner,
-        through: "rental",
-        on: "rental.customer_id = customer.customer_id"
-      },
-      "payment" => %{
-        type: :inner,
-        on: "rental.rental_id = payment.rental_id"
-      },
-      "order_items" => %{
-        type: :inner,
-        on: "orders.order_id = order_items.order_id"
-      }
-    }
-  end
+
+  # defp get_joins_config do
+  #   %{
+  #     "actor" => %{
+  #       type: :inner,
+  #       through: "film_actor",
+  #       on: "film.film_id = film_actor.film_id AND film_actor.actor_id = actor.actor_id"
+  #     },
+  #     "category" => %{
+  #       type: :inner,
+  #       through: "film_category",
+  #       on: "film.film_id = film_category.film_id AND film_category.category_id = category.category_id"
+  #     },
+  #     "inventory" => %{
+  #       type: :inner,
+  #       on: "film.film_id = inventory.film_id"
+  #     },
+  #     "rental" => %{
+  #       type: :inner,
+  #       through: "inventory",
+  #       on: "film.film_id = inventory.film_id AND inventory.inventory_id = rental.inventory_id"
+  #     },
+  #     "customer" => %{
+  #       type: :inner,
+  #       through: "rental",
+  #       on: "rental.customer_id = customer.customer_id"
+  #     },
+  #     "payment" => %{
+  #       type: :inner,
+  #       on: "rental.rental_id = payment.rental_id"
+  #     },
+  #     "order_items" => %{
+  #       type: :inner,
+  #       on: "orders.order_id = order_items.order_id"
+  #     }
+  #   }
+  # end
 end

@@ -51,7 +51,7 @@ defmodule CteSimpleTest do
       {cte_iodata, _params} = Selecto.Builder.CTE.build_cte_definition(cte_spec)
 
       # Finalize to get SQL string
-      {sql_string, final_params} = Selecto.SQL.Params.finalize(cte_iodata)
+      {sql_string, _final_params} = Selecto.SQL.Params.finalize(cte_iodata)
 
       # Verify SQL structure
       assert sql_string =~ "active_customers AS"

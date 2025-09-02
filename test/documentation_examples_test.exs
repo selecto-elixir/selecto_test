@@ -23,8 +23,8 @@ defmodule DocumentationExamplesTest do
       
       {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
       
-      assert sql =~ "ARRAY_AGG"
-      assert sql =~ "GROUP BY"
+      assert sql =~ ~r/array_agg/i
+      assert sql =~ ~r/group by/i
     end
 
     test "JSON Operations - basic json operations" do
@@ -61,15 +61,16 @@ defmodule DocumentationExamplesTest do
             }
           ])
       
-      {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
+      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
       
-      assert sql =~ "CASE"
-      assert sql =~ "WHEN.*rating.*=.*THEN"
-      assert sql =~ "'General Audience'"
-      assert sql =~ "'Parental Guidance'"
-      assert sql =~ "'Teens'"
-      assert sql =~ "'Restricted'"
-      assert sql =~ "ELSE.*'Not Rated'"
+      assert sql =~ ~r/case/i
+      assert sql =~ ~r/when.*rating.*=.*then/i
+      # The literal values are parameterized
+      assert "General Audience" in params
+      assert "Parental Guidance" in params
+      assert "Teens" in params
+      assert "Restricted" in params
+      assert "Not Rated" in params
     end
   end
 
@@ -100,12 +101,12 @@ defmodule DocumentationExamplesTest do
       
       {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
       
-      assert sql =~ "COUNT.*rental_id"
-      assert sql =~ "SUM.*amount"
-      assert sql =~ "AVG.*amount"
-      assert sql =~ "GROUP BY.*rental_date"
-      assert sql =~ "ORDER BY.*rental_date.*DESC"
-      assert sql =~ "LIMIT.*10"
+      assert sql =~ ~r/count.*rental_id/i
+      assert sql =~ ~r/sum.*amount/i
+      assert sql =~ ~r/avg.*amount/i
+      assert sql =~ ~r/group by.*rental_date/i
+      assert sql =~ ~r/order by.*rental_date.*desc/i
+      assert sql =~ ~r/limit.*10/i
     end
   end
 
@@ -161,7 +162,7 @@ defmodule DocumentationExamplesTest do
       assert sql =~ ~r/select/i
       assert sql =~ "first_name"
       assert sql =~ "last_name"
-      assert sql =~ "COUNT.*actor_id"
+      assert sql =~ ~r/count.*actor_id/i
       assert sql =~ ~r/where.*last_name.*like/i
       assert sql =~ ~r/group by.*first_name.*last_name/i
       assert sql =~ ~r/order by.*last_name.*asc/i
