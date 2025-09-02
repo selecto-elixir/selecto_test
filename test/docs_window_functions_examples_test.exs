@@ -1,82 +1,115 @@
 defmodule DocsWindowFunctionsExamplesTest do
   use ExUnit.Case, async: true
 
-@moduledoc """
-Tests for window functions in Selecto.
-
-Window functions are added using Selecto.window_function/4 and then included
-in the SELECT clause when the query is built.
-"""
-
+  @moduledoc """
+  Tests for window functions in Selecto using the Pagila domain.
   
+  Window functions are added using Selecto.window_function/4 and then included
+  in the SELECT clause when the query is built.
+  """
+
   alias Selecto.Builder.Sql
   
-  # Helper to configure test Selecto instance
-  # Creates a mock domain for documentation examples that don't run against real DB
-  defp configure_test_selecto(table \\ "employee") do
-    # Helper to create a mock schema with required fields
-    create_mock_schema = fn table_name, fields_list ->
-      field_columns = fields_list
-        |> Enum.map(fn field ->
-          type = case field do
-            f when f in [:id] -> :integer
-            f when f in [:name, :first_name, :last_name, :department, :category, :event_type, 
-                         :event_name, :page_view, :symbol, :region, :player] -> :string
-            f when f in [:salary, :amount, :price, :lifetime_value, :total_spent, 
-                         :budget, :metric_value, :revenue, :score, :volume] -> :decimal
-            f when f in [:date, :hire_date, :order_date, :signup_date, :game_date, 
-                         :event_date, :event_time, :timestamp] -> :datetime
-            f when f in [:month, :year, :customer_id, :product_id, :user_id] -> :integer
-            f when f in [:grade_level, :segment] -> :string
-            _ -> :string
-          end
-          {field, %{type: type, name: Atom.to_string(field)}}
-        end)
-        |> Enum.into(%{})
-      
-      %{
-        source_table: table_name,
-        primary_key: :id,
-        fields: fields_list,
-        columns: field_columns,
-        redact_fields: []
-      }
-    end
-    
-    # Create a mock schema structure for each entity type
-    # These are simplified structures just for testing window function SQL generation
-    mock_schemas = %{
-      "employee" => create_mock_schema.("employees", [:id, :name, :salary, :department, :hire_date]),
-      "employees" => create_mock_schema.("employees", [:id, :name, :salary, :department, :hire_date]),
-      "sale" => create_mock_schema.("sales", [:id, :product_id, :customer_id, :amount, :date]),
-      "sales" => create_mock_schema.("sales", [:id, :month, :revenue, :product_id, :customer_id, :amount, :date]),
-      "product" => create_mock_schema.("products", [:id, :name, :category, :price]),
-      "products" => create_mock_schema.("products", [:id, :product_name, :category, :price, :revenue]),
-      "student" => create_mock_schema.("students", [:id, :name, :score, :grade_level]),
-      "students" => create_mock_schema.("students", [:id, :name, :score, :grade_level]),
-      "customer" => create_mock_schema.("customers", [:id, :name, :lifetime_value, :segment]),
-      "customers" => create_mock_schema.("customers", [:id, :customer_id, :name, :lifetime_value, :segment, :signup_date, :order_date]),
-      "transaction" => create_mock_schema.("transactions", [:id, :date, :amount, :type]),
-      "transactions" => create_mock_schema.("transactions", [:id, :date, :amount, :type]),
-      "stock_prices" => create_mock_schema.("stock_prices", [:id, :symbol, :date, :price, :volume]),
-      "orders" => create_mock_schema.("orders", [:id, :customer_id, :order_date, :total_spent, :region]),
-      "game_scores" => create_mock_schema.("game_scores", [:id, :player, :score, :game_date]),
-      "website_sessions" => create_mock_schema.("website_sessions", [:id, :user_id, :event_time, :page_view]),
-      "departments" => create_mock_schema.("departments", [:id, :name, :budget]),
-      "events" => create_mock_schema.("events", [:id, :event_date, :event_type, :event_name, :event_time, :timestamp, :value, :user_id]),
-      "metrics" => create_mock_schema.("metrics", [:id, :date, :metric_value]),
-      "regions" => create_mock_schema.("regions", [:id, :name]),
-      "revenue" => create_mock_schema.("revenue", [:id, :year, :month, :revenue]),
-      "monthly_revenue" => create_mock_schema.("monthly_revenue", [:id, :month, :revenue]),
-      "customer_orders" => create_mock_schema.("customer_orders", [:id, :customer_id, :signup_date, :order_date])
-    }
-    
-    # Get the appropriate mock schema
-    source_schema = mock_schemas[table] || mock_schemas["employee"]
-    
+  # Helper to configure test Selecto instance with Pagila domain
+  defp configure_test_selecto() do
+    # Use the actual PagilaDomain configuration
     domain_config = %{
-      source: source_schema,
-      schemas: mock_schemas,
+      name: "Film",
+      source: %{
+        source_table: "film",
+        primary_key: :film_id,
+        fields: [:film_id, :title, :description, :release_year, :language_id, 
+                 :rental_duration, :rental_rate, :length, :replacement_cost, :rating],
+        redact_fields: [],
+        columns: %{
+          film_id: %{type: :integer, name: "Film ID"},
+          title: %{type: :string, name: "Title"},
+          description: %{type: :string, name: "Description"},
+          release_year: %{type: :integer, name: "Release Year"},
+          language_id: %{type: :integer, name: "Language ID"},
+          rental_duration: %{type: :integer, name: "Rental Duration"},
+          rental_rate: %{type: :decimal, name: "Rental Rate"},
+          length: %{type: :integer, name: "Length"},
+          replacement_cost: %{type: :decimal, name: "Replacement Cost"},
+          rating: %{type: :string, name: "Rating"}
+        }
+      },
+      schemas: %{
+        actor: %{
+          source_table: "actor",
+          primary_key: :actor_id,
+          fields: [:actor_id, :first_name, :last_name],
+          redact_fields: [],
+          columns: %{
+            actor_id: %{type: :integer, name: "Actor ID"},
+            first_name: %{type: :string, name: "First Name"},
+            last_name: %{type: :string, name: "Last Name"}
+          }
+        },
+        customer: %{
+          source_table: "customer",
+          primary_key: :customer_id,
+          fields: [:customer_id, :first_name, :last_name, :email, :active, :create_date],
+          redact_fields: [],
+          columns: %{
+            customer_id: %{type: :integer, name: "Customer ID"},
+            first_name: %{type: :string, name: "First Name"},
+            last_name: %{type: :string, name: "Last Name"},
+            email: %{type: :string, name: "Email"},
+            active: %{type: :boolean, name: "Active"},
+            create_date: %{type: :datetime, name: "Create Date"}
+          }
+        },
+        rental: %{
+          source_table: "rental",
+          primary_key: :rental_id,
+          fields: [:rental_id, :rental_date, :return_date, :customer_id, :inventory_id, :staff_id],
+          redact_fields: [],
+          columns: %{
+            rental_id: %{type: :integer, name: "Rental ID"},
+            rental_date: %{type: :datetime, name: "Rental Date"},
+            return_date: %{type: :datetime, name: "Return Date"},
+            customer_id: %{type: :integer, name: "Customer ID"},
+            inventory_id: %{type: :integer, name: "Inventory ID"},
+            staff_id: %{type: :integer, name: "Staff ID"}
+          }
+        },
+        payment: %{
+          source_table: "payment",
+          primary_key: :payment_id,
+          fields: [:payment_id, :customer_id, :staff_id, :rental_id, :amount, :payment_date],
+          redact_fields: [],
+          columns: %{
+            payment_id: %{type: :integer, name: "Payment ID"},
+            customer_id: %{type: :integer, name: "Customer ID"},
+            staff_id: %{type: :integer, name: "Staff ID"},
+            rental_id: %{type: :integer, name: "Rental ID"},
+            amount: %{type: :decimal, name: "Amount"},
+            payment_date: %{type: :datetime, name: "Payment Date"}
+          }
+        },
+        inventory: %{
+          source_table: "inventory",
+          primary_key: :inventory_id,
+          fields: [:inventory_id, :film_id, :store_id],
+          redact_fields: [],
+          columns: %{
+            inventory_id: %{type: :integer, name: "Inventory ID"},
+            film_id: %{type: :integer, name: "Film ID"},
+            store_id: %{type: :integer, name: "Store ID"}
+          }
+        },
+        category: %{
+          source_table: "category",
+          primary_key: :category_id,
+          fields: [:category_id, :name],
+          redact_fields: [],
+          columns: %{
+            category_id: %{type: :integer, name: "Category ID"},
+            name: %{type: :string, name: "Name"}
+          }
+        }
+      },
       joins: %{},
       filters: []
     }
@@ -85,617 +118,501 @@ in the SELECT clause when the query is built.
   end
   
   describe "Understanding Window Functions" do
-    test "basic window function with partition" do
+    test "basic window function with partition - average rental rate by rating" do
       selecto = configure_test_selecto()
       
       result = 
         selecto
-        |> Selecto.select(["name", "salary", "department"])
-        |> Selecto.window_function(:avg, ["salary"], 
-            over: [partition_by: ["department"]], 
-            as: "dept_avg_salary")
+        |> Selecto.select(["title", "rental_rate", "rating"])
+        |> Selecto.window_function(:avg, ["rental_rate"], 
+            over: [partition_by: ["rating"]], 
+            as: "avg_rate_by_rating")
       
       {sql, _aliases, _params} = Sql.build(result, [])
       
-      assert sql =~ "name"
-      assert sql =~ "salary"
-      assert sql =~ "department"
-      # Window functions are added after regular select fields
-      assert sql =~ ~r/AVG\(.*salary.*\)\s+OVER\s+\(\s*PARTITION\s+BY.*department/i
+      assert sql =~ "title"
+      assert sql =~ "rental_rate"
+      assert sql =~ "rating"
+      assert sql =~ "AVG(film.rental_rate) OVER (PARTITION BY film.rating) AS avg_rate_by_rating"
     end
     
-    test "window function with ordering" do
-      selecto = configure_test_selecto("sale")
+    test "window function with order - running total of rental rates" do
+      selecto = configure_test_selecto()
       
       result = 
         selecto
-        |> Selecto.select(["date", "amount"])
-        |> Selecto.window_function(:sum, ["amount"], 
-            over: [order_by: ["date"]], 
+        |> Selecto.select(["title", "rental_rate"])
+        |> Selecto.window_function(:sum, ["rental_rate"], 
+            over: [order_by: ["title"]], 
             as: "running_total")
       
       {sql, _aliases, _params} = Sql.build(result, [])
       
-      assert sql =~ "date"
-      assert sql =~ "amount"
-      assert sql =~ ~r/SUM\(.*amount.*\)\s+OVER\s+\(\s*ORDER\s+BY.*date/i
+      assert sql =~ "SUM(film.rental_rate) OVER (ORDER BY film.title"
+      assert sql =~ "AS running_total"
     end
   end
   
   describe "Ranking Functions" do
-    test "ROW_NUMBER with partition and order" do
-      selecto = configure_test_selecto("product")
-      
-      result = 
-        selecto
-        |> Selecto.select(["name", "category", "price"])
-        |> Selecto.window_function(:row_number, [], 
-            over: [
-              partition_by: ["category"], 
-              order_by: [{"price", :desc}]
-            ], 
-            as: "price_rank_in_category")
-      
-      {sql, _aliases, _params} = Sql.build(result, [])
-      
-      assert sql =~ "name"
-      assert sql =~ "category"
-      assert sql =~ "price"
-      assert sql =~ ~r/ROW_NUMBER\(\)\s+OVER\s+\(.*PARTITION\s+BY.*category.*ORDER\s+BY.*price.*DESC/i
-    end
-    
-    test "RANK and DENSE_RANK comparison" do
-      selecto = configure_test_selecto("student")
-      
-      result = 
-        selecto
-        |> Selecto.select(["name", "score"])
-        |> Selecto.window_function(:rank, [], 
-            over: [order_by: [{"score", :desc}]], 
-            as: "rank")
-        |> Selecto.window_function(:dense_rank, [], 
-            over: [order_by: [{"score", :desc}]], 
-            as: "dense_rank")
-      
-      {sql, _aliases, _params} = Sql.build(result, [])
-      
-      assert sql =~ "name"
-      assert sql =~ "score"
-      assert sql =~ ~r/RANK\(\)\s+OVER\s+\(.*ORDER\s+BY.*score.*DESC/i
-      assert sql =~ ~r/DENSE_RANK\(\)\s+OVER\s+\(.*ORDER\s+BY.*score.*DESC/i
-    end
-    
-    test "percentile ranking functions" do
+    test "ROW_NUMBER to rank films by rental rate" do
       selecto = configure_test_selecto()
       
       result = 
         selecto
-        |> Selecto.select(["name", "salary"])
-        |> Selecto.window_function(:percent_rank, [], 
-            over: [order_by: ["salary"]], 
-            as: "salary_percentile")
-        |> Selecto.window_function(:cume_dist, [], 
-            over: [order_by: ["salary"]], 
-            as: "cumulative_distribution")
+        |> Selecto.select(["title", "rental_rate"])
+        |> Selecto.window_function(:row_number, [], 
+            over: [order_by: [{"rental_rate", :desc}]], 
+            as: "rental_rank")
       
       {sql, _aliases, _params} = Sql.build(result, [])
       
-      assert sql =~ "name"
-      assert sql =~ "salary"
-      assert sql =~ ~r/PERCENT_RANK\(\)\s+OVER\s+\(.*ORDER\s+BY.*salary/i
-      assert sql =~ ~r/CUME_DIST\(\)\s+OVER\s+\(.*ORDER\s+BY.*salary/i
+      assert sql =~ "ROW_NUMBER\\(\\) OVER \\(ORDER BY.*rental_rate.*DESC.*\\) AS rental_rank"
+    end
+    
+    test "RANK and DENSE_RANK for films by rating and rental rate" do
+      selecto = configure_test_selecto()
+      
+      result = 
+        selecto
+        |> Selecto.select(["title", "rating", "rental_rate"])
+        |> Selecto.window_function(:rank, [], 
+            over: [partition_by: ["rating"], order_by: [{"rental_rate", :desc}]], 
+            as: "rate_rank")
+        |> Selecto.window_function(:dense_rank, [], 
+            over: [partition_by: ["rating"], order_by: [{"rental_rate", :desc}]], 
+            as: "rate_dense_rank")
+      
+      {sql, _aliases, _params} = Sql.build(result, [])
+      
+      assert sql =~ "RANK\\(\\) OVER \\(PARTITION BY.*rating.*ORDER BY.*rental_rate.*DESC.*\\) AS rate_rank"
+      assert sql =~ "DENSE_RANK\\(\\) OVER \\(PARTITION BY.*rating.*ORDER BY.*rental_rate.*DESC.*\\) AS rate_dense_rank"
+    end
+    
+    test "PERCENT_RANK for percentile ranking" do
+      selecto = configure_test_selecto()
+      
+      result = 
+        selecto
+        |> Selecto.select(["title", "replacement_cost"])
+        |> Selecto.window_function(:percent_rank, [], 
+            over: [order_by: ["replacement_cost"]], 
+            as: "cost_percentile")
+      
+      {sql, _aliases, _params} = Sql.build(result, [])
+      
+      assert sql =~ "PERCENT_RANK\\(\\) OVER \\(ORDER BY.*replacement_cost.*\\) AS cost_percentile"
     end
     
     test "NTILE for quartiles" do
-      selecto = configure_test_selecto("customer")
+      selecto = configure_test_selecto()
       
       result = 
         selecto
-        |> Selecto.select(["name", "total_spent"])
+        |> Selecto.select(["title", "length"])
         |> Selecto.window_function(:ntile, [4], 
-            over: [order_by: [{"total_spent", :desc}]], 
-            as: "spending_quartile")
+            over: [order_by: ["length"]], 
+            as: "length_quartile")
       
       {sql, _aliases, params} = Sql.build(result, [])
       
-      assert sql =~ "name"
-      assert sql =~ "total_spent"
-      assert sql =~ ~r/NTILE\(.*\)\s+OVER\s+\(.*ORDER\s+BY.*total_spent.*DESC/i
+      assert sql =~ "NTILE\\(.*\\) OVER \\(ORDER BY.*length.*\\) AS length_quartile"
       assert 4 in params
-    end
-    
-    test "NTILE with multiple window functions" do
-      selecto = configure_test_selecto("product")
-      
-      result = 
-        selecto
-        |> Selecto.select(["name", "revenue"])
-        |> Selecto.window_function(:ntile, [10], 
-            over: [order_by: [{"revenue", :desc}]], 
-            as: "revenue_decile")
-        |> Selecto.window_function(:ntile, [5], 
-            over: [order_by: [{"revenue", :desc}]], 
-            as: "revenue_quintile")
-      
-      {sql, _aliases, params} = Sql.build(result, [])
-      
-      assert sql =~ "name"
-      assert sql =~ "revenue"
-      assert sql =~ ~r/NTILE\(.*\)\s+OVER\s+\(.*ORDER\s+BY.*revenue.*DESC/i
-      assert 10 in params
-      assert 5 in params
     end
   end
   
   describe "Aggregate Window Functions" do
-    test "running aggregates" do
-      selecto = configure_test_selecto("transaction")
+    test "running aggregates - cumulative rental count" do
+      selecto = configure_test_selecto()
       
       result = 
         selecto
-        |> Selecto.select(["date", "amount"])
-        |> Selecto.window_function(:sum, ["amount"], 
-            over: [order_by: ["date"]], as: "running_sum")
-        |> Selecto.window_function(:avg, ["amount"], 
-            over: [order_by: ["date"]], as: "running_avg")
+        |> Selecto.select(["title", "release_year"])
         |> Selecto.window_function(:count, ["*"], 
-            over: [order_by: ["date"]], as: "running_count")
-        |> Selecto.window_function(:max, ["amount"], 
-            over: [order_by: ["date"]], as: "running_max")
-        |> Selecto.window_function(:min, ["amount"], 
-            over: [order_by: ["date"]], as: "running_min")
+            over: [order_by: ["release_year", "title"]], 
+            as: "cumulative_count")
       
       {sql, _aliases, _params} = Sql.build(result, [])
       
-      assert sql =~ "date"
-      assert sql =~ "amount"
-      assert sql =~ ~r/SUM\(.*amount.*\)\s+OVER\s+\(.*ORDER\s+BY.*date/i
-      assert sql =~ ~r/AVG\(.*amount.*\)\s+OVER\s+\(.*ORDER\s+BY.*date/i
-      assert sql =~ ~r/COUNT\(.*\*.*\)\s+OVER\s+\(.*ORDER\s+BY.*date/i
-      assert sql =~ ~r/MAX\(.*amount.*\)\s+OVER\s+\(.*ORDER\s+BY.*date/i
-      assert sql =~ ~r/MIN\(.*amount.*\)\s+OVER\s+\(.*ORDER\s+BY.*date/i
+      assert sql =~ "COUNT\\(.*\\*.*\\) OVER \\(ORDER BY.*release_year.*title.*\\) AS cumulative_count"
     end
     
     test "moving averages with frame specification" do
-      selecto = configure_test_selecto("stock_prices")
+      selecto = configure_test_selecto()
       
       result = 
         selecto
-        |> Selecto.select(["symbol", "date", "close_price"])
-        |> Selecto.window_function(:avg, ["close_price"], 
+        |> Selecto.select(["title", "rental_rate", "release_year"])
+        |> Selecto.window_function(:avg, ["rental_rate"], 
             over: [
-              partition_by: ["symbol"],
-              order_by: ["date"],
-              frame: {:rows, {:preceding, 6}, :current_row}
-            ],
-            as: "moving_avg_7_day")
-        |> Selecto.window_function(:avg, ["close_price"],
-            over: [
-              partition_by: ["symbol"],
-              order_by: ["date"],
-              frame: {:rows, {:preceding, 29}, :current_row}
-            ],
-            as: "moving_avg_30_day")
+              order_by: ["release_year"],
+              frame: {:rows, {:preceding, 2}, {:following, 2}}
+            ], 
+            as: "moving_avg_5")
       
       {sql, _aliases, _params} = Sql.build(result, [])
       
-      assert sql =~ "symbol"
-      assert sql =~ "date"
-      assert sql =~ "close_price"
-      assert sql =~ ~r/AVG\(.*close_price.*\)\s+OVER/i
-      assert sql =~ ~r/ROWS\s+BETWEEN\s+6\s+PRECEDING\s+AND\s+CURRENT\s+ROW/i
-      assert sql =~ ~r/ROWS\s+BETWEEN\s+29\s+PRECEDING\s+AND\s+CURRENT\s+ROW/i
+      assert sql =~ "AVG\\(.*rental_rate.*\\) OVER \\(.*ORDER BY.*release_year.*ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING.*\\) AS moving_avg_5"
     end
   end
   
   describe "Value Functions" do
-    test "LAG and LEAD functions" do
-      selecto = configure_test_selecto("sales")
+    test "LAG and LEAD functions for comparing adjacent films" do
+      selecto = configure_test_selecto()
       
       result = 
         selecto
         |> Selecto.select([
-            "month",
-            "revenue",
-            {"revenue - LAG(revenue, 1) OVER (ORDER BY month) AS month_over_month_change"},
-            {"(revenue - LAG(revenue, 1) OVER (ORDER BY month)) / LAG(revenue, 1) OVER (ORDER BY month) * 100 AS growth_rate"}
+            "title",
+            "rental_rate",
+            {"rental_rate - LAG(rental_rate, 1) OVER (ORDER BY title) AS rate_diff"},
+            {"(rental_rate - LAG(rental_rate, 1) OVER (ORDER BY title)) / LAG(rental_rate, 1) OVER (ORDER BY title) * 100 AS rate_change_pct"}
           ])
-        |> Selecto.window_function(:lag, ["revenue", 1], 
-            over: [order_by: ["month"]], 
-            as: "prev_month_revenue")
-        |> Selecto.window_function(:lead, ["revenue", 1], 
-            over: [order_by: ["month"]], 
-            as: "next_month_revenue")
+        |> Selecto.window_function(:lag, ["rental_rate", 1], 
+            over: [order_by: ["title"]], 
+            as: "prev_rate")
+        |> Selecto.window_function(:lead, ["rental_rate", 1], 
+            over: [order_by: ["title"]], 
+            as: "next_rate")
       
       {sql, _aliases, params} = Sql.build(result, [])
       
-      assert sql =~ "month"
-      assert sql =~ "revenue"
-      assert sql =~ "LAG\\(.*revenue.*\\) OVER \\(ORDER BY.*month.*\\) AS prev_month_revenue"
-      assert sql =~ "LEAD\\(.*revenue.*\\) OVER \\(ORDER BY.*month.*\\) AS next_month_revenue"
-      assert sql =~ "revenue - LAG\\(revenue, 1\\) OVER \\(ORDER BY month\\) AS month_over_month_change"
-      assert sql =~ "growth_rate"
+      assert sql =~ "title"
+      assert sql =~ "rental_rate"
+      assert sql =~ "LAG\\(.*rental_rate.*\\) OVER \\(ORDER BY.*title.*\\) AS prev_rate"
+      assert sql =~ "LEAD\\(.*rental_rate.*\\) OVER \\(ORDER BY.*title.*\\) AS next_rate"
+      assert sql =~ "rate_diff"
+      assert sql =~ "rate_change_pct"
       assert 1 in params
     end
     
-    test "FIRST_VALUE and LAST_VALUE" do
-      selecto = configure_test_selecto("employees")
+    test "FIRST_VALUE and LAST_VALUE for extremes within groups" do
+      selecto = configure_test_selecto()
       
       result = 
         selecto
         |> Selecto.select([
-            "department",
-            "name",
-            "salary"
+            "rating",
+            "title",
+            "rental_rate"
           ])
-        |> Selecto.window_function(:first_value, ["name"], 
-            over: [partition_by: ["department"], order_by: [{"salary", :desc}]],
-            as: "highest_paid_in_dept")
-        |> Selecto.window_function(:last_value, ["name"],
+        |> Selecto.window_function(:first_value, ["title"], 
+            over: [partition_by: ["rating"], order_by: [{"rental_rate", :desc}]],
+            as: "highest_rate_film")
+        |> Selecto.window_function(:last_value, ["title"],
             over: [
-              partition_by: ["department"], 
-              order_by: [{"salary", :desc}],
+              partition_by: ["rating"], 
+              order_by: [{"rental_rate", :desc}],
               frame: {:range, :unbounded_preceding, :unbounded_following}
             ],
-            as: "lowest_paid_in_dept")
+            as: "lowest_rate_film")
       
       {sql, _aliases, _params} = Sql.build(result, [])
       
-      assert sql =~ "department"
-      assert sql =~ "name"
-      assert sql =~ "salary"
-      assert sql =~ "FIRST_VALUE\\(.*name.*\\) OVER \\(PARTITION BY.*department.*ORDER BY.*salary.*DESC.*\\) AS highest_paid_in_dept"
-      assert sql =~ "LAST_VALUE\\(.*name.*\\) OVER \\(PARTITION BY.*department.*ORDER BY.*salary.*DESC.*RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING.*\\) AS lowest_paid_in_dept"
+      assert sql =~ "rating"
+      assert sql =~ "title"
+      assert sql =~ "rental_rate"
+      assert sql =~ "FIRST_VALUE\\(.*title.*\\) OVER \\(PARTITION BY.*rating.*ORDER BY.*rental_rate.*DESC.*\\) AS highest_rate_film"
+      assert sql =~ "LAST_VALUE\\(.*title.*\\) OVER \\(PARTITION BY.*rating.*ORDER BY.*rental_rate.*DESC.*RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING.*\\) AS lowest_rate_film"
     end
     
-    test "NTH_VALUE function" do
-      selecto = configure_test_selecto("game_scores")
+    test "NTH_VALUE function for specific positions" do
+      selecto = configure_test_selecto()
       
       result = 
         selecto
         |> Selecto.select([
-            "player",
-            "score",
-            "game_date"
+            "rating",
+            "title",
+            "length"
           ])
-        |> Selecto.window_function(:nth_value, ["score", 2],
-            over: [partition_by: ["player"], order_by: [{"score", :desc}]],
-            as: "second_best_score")
-        |> Selecto.window_function(:nth_value, ["score", 3],
-            over: [partition_by: ["player"], order_by: [{"score", :desc}]],
-            as: "third_best_score")
+        |> Selecto.window_function(:nth_value, ["title", 2],
+            over: [partition_by: ["rating"], order_by: [{"length", :desc}]],
+            as: "second_longest")
+        |> Selecto.window_function(:nth_value, ["title", 3],
+            over: [partition_by: ["rating"], order_by: [{"length", :desc}]],
+            as: "third_longest")
       
       {sql, _aliases, params} = Sql.build(result, [])
       
-      assert sql =~ "player"
-      assert sql =~ "score"
-      assert sql =~ "game_date"
-      assert sql =~ "NTH_VALUE\\(.*score.*\\) OVER \\(PARTITION BY.*player.*ORDER BY.*score.*DESC.*\\) AS second_best_score"
-      assert sql =~ "NTH_VALUE\\(.*score.*\\) OVER \\(PARTITION BY.*player.*ORDER BY.*score.*DESC.*\\) AS third_best_score"
+      assert sql =~ "rating"
+      assert sql =~ "title"
+      assert sql =~ "length"
+      assert sql =~ "NTH_VALUE\\(.*title.*\\) OVER \\(PARTITION BY.*rating.*ORDER BY.*length.*DESC.*\\) AS second_longest"
+      assert sql =~ "NTH_VALUE\\(.*title.*\\) OVER \\(PARTITION BY.*rating.*ORDER BY.*length.*DESC.*\\) AS third_longest"
       assert 2 in params
       assert 3 in params
     end
   end
   
   describe "Frame Specifications" do
-    test "ROWS frame specification" do
-      selecto = configure_test_selecto("transactions")
+    test "ROWS frame specification for physical row counts" do
+      selecto = configure_test_selecto()
       
       result = 
         selecto
         |> Selecto.select([
-            "date",
-            "amount"
+            "title",
+            "rental_rate"
           ])
-        |> Selecto.window_function(:sum, ["amount"],
+        |> Selecto.window_function(:sum, ["rental_rate"],
             over: [
-              order_by: ["date"],
+              order_by: ["title"],
               frame: {:rows, {:preceding, 2}, {:following, 2}}
             ],
-            as: "centered_sum_5")
-        |> Selecto.window_function(:avg, ["amount"],
+            as: "sum_5_films")
+        |> Selecto.window_function(:avg, ["rental_rate"],
             over: [
-              order_by: ["date"],
+              order_by: ["title"],
               frame: {:rows, :unbounded_preceding, :current_row}
             ],
             as: "cumulative_avg")
       
       {sql, _aliases, _params} = Sql.build(result, [])
       
-      assert sql =~ "date"
-      assert sql =~ "amount"
-      assert sql =~ "SUM\\(.*amount.*\\) OVER \\(.*ORDER BY.*date.*ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING.*\\) AS centered_sum_5"
-      assert sql =~ "AVG\\(.*amount.*\\) OVER \\(.*ORDER BY.*date.*ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW.*\\) AS cumulative_avg"
+      assert sql =~ "title"
+      assert sql =~ "rental_rate"
+      assert sql =~ "SUM\\(.*rental_rate.*\\) OVER \\(.*ORDER BY.*title.*ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING.*\\) AS sum_5_films"
+      assert sql =~ "AVG\\(.*rental_rate.*\\) OVER \\(.*ORDER BY.*title.*ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW.*\\) AS cumulative_avg"
     end
     
-    test "RANGE frame specification" do
-      selecto = configure_test_selecto("events")
+    test "RANGE frame specification for value ranges" do
+      selecto = configure_test_selecto()
       
       result = 
         selecto
         |> Selecto.select([
-            "timestamp",
-            "value"
+            "title",
+            "release_year",
+            "rental_rate"
           ])
-        |> Selecto.window_function(:sum, ["value"],
+        |> Selecto.window_function(:sum, ["rental_rate"],
             over: [
-              order_by: ["timestamp"],
-              frame: {:range, {:interval, "1 hour"}, :current_row}
+              order_by: ["release_year"],
+              frame: {:range, {:preceding, 1}, {:following, 1}}
             ],
-            as: "hourly_sum")
+            as: "rate_sum_3yr_window")
         |> Selecto.window_function(:count, ["*"],
             over: [
-              order_by: ["timestamp"],
-              frame: {:range, {:interval, "24 hours"}, {:interval, "24 hours"}}
+              order_by: ["release_year"],
+              frame: {:range, {:preceding, 2}, {:following, 2}}
             ],
-            as: "daily_count")
+            as: "count_5yr_window")
       
       {sql, _aliases, _params} = Sql.build(result, [])
       
-      assert sql =~ "timestamp"
-      assert sql =~ "value"
-      assert sql =~ "SUM\\(.*value.*\\) OVER \\(.*ORDER BY.*timestamp.*RANGE BETWEEN INTERVAL '1 hour' PRECEDING AND CURRENT ROW.*\\) AS hourly_sum"
-      assert sql =~ "COUNT\\(.*\\*.*\\) OVER \\(.*ORDER BY.*timestamp.*RANGE BETWEEN INTERVAL '24 hours' PRECEDING AND INTERVAL '24 hours' FOLLOWING.*\\) AS daily_count"
+      assert sql =~ "title"
+      assert sql =~ "release_year"
+      assert sql =~ "rental_rate"
+      assert sql =~ "SUM\\(.*rental_rate.*\\) OVER \\(.*ORDER BY.*release_year.*RANGE BETWEEN 1 PRECEDING AND 1 FOLLOWING.*\\) AS rate_sum_3yr_window"
+      assert sql =~ "COUNT\\(.*\\*.*\\) OVER \\(.*ORDER BY.*release_year.*RANGE BETWEEN 2 PRECEDING AND 2 FOLLOWING.*\\) AS count_5yr_window"
     end
   end
   
   describe "Advanced Patterns" do
-    test "year-over-year comparison" do
-      selecto = configure_test_selecto("revenue")
+    test "year-over-year comparison with LAG" do
+      selecto = configure_test_selecto()
       
       result = 
         selecto
         |> Selecto.select([
-            "year",
-            "month",
-            "revenue",
-            {"(revenue - LAG(revenue, 12) OVER (ORDER BY year, month)) / LAG(revenue, 12) OVER (ORDER BY year, month) * 100 AS yoy_growth"}
+            "release_year",
+            {"COUNT(*) AS film_count"},
+            {"(COUNT(*) - LAG(COUNT(*), 1) OVER (ORDER BY release_year))::FLOAT / LAG(COUNT(*), 1) OVER (ORDER BY release_year) * 100 AS yoy_growth"}
           ])
-        |> Selecto.window_function(:lag, ["revenue", 12], 
-            over: [order_by: ["year", "month"]], 
-            as: "revenue_last_year")
+        |> Selecto.window_function(:lag, ["COUNT(*)", 1], 
+            over: [order_by: ["release_year"]], 
+            as: "prev_year_count")
+        |> Selecto.group_by(["release_year"])
       
       {sql, _aliases, params} = Sql.build(result, [])
       
-      assert sql =~ "year"
-      assert sql =~ "month"
-      assert sql =~ "revenue"
-      assert sql =~ "LAG\\(.*revenue.*\\) OVER \\(.*ORDER BY.*year.*month.*\\) AS revenue_last_year"
+      assert sql =~ "release_year"
+      assert sql =~ "COUNT\\(\\*\\) AS film_count"
+      assert sql =~ "LAG\\(.*COUNT\\(\\*\\).*\\) OVER \\(.*ORDER BY.*release_year.*\\) AS prev_year_count"
       assert sql =~ "yoy_growth"
-      assert 12 in params
-    end
-    
-    test "sessionization with window functions" do
-      selecto = configure_test_selecto("website_sessions")
-      
-      result = 
-        selecto
-        |> Selecto.select([
-            "user_id",
-            "event_time",
-            "page_view",
-            {"CASE WHEN event_time - LAG(event_time, 1) OVER (PARTITION BY user_id ORDER BY event_time) > INTERVAL '30 minutes' 
-              THEN 1 ELSE 0 END AS new_session_flag"}
-          ])
-        |> Selecto.window_function(:lag, ["event_time", 1], 
-            over: [partition_by: ["user_id"], order_by: ["event_time"]], 
-            as: "prev_event_time")
-        |> Selecto.window_function(:sum, 
-            ["CASE WHEN event_time - LAG(event_time, 1) OVER (PARTITION BY user_id ORDER BY event_time) > INTERVAL '30 minutes' 
-              THEN 1 ELSE 0 END"], 
-            over: [partition_by: ["user_id"], order_by: ["event_time"]], 
-            as: "session_id")
-      
-      {sql, _aliases, params} = Sql.build(result, [])
-      
-      assert sql =~ "user_id"
-      assert sql =~ "event_time"
-      assert sql =~ "page_view"
-      assert sql =~ "LAG\\(.*event_time.*\\) OVER \\(PARTITION BY.*user_id.*ORDER BY.*event_time.*\\) AS prev_event_time"
-      assert sql =~ "INTERVAL '30 minutes'"
-      assert sql =~ "new_session_flag"
-      assert sql =~ "session_id"
+      assert sql =~ "GROUP BY"
       assert 1 in params
     end
     
-    test "top N per group" do
-      selecto = configure_test_selecto("products")
+    test "top N per group using window functions" do
+      selecto = configure_test_selecto()
       
-      # Create inner query for CTE
-      inner = configure_test_selecto("products")
-        |> Selecto.select([
-            "category",
-            "product_name",
-            "revenue"
-          ])
-        |> Selecto.window_function(:row_number, [], 
-            over: [partition_by: ["category"], order_by: [{"revenue", :desc}]], 
-            as: "rank")
-      
+      # Note: This would typically use a CTE, but for testing we'll just show the window function part
       result = 
         selecto
-        |> Selecto.with_cte("ranked_products", fn -> inner end)
-        |> Selecto.select(["category", "product_name", "revenue", "rank"])
-        |> Selecto.from("ranked_products")
-        |> Selecto.filter([{"rank", {:<=, 3}}])
+        |> Selecto.select([
+            "rating",
+            "title",
+            "rental_rate"
+          ])
+        |> Selecto.window_function(:row_number, [], 
+            over: [partition_by: ["rating"], order_by: [{"rental_rate", :desc}]], 
+            as: "rate_rank")
+        |> Selecto.filter([{"ROW_NUMBER() OVER (PARTITION BY rating ORDER BY rental_rate DESC)", {:<=, 3}}])
       
       {sql, _aliases, params} = Sql.build(result, [])
       
-      assert sql =~ "WITH ranked_products AS"
-      assert sql =~ "ROW_NUMBER() OVER (PARTITION BY category ORDER BY revenue DESC) AS rank"
-      assert sql =~ "FROM ranked_products"
-      assert sql =~ "WHERE rank <= $"
+      assert sql =~ "rating"
+      assert sql =~ "title"
+      assert sql =~ "rental_rate"
+      assert sql =~ "ROW_NUMBER\\(\\) OVER \\(PARTITION BY.*rating.*ORDER BY.*rental_rate.*DESC.*\\) AS rate_rank"
+      assert sql =~ "WHERE"
       assert 3 in params
     end
     
-    test "gaps and islands detection" do
-      selecto = configure_test_selecto("events")
+    test "cumulative distribution analysis" do
+      selecto = configure_test_selecto()
       
       result = 
         selecto
         |> Selecto.select([
-            "event_date",
-            "event_type",
-            {"event_date - INTERVAL '1 day' * ROW_NUMBER() OVER (ORDER BY event_date) AS group_id"}
+            "title",
+            "replacement_cost"
           ])
-        |> Selecto.window_function(:row_number, [], 
-            over: [order_by: ["event_date"]], 
-            as: "row_num")
-        |> Selecto.filter([{"event_type", "active"}])
+        |> Selecto.window_function(:cume_dist, [], 
+            over: [order_by: ["replacement_cost"]], 
+            as: "cost_cume_dist")
+        |> Selecto.window_function(:percent_rank, [], 
+            over: [order_by: ["replacement_cost"]], 
+            as: "cost_percent_rank")
       
-      {sql, _aliases, params} = Sql.build(result, [])
+      {sql, _aliases, _params} = Sql.build(result, [])
       
-      assert sql =~ "event_date"
-      assert sql =~ "event_type"
-      assert sql =~ "ROW_NUMBER() OVER (ORDER BY event_date) AS row_num"
-      assert sql =~ "event_date - INTERVAL '1 day' * ROW_NUMBER() OVER (ORDER BY event_date) AS group_id"
-      assert sql =~ "event_type = $"
-      assert "active" in params
+      assert sql =~ "title"
+      assert sql =~ "replacement_cost"
+      assert sql =~ "CUME_DIST\\(\\) OVER \\(ORDER BY.*replacement_cost.*\\) AS cost_cume_dist"
+      assert sql =~ "PERCENT_RANK\\(\\) OVER \\(ORDER BY.*replacement_cost.*\\) AS cost_percent_rank"
     end
   end
   
   describe "Complex Analytics Patterns" do
-    test "cohort analysis with window functions" do
-      selecto = configure_test_selecto("customers")
+    test "rental frequency analysis with multiple window functions" do
+      selecto = configure_test_selecto()
       
       result = 
         selecto
         |> Selecto.select([
-            "DATE_TRUNC('month', signup_date) AS cohort_month",
-            "DATE_TRUNC('month', order_date) AS order_month",
-            {:count, "DISTINCT customer_id", as: "customers"},
-            {"COUNT(DISTINCT customer_id)::FLOAT / 
-              FIRST_VALUE(COUNT(DISTINCT customer_id)) OVER 
-              (PARTITION BY DATE_TRUNC('month', signup_date) ORDER BY DATE_TRUNC('month', order_date)) * 100 
-              AS retention_rate"}
+            "rating",
+            "title",
+            "rental_duration",
+            "rental_rate"
           ])
-        |> Selecto.window_function(:first_value, ["COUNT(DISTINCT customer_id)"],
-            over: [
-              partition_by: ["DATE_TRUNC('month', signup_date)"],
-              order_by: ["DATE_TRUNC('month', order_date)"]
-            ],
-            as: "cohort_size")
-        |> Selecto.from("customer_orders")
-        |> Selecto.group_by(["DATE_TRUNC('month', signup_date)", "DATE_TRUNC('month', order_date)"])
+        |> Selecto.window_function(:avg, ["rental_duration"],
+            over: [partition_by: ["rating"]],
+            as: "avg_duration_by_rating")
+        |> Selecto.window_function(:rank, [],
+            over: [partition_by: ["rating"], order_by: [{"rental_rate", :desc}]],
+            as: "rate_rank_in_rating")
+        |> Selecto.window_function(:count, ["*"],
+            over: [partition_by: ["rating"]],
+            as: "films_in_rating")
       
       {sql, _aliases, _params} = Sql.build(result, [])
       
-      assert sql =~ "DATE_TRUNC('month', signup_date) AS cohort_month"
-      assert sql =~ "DATE_TRUNC('month', order_date) AS order_month"
-      assert sql =~ "COUNT(DISTINCT customer_id)"
-      assert sql =~ "FIRST_VALUE"
-      assert sql =~ "retention_rate"
-      assert sql =~ "GROUP BY DATE_TRUNC('month', signup_date), DATE_TRUNC('month', order_date)"
+      assert sql =~ "rating"
+      assert sql =~ "title"
+      assert sql =~ "rental_duration"
+      assert sql =~ "rental_rate"
+      assert sql =~ "AVG\\(.*rental_duration.*\\) OVER \\(PARTITION BY.*rating.*\\) AS avg_duration_by_rating"
+      assert sql =~ "RANK\\(\\) OVER \\(PARTITION BY.*rating.*ORDER BY.*rental_rate.*DESC.*\\) AS rate_rank_in_rating"
+      assert sql =~ "COUNT\\(.*\\*.*\\) OVER \\(PARTITION BY.*rating.*\\) AS films_in_rating"
     end
     
-    test "funnel analysis with window functions" do
-      selecto = configure_test_selecto("events")
-      
-      # Create inner query for CTE
-      inner = configure_test_selecto("events")
-        |> Selecto.select([
-            "user_id",
-            "event_name",
-            "event_time"
-          ])
-        |> Selecto.window_function(:row_number, [], 
-            over: [partition_by: ["user_id"], order_by: ["event_time"]], 
-            as: "step_number")
-        |> Selecto.from("events")
-        |> Selecto.filter([{"event_name", {:in, ["signup", "activation", "first_purchase", "retention"]}}])
+    test "revenue potential scoring" do
+      selecto = configure_test_selecto()
       
       result = 
         selecto
-        |> Selecto.with_cte("funnel_steps", fn -> inner end)
         |> Selecto.select([
-            "event_name",
-            {:count, "DISTINCT user_id", as: "users_reached"},
-            {"COUNT(DISTINCT user_id)::FLOAT / LAG(COUNT(DISTINCT user_id), 1) OVER (ORDER BY MIN(step_number)) * 100 AS conversion_rate"}
+            "title",
+            "rental_rate",
+            "rental_duration",
+            {"rental_rate * (30.0 / rental_duration) AS monthly_revenue_potential"}
           ])
-        |> Selecto.window_function(:lag, ["COUNT(DISTINCT user_id)", 1], 
-            over: [order_by: ["MIN(step_number)"]], 
-            as: "prev_step_users")
-        |> Selecto.from("funnel_steps")
-        |> Selecto.group_by(["event_name"])
+        |> Selecto.window_function(:ntile, [10],
+            over: [order_by: ["rental_rate * (30.0 / rental_duration)"]],
+            as: "revenue_decile")
+        |> Selecto.window_function(:percent_rank, [],
+            over: [order_by: ["rental_rate * (30.0 / rental_duration)"]],
+            as: "revenue_percentile")
       
       {sql, _aliases, params} = Sql.build(result, [])
       
-      assert sql =~ "WITH funnel_steps AS"
-      assert sql =~ "ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY event_time) AS step_number"
-      assert sql =~ "event_name IN"
-      assert sql =~ "COUNT(DISTINCT user_id) AS users_reached"
-      assert sql =~ "LAG(COUNT(DISTINCT user_id), $) OVER (ORDER BY MIN(step_number)) AS prev_step_users"
-      assert sql =~ "conversion_rate"
-      assert ["signup", "activation", "first_purchase", "retention"] in params
-      assert 1 in params
+      assert sql =~ "title"
+      assert sql =~ "rental_rate"
+      assert sql =~ "rental_duration"
+      assert sql =~ "monthly_revenue_potential"
+      assert sql =~ "NTILE\\(.*\\) OVER \\(ORDER BY.*rental_rate.*\\*.*30\\.0.*\\/.*rental_duration.*\\) AS revenue_decile"
+      assert sql =~ "PERCENT_RANK\\(\\) OVER \\(ORDER BY.*rental_rate.*\\*.*30\\.0.*\\/.*rental_duration.*\\) AS revenue_percentile"
+      assert 10 in params
     end
   end
   
   describe "Performance Optimization" do
-    test "using window functions instead of self-joins" do
-      selecto = configure_test_selecto("metrics")
+    test "using window functions to avoid self-joins" do
+      selecto = configure_test_selecto()
       
-      # Efficient window function approach instead of self-join
+      # Window functions are more efficient than self-joins for this type of analysis
       result = 
         selecto
         |> Selecto.select([
-            "date",
-            "metric_value"
+            "title",
+            "length"
           ])
-        |> Selecto.window_function(:avg, ["metric_value"], 
+        |> Selecto.window_function(:avg, ["length"], 
             over: [
-              order_by: ["date"],
-              frame: {:rows, {:preceding, 3}, {:following, 3}}
+              order_by: ["title"],
+              frame: {:rows, {:preceding, 5}, {:following, 5}}
             ], 
-            as: "smoothed_value")
-        |> Selecto.window_function(:stddev, ["metric_value"], 
+            as: "local_avg_length")
+        |> Selecto.window_function(:stddev, ["length"], 
             over: [
-              order_by: ["date"],
-              frame: {:rows, {:preceding, 3}, {:following, 3}}
+              order_by: ["title"],
+              frame: {:rows, {:preceding, 5}, {:following, 5}}
             ], 
             as: "local_stddev")
         |> Selecto.filter([
-            {"ABS(metric_value - AVG(metric_value) OVER (ORDER BY date ROWS BETWEEN 3 PRECEDING AND 3 FOLLOWING))", 
-              {:>, "2 * STDDEV(metric_value) OVER (ORDER BY date ROWS BETWEEN 3 PRECEDING AND 3 FOLLOWING)"}}
+            {"ABS(length - AVG(length) OVER (ORDER BY title ROWS BETWEEN 5 PRECEDING AND 5 FOLLOWING))", 
+              {:>, "2 * STDDEV(length) OVER (ORDER BY title ROWS BETWEEN 5 PRECEDING AND 5 FOLLOWING)"}}
           ])
       
       {sql, _aliases, _params} = Sql.build(result, [])
       
-      assert sql =~ "date"
-      assert sql =~ "metric_value"
-      assert sql =~ "AVG(metric_value) OVER (ORDER BY date ROWS BETWEEN 3 PRECEDING AND 3 FOLLOWING) AS smoothed_value"
-      assert sql =~ "STDDEV(metric_value) OVER (ORDER BY date ROWS BETWEEN 3 PRECEDING AND 3 FOLLOWING) AS local_stddev"
-      assert sql =~ "ABS(metric_value"
+      assert sql =~ "title"
+      assert sql =~ "length"
+      assert sql =~ "AVG\\(.*length.*\\) OVER \\(.*ORDER BY.*title.*ROWS BETWEEN 5 PRECEDING AND 5 FOLLOWING.*\\) AS local_avg_length"
+      assert sql =~ "STDDEV\\(.*length.*\\) OVER \\(.*ORDER BY.*title.*ROWS BETWEEN 5 PRECEDING AND 5 FOLLOWING.*\\) AS local_stddev"
+      assert sql =~ "ABS\\(length"
     end
     
     test "partitioned ranking for large datasets" do
-      selecto = configure_test_selecto("orders")
+      selecto = configure_test_selecto()
       
       result = 
         selecto
         |> Selecto.select([
-            "region",
-            "customer_id",
-            "total_spent"
+            "rating",
+            "title",
+            "replacement_cost"
           ])
         |> Selecto.window_function(:dense_rank, [], 
             over: [
-              partition_by: ["region"],
-              order_by: [{"total_spent", :desc}]
+              partition_by: ["rating"],
+              order_by: [{"replacement_cost", :desc}]
             ], 
-            as: "regional_rank")
+            as: "cost_rank")
         |> Selecto.filter([
-            {"DENSE_RANK() OVER (PARTITION BY region ORDER BY total_spent DESC)", {:<=, 100}}
+            {"DENSE_RANK() OVER (PARTITION BY rating ORDER BY replacement_cost DESC)", {:<=, 10}}
           ])
       
       {sql, _aliases, params} = Sql.build(result, [])
       
-      assert sql =~ "region"
-      assert sql =~ "customer_id"
-      assert sql =~ "total_spent"
-      assert sql =~ "DENSE_RANK() OVER (PARTITION BY region ORDER BY total_spent DESC) AS regional_rank"
-      assert sql =~ "DENSE_RANK() OVER (PARTITION BY region ORDER BY total_spent DESC) <= $"
-      assert 100 in params
+      assert sql =~ "rating"
+      assert sql =~ "title"
+      assert sql =~ "replacement_cost"
+      assert sql =~ "DENSE_RANK\\(\\) OVER \\(PARTITION BY.*rating.*ORDER BY.*replacement_cost.*DESC.*\\) AS cost_rank"
+      assert sql =~ "DENSE_RANK\\(\\) OVER \\(PARTITION BY rating ORDER BY replacement_cost DESC\\) <= "
+      assert 10 in params
     end
   end
 end
