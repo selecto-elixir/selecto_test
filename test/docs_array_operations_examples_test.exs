@@ -220,8 +220,6 @@ defmodule DocsArrayOperationsExamplesTest do
   end
 
   describe "Array Construction Examples from Docs" do
-    # Array construction not yet supported - skip test
-    @tag :skip
     test "construct array from values" do
       selecto = configure_test_selecto("orders")
       
@@ -229,13 +227,14 @@ defmodule DocsArrayOperationsExamplesTest do
         selecto
         |> Selecto.select([
             "order_id",
-            {:array, ["pending", "processing", "shipped"], as: "status_flow"}
+            {:array, ["pending", "processing", "shipped"]}
           ])
       
       {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
       
       assert sql =~ ~r/array/i
-      assert sql =~ "status_flow"
+      # Check for ARRAY[] construct
+      assert sql =~ ~r/ARRAY\[/i
       assert ["pending", "processing", "shipped"] in params or
              "pending" in params  # Depending on implementation
     end
@@ -433,15 +432,13 @@ defmodule DocsArrayOperationsExamplesTest do
   end
 
   describe "Array Unnesting Examples from Docs" do
-    # Unnest functionality not yet fully integrated - skip tests
-    @tag :skip
     test "basic unnest" do
-      selecto = configure_test_selecto()
+      selecto = configure_test_selecto("film")
       
       result = 
         selecto
-        |> Selecto.select(["title", "feature"])
         |> Selecto.unnest("special_features", as: "feature")
+        |> Selecto.select(["title"])
       
       {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
       
@@ -450,14 +447,13 @@ defmodule DocsArrayOperationsExamplesTest do
       assert sql =~ "AS feature"
     end
 
-    @tag :skip
     test "unnest with ordinality" do
       selecto = configure_test_selecto("product")
       
       result = 
         selecto
-        |> Selecto.select(["name", "tag.value", "tag.position"])
-        |> Selecto.unnest("tags", as: "tag", with_ordinality: true)
+        |> Selecto.unnest("tags", as: "tag", ordinality: "tag_position")
+        |> Selecto.select(["name"])
       
       {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
       
@@ -467,15 +463,14 @@ defmodule DocsArrayOperationsExamplesTest do
       assert sql =~ "AS tag"
     end
 
-    @tag :skip
     test "multiple unnests" do
       selecto = configure_test_selecto("orders")
       
       result = 
         selecto
-        |> Selecto.select(["order_id", "item", "quantity"])
         |> Selecto.unnest("items", as: "item")
         |> Selecto.unnest("metadata", as: "quantity")
+        |> Selecto.select(["order_id"])
       
       {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
       

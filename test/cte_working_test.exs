@@ -118,7 +118,6 @@ defmodule CteWorkingTest do
       assert "G" in params
     end
     
-    @tag :skip
     test "Recursive CTE generates WITH RECURSIVE" do
       selecto = configure_test_selecto("film")
       
@@ -126,7 +125,7 @@ defmodule CteWorkingTest do
       result = 
         selecto
         |> Selecto.with_recursive_cte("counter",
-            base_query: fn ->
+            fn ->
               %{
                 set: %{
                   selected: [{:literal, "1 AS value"}],
@@ -146,7 +145,7 @@ defmodule CteWorkingTest do
                 }
               }
             end,
-            recursive_query: fn _cte ->
+            fn _cte ->
               %{
                 set: %{
                   selected: [{:literal, "value + 1"}],

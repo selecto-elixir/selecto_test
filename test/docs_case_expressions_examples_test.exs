@@ -241,21 +241,91 @@ defmodule DocsCaseExpressionsExamplesTest do
     end
   end
 
-  # Note: CASE in WHERE and ORDER BY clauses are not yet supported
-  # These would require extension to the Selecto.filter and Selecto.order_by functions
-  @tag :skip
-  describe "CASE in WHERE Clause (Future Feature)" do
+  describe "CASE in WHERE Clause" do
     test "conditional filtering with CASE" do
-      # This functionality is not yet implemented
-      # Would require support in Selecto.filter for CASE expressions
+      selecto = configure_test_selecto("film")
+      
+      # Filter using a CASE expression
+      # WHERE CASE WHEN rating = 'R' THEN length > 120 ELSE length > 90 END
+      result = 
+        selecto
+        |> Selecto.select(["title", "rating", "length"])
+        |> Selecto.filter({:case, [
+            {{"rating", "R"}, {"length", {">", 120}}},
+            {{"rating", "PG-13"}, {"length", {">", 100}}}
+          ], {"length", {">", 90}}})
+      
+      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
+      
+      assert sql =~ ~r/where.*case/i
+      assert sql =~ ~r/when.*rating.*=.*then.*length.*>/i
+      assert sql =~ ~r/else.*length.*>/i
+      assert sql =~ ~r/end/i
+      assert 120 in params
+      assert 90 in params
+    end
+
+    test "CASE returning boolean in WHERE" do
+      selecto = configure_test_selecto("film")
+      
+      # WHERE CASE WHEN rating IN ('G', 'PG') THEN TRUE ELSE FALSE END
+      result = 
+        selecto
+        |> Selecto.select(["title", "rating"])
+        |> Selecto.filter({:case, [
+            {{"rating", ["G", "PG"]}, true}
+          ], false})
+      
+      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
+      
+      assert sql =~ ~r/where.*case/i
+      assert sql =~ ~r/when.*rating.*=.*any/i
+      assert sql =~ ~r/then.*true/i
+      assert sql =~ ~r/else.*false/i
     end
   end
 
-  @tag :skip
-  describe "CASE in ORDER BY Clause (Future Feature)" do
+  describe "CASE in ORDER BY Clause" do
     test "conditional ordering with CASE" do
-      # This functionality is not yet implemented
-      # Would require support in Selecto.order_by for CASE expressions
+      selecto = configure_test_selecto("film")
+      
+      # ORDER BY CASE WHEN rating = 'G' THEN 1 WHEN rating = 'PG' THEN 2 ELSE 3 END
+      result = 
+        selecto
+        |> Selecto.select(["title", "rating"])
+        |> Selecto.order_by([{:case, [
+            {{"rating", "G"}, 1},
+            {{"rating", "PG"}, 2},
+            {{"rating", "PG-13"}, 3}
+          ], 4}])
+      
+      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
+      
+      assert sql =~ ~r/order by.*case/i
+      assert sql =~ ~r/when.*rating.*=.*then/i
+      assert sql =~ ~r/else.*\$\d+/i  # ELSE uses a parameter
+      assert sql =~ ~r/end/i
+      assert 4 in params  # Check that 4 is in the params
+    end
+
+    test "multiple ORDER BY with CASE" do
+      selecto = configure_test_selecto("film")
+      
+      # ORDER BY CASE..., title ASC
+      result = 
+        selecto
+        |> Selecto.select(["title", "rating", "length"])
+        |> Selecto.order_by([
+            {:case, [
+              {{"rating", "G"}, 1},
+              {{"rating", "PG"}, 2}
+            ], 99},
+            {"title", :asc}
+          ])
+      
+      {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
+      
+      assert sql =~ ~r/order by.*case.*when.*then.*end.*,.*title/i
     end
   end
 end
