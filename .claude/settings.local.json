@@ -169,7 +169,8 @@
       "Bash(MIX_ENV=test timeout 30 mix test test/selecto_test_web/live/rating_filter_ui_test.exs --max-cases 1)",
       "Bash(MIX_ENV=test timeout 30 mix test test/selecto_dome_integration_simple_test.exs --max-cases 1)",
       "Bash(for file in test/selecto_pivot_subselect_simple_test.exs test/selecto_subselect_database_test.exs test/selecto_subfilter_live_data_test.exs test/cte_working_test.exs test/docs_subqueries_subfilters_examples_test.exs)",
-      "Bash(do sed -i '' 's/assert sql =~ \"\"WHERE\"\"/assert sql =~ ~r\\/where\\/i/g' \"$file\")"
+      "Bash(do sed -i '' 's/assert sql =~ \"\"WHERE\"\"/assert sql =~ ~r\\/where\\/i/g' \"$file\")",
+      "Bash(psql:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

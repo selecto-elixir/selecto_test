@@ -425,7 +425,7 @@ defmodule SelectoComplexFiltersTest do
   end
 
   describe "Full-Text Search Filters" do
-    setup %{film_selecto: selecto} do
+    setup %{film_selecto: _selecto} do
       # Set up film domain with fulltext column
       # Add fulltext field to existing domain structure
       domain = %{
@@ -453,33 +453,33 @@ defmodule SelectoComplexFiltersTest do
         }
       }
 
-      fulltext_selecto = Selecto.configure(domain, selecto.postgrex_opts)
+      fulltext_selecto = Selecto.configure(domain, SelectoTest.Repo)
       {:ok, fulltext_selecto: fulltext_selecto}
     end
 
     test "basic text search", %{fulltext_selecto: selecto} do
       result = selecto
       |> Selecto.select(["title", "description"])
-      |> Selecto.filter({"fulltext", {:text_search, "drama"}})
+      |> Selecto.filter({"fulltext", {:text_search, "test"}})
       |> Selecto.execute()
 
       assert {:ok, {rows, _columns, _aliases}} = result
-      # Should find films with "drama" in their content
+      # Should find films with "test" in their content
       assert length(rows) > 0
       Enum.each(rows, fn [title, _description] ->
         assert is_binary(title)
-        # Either title or description should contain drama-related content
+        # Either title or description should contain test-related content
       end)
     end
 
     test "complex text search with operators", %{fulltext_selecto: selecto} do
       result = selecto
       |> Selecto.select(["title"])
-      |> Selecto.filter({"fulltext", {:text_search, "drama & comedy"}})
+      |> Selecto.filter({"fulltext", {:text_search, "test & film"}})
       |> Selecto.execute()
 
       assert {:ok, {rows, _columns, _aliases}} = result
-      # Should find films with both drama AND comedy
+      # Should find films with both test AND film
       Enum.each(rows, fn [title] ->
         assert is_binary(title)
       end)
@@ -488,11 +488,11 @@ defmodule SelectoComplexFiltersTest do
     test "text search with OR logic", %{fulltext_selecto: selecto} do
       result = selecto
       |> Selecto.select(["title"])
-      |> Selecto.filter({"fulltext", {:text_search, "action | adventure"}})
+      |> Selecto.filter({"fulltext", {:text_search, "test | another"}})
       |> Selecto.execute()
 
       assert {:ok, {rows, _columns, _aliases}} = result
-      # Should find films with action OR adventure
+      # Should find films with test OR another
       Enum.each(rows, fn [title] ->
         assert is_binary(title)
       end)
@@ -501,11 +501,11 @@ defmodule SelectoComplexFiltersTest do
     test "text search with negation", %{fulltext_selecto: selecto} do
       result = selecto
       |> Selecto.select(["title"])
-      |> Selecto.filter({"fulltext", {:text_search, "drama & !comedy"}})
+      |> Selecto.filter({"fulltext", {:text_search, "test & !another"}})
       |> Selecto.execute()
 
       assert {:ok, {rows, _columns, _aliases}} = result
-      # Should find films with drama but NOT comedy
+      # Should find films with test but NOT another
       Enum.each(rows, fn [title] ->
         assert is_binary(title)
       end)
@@ -519,7 +519,7 @@ defmodule SelectoComplexFiltersTest do
         # Integer filter - test films from 2023 (matches test data)
         {{"release_year", 2023}, "release_year"},
         # Decimal filter - test specific rental rates from our test dataset
-        {{"rental_rate", [Decimal.new("3.99"), Decimal.new("4.99")]}, "rental_rate"},  
+        {{"rental_rate", [Decimal.new("3.99"), Decimal.new("4.99")]}, "rental_rate"},
         # Length filter - test specific lengths from our test dataset
         {{"length", [120, 150]}, "length"}
       ]
