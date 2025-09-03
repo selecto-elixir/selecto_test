@@ -25,11 +25,36 @@ export default {
     const chartOptions = JSON.parse(this.el.dataset.chartOptions || '{}');
     const chartType = this.el.dataset.chartType || 'bar';
 
+    const pushEvent = (event, payload) => {\n      this.pushEvent(event, payload);\n    };
+
     if (window.Chart) {
       this.chart = new Chart(canvas, {
         type: chartType,
         data: chartData,
-        options: chartOptions
+        options: {
+          ...chartOptions,
+          onClick: (event, elements) => {
+            if (elements.length > 0) {
+              const element = elements[0];
+              const datasetIndex = element.datasetIndex;
+              const index = element.index;
+              const dataset = chartData.datasets[datasetIndex];
+              const value = dataset.data[index];
+              const label = chartData.labels[index];
+
+              const xFieldName = this.el.dataset.xAxis; 
+              const yFieldName = dataset.label; 
+              
+              pushEvent('chart_click', {
+                label: label,
+                value: value,
+                dataset_label: dataset.label,
+                x_field: xFieldName,
+                y_field: yFieldName
+              });
+            }
+          }
+        }
       });
     }
   },
