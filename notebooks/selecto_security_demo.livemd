@@ -1,0 +1,408 @@
+# SelectoKino Security Features Demo
+
+```elixir
+Mix.install([
+  {:selecto_kino, path: "../vendor/selecto_kino"},
+  {:selecto, path: "../vendor/selecto"},
+  {:kino, "~> 0.12.0"},
+  {:postgrex, "~> 0.17.0"}
+])
+```
+
+## Introduction
+
+This notebook demonstrates the **Security Features** in SelectoKino that leverage Selecto v0.3.0's security improvements:
+
+1. **Domain Validation** - Comprehensive validation of domain configurations
+2. **SQL Parameterization** - Complete prevention of SQL injection attacks
+3. **Safe Query Building** - IoData-based query construction
+
+These features ensure your applications are secure by default and follow best practices.
+
+## Part 1: Domain Validation
+
+Domain validation helps catch configuration errors before they cause runtime issues.
+
+### Interactive Domain Validator
+
+```elixir
+# Sample domain with intentional issues for demonstration
+sample_domain = %{
+  name: "TestDomain",
+  source: %{
+    source_table: "users",
+    primary_key: :id,
+    fields: [:id, :name, :email],
+    columns: %{
+      id: %{type: :integer},
+      name: %{type: :string},
+      email: %{type: :string}
+    },
+    associations: %{
+      posts: %{
+        queryable: :posts,  # This references a schema that exists
+        field: :posts,
+        owner_key: :id,
+        related_key: :user_id
+      },
+      comments: %{
+        queryable: :user_comments,  # This references a non-existent schema!
+        field: :comments,
+        owner_key: :id,
+        related_key: :user_id
+      }
+    }
+  },
+  schemas: %{
+    posts: %{
+      source_table: "posts",
+      primary_key: :id,
+      fields: [:id, :title, :user_id],
+      columns: %{
+        id: %{type: :integer},
+        title: %{type: :string},
+        user_id: %{type: :integer}
+      }
+    }
+    # Note: user_comments schema is missing!
+  }
+}
+
+# Create validation widget
+SelectoKino.DomainValidatorIntegration.validation_widget(
+  domain: sample_domain,
+  auto_validate: true,
+  show_suggestions: true
+)
+```
+
+### Valid Domain Example
+
+```elixir
+# A properly configured domain
+valid_domain = %{
+  name: "ValidDomain",
+  source: %{
+    source_table: "films",
+    primary_key: :id,
+    fields: [:id, :title, :rating],
+    columns: %{
+      id: %{type: :integer},
+      title: %{type: :string},
+      rating: %{type: :string}
+    }
+  },
+  schemas: %{
+    actors: %{
+      source_table: "actors",
+      primary_key: :id,
+      fields: [:id, :name],
+      columns: %{
+        id: %{type: :integer},
+        name: %{type: :string}
+      }
+    }
+  },
+  joins: %{
+    actors: %{
+      type: :left,
+      name: "actors"
+    }
+  }
+}
+
+# Validate and show report
+validation_result = SelectoKino.DomainValidatorIntegration.validate_domain(valid_domain)
+
+case validation_result do
+  {:ok, _} -> 
+    IO.puts("✅ Domain is valid and ready to use!")
+  {:error, errors} ->
+    IO.puts("❌ Validation errors found:")
+    Enum.each(errors, &IO.puts("  - #{&1}"))
+end
+```
+
+### Domain Builder with Validation
+
+Build a domain configuration step-by-step with real-time validation:
+
+```elixir
+# Interactive domain builder with validation
+SelectoKino.DomainValidatorIntegration.domain_builder_with_validation()
+```
+
+### Detecting Circular Dependencies
+
+```elixir
+# Domain with circular dependency
+circular_domain = %{
+  name: "CircularDomain",
+  source: %{
+    source_table: "table_a",
+    columns: %{id: %{type: :integer}}
+  },
+  schemas: %{
+    table_b: %{
+      source_table: "table_b",
+      columns: %{id: %{type: :integer}}
+    },
+    table_c: %{
+      source_table: "table_c",
+      columns: %{id: %{type: :integer}}
+    }
+  },
+  joins: %{
+    to_b: %{
+      type: :left,
+      name: "table_b",
+      joins: %{
+        to_c: %{
+          type: :left,
+          name: "table_c",
+          joins: %{
+            back_to_a: %{
+              type: :left,
+              name: "to_b"  # Circular reference!
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# Check for cycles
+validation_report = SelectoKino.DomainValidatorIntegration.validation_report(circular_domain)
+```
+
+### Auto-Fix Domain Issues
+
+```elixir
+# Domain with fixable issues
+fixable_domain = %{
+  name: "FixableDomain",
+  source: %{
+    source_table: "users",
+    columns: %{id: %{type: :integer}}
+  }
+  # Missing required 'schemas' key
+}
+
+# Attempt auto-fix
+case SelectoKino.DomainValidatorIntegration.auto_fix_domain(fixable_domain) do
+  {:ok, fixed_domain, fixes} ->
+    IO.puts("✅ Domain fixed successfully!")
+    IO.puts("Fixes applied:")
+    Enum.each(fixes, &IO.puts("  - #{&1}"))
+    IO.inspect(fixed_domain, label: "Fixed Domain", pretty: true)
+    
+  {:partial, partially_fixed, fixes, remaining_errors} ->
+    IO.puts("⚠️ Partially fixed")
+    IO.puts("Fixes applied:")
+    Enum.each(fixes, &IO.puts("  - #{&1}"))
+    IO.puts("Remaining issues:")
+    Enum.each(remaining_errors, &IO.puts("  - #{&1}"))
+    
+  {:error, reason} ->
+    IO.puts("❌ Could not fix: #{reason}")
+end
+```
+
+## Part 2: SQL Parameterization
+
+Selecto v0.3.0 completely eliminates SQL injection vulnerabilities through parameterization.
+
+### Parameterized Query Builder
+
+```elixir
+# Interactive parameterized query builder
+SelectoKino.SqlParameterization.parameterized_query_builder(
+  show_params: true,
+  show_raw_sql: true,
+  validate_inputs: true
+)
+```
+
+### Safe vs Unsafe Query Construction
+
+```elixir
+# Demonstrate the difference with a malicious input
+malicious_input = "admin@example.com'; DROP TABLE users; --"
+
+comparison = SelectoKino.SqlParameterization.security_comparison(malicious_input)
+
+IO.puts("=== UNSAFE APPROACH (Vulnerable) ===")
+IO.puts("SQL: #{comparison.unsafe.sql}")
+IO.puts("Vulnerable: #{comparison.unsafe.vulnerable}")
+IO.puts("Risks: #{Enum.join(comparison.unsafe.risk, ", ")}")
+
+IO.puts("\n=== SAFE APPROACH (Protected) ===")
+IO.puts("SQL: #{comparison.safe.sql}")
+IO.puts("Parameters: #{inspect(comparison.safe.params)}")
+IO.puts("Vulnerable: #{comparison.safe.vulnerable}")
+IO.puts("Protection: #{comparison.safe.protection}")
+```
+
+### Building Safe Queries Programmatically
+
+```elixir
+# Build various types of safe queries
+queries = [
+  # Simple SELECT with WHERE
+  %{
+    select: ["id", "name", "email"],
+    from: "users",
+    where: %{active: true, role: "admin"}
+  },
+  
+  # Query with potential injection attempt in value
+  %{
+    select: ["*"],
+    from: "products",
+    where: %{name: "'; DELETE FROM products; --"}
+  },
+  
+  # Complex query with multiple conditions
+  %{
+    select: ["order_id", "total", "status"],
+    from: "orders",
+    where: %{
+      customer_id: 123,
+      status: "pending",
+      created_at: "2024-01-01"
+    },
+    order_by: "created_at DESC",
+    limit: 10
+  }
+]
+
+Enum.each(queries, fn query_spec ->
+  {sql, params} = SelectoKino.SqlParameterization.build_safe_query(query_spec)
+  
+  IO.puts("\n" <> String.duplicate("=", 50))
+  IO.puts("Query Spec: #{inspect(query_spec, pretty: true)}")
+  IO.puts("\nGenerated SQL:")
+  IO.puts(sql)
+  IO.puts("\nParameters:")
+  Enum.with_index(params, 1) |> Enum.each(fn {param, idx} ->
+    IO.puts("  $#{idx} = #{inspect(param)}")
+  end)
+end)
+```
+
+### Input Validation
+
+```elixir
+# Test various inputs for validation
+test_inputs = [
+  {"users", :identifier},
+  {"user@example.com", :general},
+  {"42", :number},
+  {"users; DROP TABLE users;", :identifier},
+  {"' OR '1'='1", :general},
+  {"123.45", :number},
+  {"not_a_number", :number}
+]
+
+IO.puts("Input Validation Results:")
+IO.puts(String.duplicate("=", 50))
+
+Enum.each(test_inputs, fn {input, type} ->
+  result = SelectoKino.SqlParameterization.validate_input(input, type)
+  
+  status = case result do
+    {:ok, _} -> "✅ VALID"
+    {:error, _} -> "❌ INVALID"
+  end
+  
+  IO.puts("Input: #{inspect(input)}")
+  IO.puts("Type: #{type}")
+  IO.puts("Result: #{status}")
+  
+  case result do
+    {:error, reason} -> IO.puts("Reason: #{reason}")
+    _ -> nil
+  end
+  
+  IO.puts("")
+end)
+```
+
+## Part 3: Integration with Selecto
+
+### Using Validation with Selecto Configuration
+
+```elixir
+# Connect to database first
+connection_form = SelectoKino.connect()
+```
+
+```elixir
+# After connecting, create a domain with validation
+domain_config = %{
+  name: "SecureFilmDomain",
+  source: %{
+    source_table: "films",
+    primary_key: :id,
+    fields: [:id, :title, :rating, :rental_rate],
+    columns: %{
+      id: %{type: :integer},
+      title: %{type: :string},
+      rating: %{type: :string},
+      rental_rate: %{type: :decimal}
+    }
+  },
+  schemas: %{},
+  # Add some filters that will be validated
+  filters: %{
+    "rating" => %{
+      name: "Rating",
+      type: "select",
+      options: ["G", "PG", "PG-13", "R", "NC-17"]
+    },
+    "min_rate" => %{
+      name: "Minimum Rental Rate",
+      type: "number",
+      validation: %{min: 0, max: 10}
+    }
+  }
+}
+
+# Validate before using with Selecto
+case SelectoKino.DomainValidatorIntegration.validate_domain(domain_config) do
+  {:ok, valid_domain} ->
+    IO.puts("✅ Domain validated successfully!")
+    # Now safe to use with Selecto
+    # selecto = Selecto.configure(repo, valid_domain, validate: true)
+    
+  {:error, errors} ->
+    IO.puts("❌ Domain validation failed:")
+    Enum.each(errors, &IO.puts("  - #{&1}"))
+end
+```
+
+## Summary
+
+SelectoKino's security features provide:
+
+### Domain Validation
+- **Comprehensive Checks** - Structure, associations, joins, cycles
+- **Early Error Detection** - Catch issues before runtime
+- **Fix Suggestions** - Helpful guidance for corrections
+- **Auto-Fix Capability** - Automatic correction of common issues
+
+### SQL Parameterization
+- **Complete Protection** - No SQL injection vulnerabilities
+- **IoData Construction** - Efficient and safe query building
+- **Input Validation** - Detect malicious patterns
+- **Parameter Binding** - All values safely bound
+
+### Best Practices Enforced
+1. Always validate domains before use
+2. Use parameterized queries exclusively
+3. Validate user inputs
+4. Never concatenate SQL strings
+5. Follow Selecto v0.3.0 security standards
+
+These features ensure your Selecto queries are both powerful and secure!

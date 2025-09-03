@@ -1,0 +1,471 @@
+# SelectoKino Subselects Demo
+
+```elixir
+Mix.install([
+  {:selecto_kino, path: "../vendor/selecto_kino"},
+  {:selecto, path: "../vendor/selecto"},
+  {:kino, "~> 0.12.0"},
+  {:postgrex, "~> 0.17.0"}
+])
+```
+
+## Introduction
+
+This notebook demonstrates the new **Subselect (Subquery)** support in SelectoKino, providing interactive builders for creating nested queries for complex filtering and data retrieval.
+
+Subselects allow you to:
+- Use query results as values in WHERE clauses
+- Check for existence of related data
+- Create correlated queries that reference outer query values
+- Build complex filtering logic with nested conditions
+
+## Connect to Database
+
+```elixir
+# Connect to your database
+connection_form = SelectoKino.connect()
+```
+
+## Subselect Builder
+
+The Subselect Builder provides different types of subqueries:
+
+```elixir
+# Define a sample domain for the demo
+domain_config = %{
+  source: %{
+    source_table: "films",
+    columns: %{
+      id: %{type: :integer},
+      title: %{type: :string},
+      release_year: %{type: :integer},
+      rating: %{type: :string},
+      rental_rate: %{type: :decimal},
+      replacement_cost: %{type: :decimal}
+    }
+  },
+  schemas: %{
+    inventory: %{
+      source_table: "inventory",
+      columns: %{
+        id: %{type: :integer},
+        film_id: %{type: :integer},
+        store_id: %{type: :integer}
+      }
+    },
+    rental: %{
+      source_table: "rental",
+      columns: %{
+        id: %{type: :integer},
+        inventory_id: %{type: :integer},
+        customer_id: %{type: :integer},
+        rental_date: %{type: :datetime}
+      }
+    }
+  },
+  name: "Films with Inventory"
+}
+
+# Create the subselect builder
+subselect_builder = SelectoKino.SubselectBuilder.new(
+  domain: domain_config,
+  on_complete: fn config ->
+    IO.puts("Subselect configured!")
+    IO.inspect(config, label: "Configuration", pretty: true)
+  end
+)
+```
+
+## 1. Scalar Subselects
+
+Scalar subselects return a single value that can be used in comparisons:
+
+```elixir
+# Find films with rental rate above average
+above_avg_subselect = SelectoKino.SubselectBuilder.scalar(%{
+  select: "AVG(rental_rate)",
+  from: "films",
+  where: %{rating: "PG-13"}
+})
+
+IO.puts("SQL: Find films more expensive than average PG-13 films")
+IO.inspect(above_avg_subselect, pretty: true)
+
+# Find films released in the same year as a specific film
+same_year_subselect = SelectoKino.SubselectBuilder.scalar(%{
+  select: "release_year",
+  from: "films",
+  where: %{title: "ACADEMY DINOSAUR"}
+})
+
+IO.inspect(same_year_subselect, label: "Same Year as Specific Film", pretty: true)
+```
+
+### Maximum/Minimum Comparisons
+
+```elixir
+# Find the most expensive film(s)
+max_cost_subselect = SelectoKino.SubselectBuilder.scalar(%{
+  select: "MAX(replacement_cost)",
+  from: "films"
+})
+
+# Find films from the earliest year
+min_year_subselect = SelectoKino.SubselectBuilder.scalar(%{
+  select: "MIN(release_year)",
+  from: "films",
+  where: %{rating: "G"}
+})
+
+IO.inspect([
+  max_cost: max_cost_subselect,
+  earliest_g_rated: min_year_subselect
+], pretty: true)
+```
+
+## 2. List Subselects (IN/NOT IN)
+
+List subselects return multiple values for set membership testing:
+
+```elixir
+# Find films that have inventory
+films_with_inventory = SelectoKino.SubselectBuilder.list(%{
+  select: "film_id",
+  from: "inventory",
+  distinct: true
+})
+
+IO.puts("Films with inventory (for IN clause):")
+IO.inspect(films_with_inventory, pretty: true)
+
+# Find films rented in the last 30 days
+recent_rentals = SelectoKino.SubselectBuilder.list(%{
+  select: "inventory.film_id",
+  from: "rental JOIN inventory ON rental.inventory_id = inventory.id",
+  where: %{rental_date: {:gte, "CURRENT_DATE - INTERVAL '30 days'"}},
+  distinct: true
+})
+
+IO.inspect(recent_rentals, label: "Recently Rented Films", pretty: true)
+```
+
+### NOT IN Examples
+
+```elixir
+# Films never rented (NOT IN)
+never_rented = %{
+  type: :not_in,
+  subselect: SelectoKino.SubselectBuilder.list(%{
+    select: "DISTINCT inventory.film_id",
+    from: "rental JOIN inventory ON rental.inventory_id = inventory.id"
+  })
+}
+
+# Films not in specific stores
+not_in_store = SelectoKino.SubselectBuilder.list(%{
+  select: "film_id",
+  from: "inventory",
+  where: %{store_id: 1},
+  distinct: true
+})
+
+IO.inspect([
+  never_rented: never_rented,
+  not_in_store_1: not_in_store
+], pretty: true)
+```
+
+## 3. EXISTS Subselects
+
+EXISTS checks whether any rows match the criteria:
+
+```elixir
+# Films that have been rented
+rented_exists = SelectoKino.SubselectBuilder.exists(%{
+  from: "rental JOIN inventory ON rental.inventory_id = inventory.id",
+  where: %{
+    film_id: {:parent, "id"}
+  }
+})
+
+IO.puts("EXISTS: Films that have been rented")
+IO.inspect(rented_exists, pretty: true)
+
+# Films with inventory in multiple stores
+multi_store_exists = SelectoKino.SubselectBuilder.exists(%{
+  from: "inventory i1 JOIN inventory i2 ON i1.film_id = i2.film_id",
+  where: %{
+    "i1.film_id": {:parent, "id"},
+    "i1.store_id": {:ne, "i2.store_id"}
+  }
+})
+
+IO.inspect(multi_store_exists, label: "Films in Multiple Stores", pretty: true)
+```
+
+### NOT EXISTS Examples
+
+```elixir
+# Films with no rentals in the last year
+no_recent_rentals = %{
+  type: :not_exists,
+  subselect: SelectoKino.SubselectBuilder.exists(%{
+    from: "rental JOIN inventory ON rental.inventory_id = inventory.id",
+    where: %{
+      film_id: {:parent, "id"},
+      rental_date: {:gte, "CURRENT_DATE - INTERVAL '1 year'"}
+    }
+  })
+}
+
+IO.inspect(no_recent_rentals, label: "No Recent Rentals", pretty: true)
+```
+
+## 4. Correlated Subselects
+
+Correlated subselects reference values from the outer query:
+
+```elixir
+# Films with above-average rental rate for their rating
+above_avg_for_rating = SelectoKino.SubselectBuilder.correlated(%{
+  select: "AVG(rental_rate)",
+  from: "films f2",
+  where: %{
+    rating: {:parent, "rating"}
+  }
+})
+
+IO.puts("Correlated: Films above average for their rating category")
+IO.inspect(above_avg_for_rating, pretty: true)
+
+# Count of other films with same rating
+same_rating_count = SelectoKino.SubselectBuilder.correlated(%{
+  select: "COUNT(*)",
+  from: "films f2",
+  where: %{
+    rating: {:parent, "rating"},
+    id: {:ne, {:parent, "id"}}
+  }
+})
+
+IO.inspect(same_rating_count, label: "Count of Similar Films", pretty: true)
+```
+
+### Advanced Correlations
+
+```elixir
+# Rank within rating category (before window functions)
+rank_in_category = SelectoKino.SubselectBuilder.correlated(%{
+  select: "COUNT(*) + 1",
+  from: "films f2",
+  where: %{
+    rating: {:parent, "rating"},
+    rental_rate: {:gt, {:parent, "rental_rate"}}
+  }
+})
+
+# Percentage of films in same category with lower price
+percentile_in_category = SelectoKino.SubselectBuilder.correlated(%{
+  select: "ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM films f3 WHERE f3.rating = f1.rating), 2)",
+  from: "films f2",
+  where: %{
+    rating: {:parent, "rating"},
+    rental_rate: {:lt, {:parent, "rental_rate"}}
+  }
+})
+
+IO.inspect([
+  rank: rank_in_category,
+  percentile: percentile_in_category
+], pretty: true)
+```
+
+## 5. ANY and ALL Operators
+
+Using subselects with ANY and ALL for complex comparisons:
+
+```elixir
+# Films cheaper than ANY film from 2006
+cheaper_than_any_2006 = %{
+  operator: :any,
+  comparison: "<",
+  subselect: SelectoKino.SubselectBuilder.list(%{
+    select: "rental_rate",
+    from: "films",
+    where: %{release_year: 2006}
+  })
+}
+
+# Films more expensive than ALL PG films
+more_than_all_pg = %{
+  operator: :all,
+  comparison: ">",
+  subselect: SelectoKino.SubselectBuilder.list(%{
+    select: "rental_rate",
+    from: "films",
+    where: %{rating: "PG"}
+  })
+}
+
+IO.inspect([
+  any_example: cheaper_than_any_2006,
+  all_example: more_than_all_pg
+], pretty: true)
+```
+
+## 6. Nested Subselects
+
+Subselects within subselects for complex logic:
+
+```elixir
+# Films in the top 10% by rental rate within their rating
+top_10_percent = %{
+  type: :scalar,
+  outer_query: "rental_rate >",
+  subselect: SelectoKino.SubselectBuilder.scalar(%{
+    select: "percentile_cont(0.9) WITHIN GROUP (ORDER BY rental_rate)",
+    from: "films f2",
+    where: %{
+      rating: {:parent, "rating"}
+    }
+  })
+}
+
+# Films with more inventory than average for popular films
+above_avg_inventory = %{
+  type: :scalar,
+  comparison: ">",
+  subselect: SelectoKino.SubselectBuilder.scalar(%{
+    select: "AVG(inv_count)",
+    from: "(SELECT film_id, COUNT(*) as inv_count FROM inventory GROUP BY film_id) inv_summary",
+    where: %{
+      film_id: {:in, 
+        SelectoKino.SubselectBuilder.list(%{
+          select: "film_id",
+          from: "rental JOIN inventory ON rental.inventory_id = inventory.id",
+          where: %{rental_date: {:gte, "CURRENT_DATE - INTERVAL '90 days'"}},
+          distinct: true
+        })
+      }
+    }
+  })
+}
+
+IO.inspect([
+  top_10_percent: top_10_percent,
+  above_avg_inventory: above_avg_inventory
+], pretty: true)
+```
+
+## 7. Validation and Error Handling
+
+The builder includes validation:
+
+```elixir
+# Test validation with invalid configurations
+test_configs = [
+  # Valid scalar subselect
+  %{valid: SelectoKino.SubselectBuilder.validate(%{
+    type: :scalar,
+    select: "MAX(rental_rate)",
+    from: "films"
+  })},
+  
+  # Missing FROM clause
+  %{missing_from: SelectoKino.SubselectBuilder.validate(%{
+    type: :scalar,
+    select: "COUNT(*)",
+    from: nil
+  })},
+  
+  # Missing correlation for correlated type
+  %{missing_correlation: SelectoKino.SubselectBuilder.validate(%{
+    type: :correlated,
+    select: "AVG(price)",
+    from: "products",
+    correlation: nil
+  })},
+  
+  # EXISTS doesn't need SELECT
+  %{exists_valid: SelectoKino.SubselectBuilder.validate(%{
+    type: :exists,
+    from: "orders",
+    where: %{customer_id: {:parent, "id"}}
+  })}
+]
+
+Enum.each(test_configs, fn {label, result} ->
+  case result do
+    {:ok, _} -> IO.puts("✓ #{label}: Valid")
+    {:error, errors} -> IO.puts("✗ #{label}: #{inspect(errors)}")
+  end
+end)
+```
+
+## 8. Integration with Selecto
+
+Convert subselect configurations to Selecto specifications:
+
+```elixir
+# Example configurations ready for Selecto
+configs = [
+  # Scalar for WHERE clause
+  SelectoKino.SubselectBuilder.scalar(%{
+    select: "AVG(rental_rate)",
+    from: "films"
+  }),
+  
+  # List for IN clause
+  SelectoKino.SubselectBuilder.list(%{
+    select: "id",
+    from: "inventory",
+    where: %{store_id: 1},
+    distinct: true
+  }),
+  
+  # EXISTS for filtering
+  SelectoKino.SubselectBuilder.exists(%{
+    from: "rental r JOIN inventory i ON r.inventory_id = i.id",
+    where: %{
+      "i.film_id": {:parent, "id"},
+      "r.rental_date": {:gte, "CURRENT_DATE - INTERVAL '30 days'"}
+    }
+  })
+]
+
+# Convert to Selecto specs
+specs = Enum.map(configs, fn config ->
+  SelectoKino.SubselectBuilder.to_selecto_spec(config)
+end)
+
+IO.puts("Selecto Specifications:")
+Enum.each(specs, fn spec ->
+  IO.inspect(spec, pretty: true)
+end)
+
+# Usage with Selecto:
+# selecto
+# |> Selecto.where({:rental_rate, :>, {:subselect, specs |> Enum.at(0)}})
+# |> Selecto.where({:id, :in, {:subselect, specs |> Enum.at(1)}})
+# |> Selecto.where({:exists, specs |> Enum.at(2)})
+# |> Selecto.execute()
+```
+
+## Summary
+
+SelectoKino's Subselect support provides:
+
+1. **Four Subselect Types**:
+   - Scalar (single value)
+   - List (multiple values for IN/NOT IN)
+   - EXISTS (row existence check)
+   - Correlated (references outer query)
+
+2. **Interactive Builder** - Visual configuration without SQL knowledge
+3. **Correlation Support** - Link inner and outer queries
+4. **Complex Operators** - ANY, ALL, IN, NOT IN, EXISTS, NOT EXISTS
+5. **Validation** - Catch errors before execution
+6. **SQL Preview** - See generated SQL before running
+7. **Selecto Integration** - Seamless use in Selecto queries
+
+This makes it easy to build sophisticated nested queries for complex business logic without manually writing SQL.
