@@ -69,6 +69,8 @@ defmodule SelectoTest.MixProject do
       {:selecto_dome, path: "./vendor/selecto_dome"},
       {:selecto_mix, path: "./vendor/selecto_mix", only: [:dev, :test]},
       {:selecto_dev, path: "./vendor/selecto_dev", only: :dev},
+      {:selecto_db_sqlite, path: "./vendor/selecto_db_sqlite", optional: true},
+      {:selecto_db_mysql, path: "./vendor/selecto_db_mysql", optional: true},
       {:timex, "~> 3.7.9"},
       {:uuid, "~> 1.1"},
       {:kino, "~> 0.7.0"},
