@@ -1,55 +1,230 @@
-defmodule SQLiteDockerIntegrationTest do
+defmodule SQLiteTempIntegrationTest do
   use ExUnit.Case, async: false
   
   alias Selecto.DB.SQLite
   
-  # Use a copy of the Docker database for testing
-  @docker_db "/tmp/pagila_docker_test.db"
-  @docker_source "/data/pagila.db"
+  # Use temporary database for testing
+  @temp_db "/tmp/selecto_pagila_test_#{System.unique_integer([:positive])}.db"
   
   setup_all do
-    # Copy database from Docker container for testing
-    setup_sqlite_db_from_docker()
+    # Create temporary database with test data
+    setup_temp_sqlite_db()
     
     on_exit(fn ->
-      File.rm(@docker_db)
+      File.rm(@temp_db)
     end)
     
     :ok
   end
   
-  defp setup_sqlite_db_from_docker do
-    # Copy database from Docker container
-    System.cmd("docker", ["cp", "selecto_sqlite:#{@docker_source}", @docker_db])
+  defp setup_temp_sqlite_db do
+    # Create new temporary database and load schema
+    create_schema()
+    insert_test_data()
     
-    # Verify the database was copied
-    if File.exists?(@docker_db) do
-      IO.puts("SQLite test database copied from Docker to #{@docker_db}")
-    else
-      # Fall back to creating from SQL files if Docker copy fails
-      setup_sqlite_db_from_sql()
-    end
+    IO.puts("SQLite temporary test database created at #{@temp_db}")
   end
   
-  defp setup_sqlite_db_from_sql do
-    # Create new database and load schema
-    {_output, 0} = System.cmd("sqlite3", [@docker_db], 
-      input: File.read!("priv/sqlite/schema/init.sql"),
-      stderr_to_stdout: true
-    )
+  defp create_schema do
+    {:ok, conn} = SQLite.connect(database: @temp_db)
     
-    # Load seed data
-    {_output, 0} = System.cmd("sqlite3", [@docker_db],
-      input: File.read!("priv/sqlite/data/seed.sql"),
-      stderr_to_stdout: true
-    )
+    # Create schema similar to Pagila but simplified for testing
+    SQLite.execute(conn, """
+      CREATE TABLE actor (
+        actor_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        first_name TEXT NOT NULL,
+        last_name TEXT NOT NULL,
+        last_update TEXT DEFAULT CURRENT_TIMESTAMP
+      )
+    """, [], [])
     
-    IO.puts("SQLite test database initialized at #{@docker_db}")
+    SQLite.execute(conn, """
+      CREATE TABLE film (
+        film_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        description TEXT,
+        release_year INTEGER,
+        rental_duration INTEGER DEFAULT 3,
+        rental_rate REAL DEFAULT 4.99,
+        length INTEGER,
+        replacement_cost REAL DEFAULT 19.99,
+        rating TEXT CHECK (rating IN ('G','PG','PG-13','R','NC-17')) DEFAULT 'G',
+        last_update TEXT DEFAULT CURRENT_TIMESTAMP
+      )
+    """, [], [])
+    
+    SQLite.execute(conn, """
+      CREATE TABLE film_actor (
+        actor_id INTEGER NOT NULL,
+        film_id INTEGER NOT NULL,
+        last_update TEXT DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (actor_id, film_id),
+        FOREIGN KEY (actor_id) REFERENCES actor(actor_id),
+        FOREIGN KEY (film_id) REFERENCES film(film_id)
+      )
+    """, [], [])
+    
+    SQLite.execute(conn, """
+      CREATE TABLE category (
+        category_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        last_update TEXT DEFAULT CURRENT_TIMESTAMP
+      )
+    """, [], [])
+    
+    SQLite.execute(conn, """
+      CREATE TABLE film_category (
+        film_id INTEGER NOT NULL,
+        category_id INTEGER NOT NULL,
+        last_update TEXT DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (film_id, category_id),
+        FOREIGN KEY (film_id) REFERENCES film(film_id),
+        FOREIGN KEY (category_id) REFERENCES category(category_id)
+      )
+    """, [], [])
+    
+    SQLite.execute(conn, """
+      CREATE TABLE customer (
+        customer_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        store_id INTEGER NOT NULL,
+        first_name TEXT NOT NULL,
+        last_name TEXT NOT NULL,
+        email TEXT,
+        address_id INTEGER,
+        active INTEGER DEFAULT 1,
+        create_date TEXT DEFAULT CURRENT_TIMESTAMP,
+        last_update TEXT DEFAULT CURRENT_TIMESTAMP
+      )
+    """, [], [])
+    
+    SQLite.execute(conn, """
+      CREATE TABLE rental (
+        rental_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        rental_date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        inventory_id INTEGER NOT NULL,
+        customer_id INTEGER NOT NULL,
+        return_date TEXT,
+        staff_id INTEGER NOT NULL,
+        last_update TEXT DEFAULT CURRENT_TIMESTAMP
+      )
+    """, [], [])
+    
+    # Create view for testing
+    SQLite.execute(conn, """
+      CREATE VIEW film_list AS
+      SELECT 
+        f.film_id,
+        f.title,
+        c.name as category,
+        f.rating
+      FROM film f
+      LEFT JOIN film_category fc ON f.film_id = fc.film_id
+      LEFT JOIN category c ON fc.category_id = c.category_id
+    """, [], [])
+    
+    SQLite.disconnect(conn)
+  end
+  
+  defp insert_test_data do
+    {:ok, conn} = SQLite.connect(database: @temp_db)
+    
+    # Insert categories
+    categories = [
+      {1, "Action"}, {2, "Animation"}, {3, "Children"}, {4, "Classics"}, {5, "Comedy"},
+      {6, "Documentary"}, {7, "Drama"}, {8, "Family"}, {9, "Foreign"}, {10, "Games"},
+      {11, "Horror"}, {12, "Music"}, {13, "New"}, {14, "Sci-Fi"}, {15, "Sports"},
+      {16, "Travel"}
+    ]
+    
+    Enum.each(categories, fn {id, name} ->
+      SQLite.execute(conn, 
+        "INSERT INTO category (category_id, name) VALUES (?, ?)",
+        [id, name], []
+      )
+    end)
+    
+    # Insert actors
+    actors = [
+      {1, "PENELOPE", "GUINESS"}, {2, "NICK", "WAHLBERG"}, {3, "ED", "CHASE"},
+      {4, "JENNIFER", "DAVIS"}, {5, "JOHNNY", "LOLLOBRIGIDA"}, {6, "BETTE", "NICHOLSON"},
+      {7, "GRACE", "MOSTEL"}, {8, "MATTHEW", "JOHANSSON"}, {9, "JOE", "SWANK"},
+      {10, "CHRISTIAN", "GABLE"}
+    ]
+    
+    Enum.each(actors, fn {id, first, last} ->
+      SQLite.execute(conn,
+        "INSERT INTO actor (actor_id, first_name, last_name) VALUES (?, ?, ?)",
+        [id, first, last], []
+      )
+    end)
+    
+    # Insert films
+    films = [
+      {1, "ACADEMY DINOSAUR", "A Epic Drama of a Feminist And a Mad Scientist", 2006, 6, 0.99, 86, 20.99, "PG"},
+      {2, "ACE GOLDFINGER", "A Astounding Epistle of a Database Administrator", 2006, 3, 4.99, 48, 12.99, "G"},
+      {3, "ADAPTATION HOLES", "A Astounding Reflection of a Lumberjack And a Car", 2006, 7, 2.99, 50, 18.99, "NC-17"},
+      {4, "AFFAIR PREJUDICE", "A Fanciful Documentary of a Frisbee And a Lumberjack", 2006, 5, 2.99, 117, 26.99, "G"},
+      {5, "AFRICAN EGG", "A Fast-Paced Documentary of a Pastry Chef And a Dentist", 2006, 6, 2.99, 130, 22.99, "G"},
+      {6, "AGENT TRUMAN", "A Intrepid Panorama of a Robot And a Boy", 2006, 3, 2.99, 169, 17.99, "PG"},
+      {7, "AIRPLANE SIERRA", "A Touching Saga of a Hunter And a Butler", 2006, 6, 4.99, 62, 28.99, "PG-13"},
+      {8, "AIRPORT POLLOCK", "A Epic Tale of a Moose And a Girl", 2006, 6, 4.99, 54, 15.99, "R"},
+      {9, "ALABAMA DEVIL", "A Thoughtful Panorama of a Database Administrator", 2006, 3, 2.99, 114, 21.99, "PG-13"},
+      {10, "ALADDIN CALENDAR", "A Action-Packed Tale of a Man And a Lumberjack", 2006, 6, 4.99, 63, 24.99, "NC-17"}
+    ]
+    
+    Enum.each(films, fn {id, title, desc, year, duration, rate, length, cost, rating} ->
+      SQLite.execute(conn,
+        "INSERT INTO film (film_id, title, description, release_year, rental_duration, rental_rate, length, replacement_cost, rating) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [id, title, desc, year, duration, rate, length, cost, rating], []
+      )
+    end)
+    
+    # Insert film-actor relationships
+    film_actors = [
+      {1, 1}, {1, 10}, {2, 2}, {2, 3}, {3, 1}, {3, 4}, 
+      {4, 5}, {4, 6}, {5, 7}, {5, 8}, {6, 9}, {6, 10},
+      {7, 1}, {7, 2}, {8, 3}, {8, 4}, {9, 5}, {9, 6}, {10, 7}
+    ]
+    
+    Enum.each(film_actors, fn {actor_id, film_id} ->
+      SQLite.execute(conn,
+        "INSERT INTO film_actor (actor_id, film_id) VALUES (?, ?)",
+        [actor_id, film_id], []
+      )
+    end)
+    
+    # Insert film-category relationships  
+    film_categories = [
+      {1, 6}, {2, 11}, {3, 6}, {4, 11}, {5, 8}, {6, 9}, {7, 5}, {8, 11}, {9, 4}, {10, 2}
+    ]
+    
+    Enum.each(film_categories, fn {film_id, category_id} ->
+      SQLite.execute(conn,
+        "INSERT INTO film_category (film_id, category_id) VALUES (?, ?)",
+        [film_id, category_id], []
+      )
+    end)
+    
+    # Insert customers
+    customers = [
+      {1, 1, "MARY", "SMITH", "MARY.SMITH@example.com", 5},
+      {2, 1, "PATRICIA", "JOHNSON", "PATRICIA.JOHNSON@example.com", 6},
+      {3, 1, "LINDA", "WILLIAMS", "LINDA.WILLIAMS@example.com", 7}
+    ]
+    
+    Enum.each(customers, fn {id, store, first, last, email, addr} ->
+      SQLite.execute(conn,
+        "INSERT INTO customer (customer_id, store_id, first_name, last_name, email, address_id) VALUES (?, ?, ?, ?, ?, ?)",
+        [id, store, first, last, email, addr], []
+      )
+    end)
+    
+    SQLite.disconnect(conn)
   end
   
   describe "Pagila database integration" do
     setup do
-      {:ok, conn} = SQLite.connect(database: @docker_db)
+      {:ok, conn} = SQLite.connect(database: @temp_db)
       
       on_exit(fn -> SQLite.disconnect(conn) end)
       
@@ -180,8 +355,8 @@ defmodule SQLiteDockerIntegrationTest do
       thrown_value = catch_throw(SQLite.transaction(conn, fn _conn ->
         # Insert within transaction
         SQLite.execute(conn, """
-          INSERT INTO film (title, description, release_year, language_id, rental_duration, rental_rate, length, replacement_cost, rating)
-          VALUES ('TEST MOVIE', 'A test movie', 2024, 1, 3, 4.99, 90, 19.99, 'PG')
+          INSERT INTO film (title, description, release_year, rental_duration, rental_rate, length, replacement_cost, rating)
+          VALUES ('TEST MOVIE', 'A test movie', 2024, 3, 4.99, 90, 19.99, 'PG')
         """, [], [])
         
         # Force rollback
@@ -256,7 +431,7 @@ defmodule SQLiteDockerIntegrationTest do
   
   describe "Performance with larger datasets" do
     setup do
-      {:ok, conn} = SQLite.connect(database: @docker_db)
+      {:ok, conn} = SQLite.connect(database: @temp_db)
       
       on_exit(fn -> SQLite.disconnect(conn) end)
       
@@ -317,7 +492,7 @@ defmodule SQLiteDockerIntegrationTest do
   
   describe "Compatibility with Selecto query patterns" do
     setup do
-      {:ok, conn} = SQLite.connect(database: @docker_db)
+      {:ok, conn} = SQLite.connect(database: @temp_db)
       
       on_exit(fn -> SQLite.disconnect(conn) end)
       
