@@ -1,7 +1,7 @@
 defmodule DocsCaseExpressionsExamplesTest do
   use ExUnit.Case, async: true
   import SelectoTest.TestHelpers
-  
+
   @moduledoc """
   Tests demonstrating CASE expression functionality using the actual Selecto API.
   CASE expressions use the format: {:case, when_clauses, else_clause}
@@ -11,9 +11,9 @@ defmodule DocsCaseExpressionsExamplesTest do
   describe "Simple CASE Expressions from Docs" do
     test "basic value mapping for film ratings" do
       selecto = configure_test_selecto("film")
-      
+
       # Using the actual {:case, when_clauses, else_clause} format
-      result = 
+      result =
         selecto
         |> Selecto.select([
             "title",
@@ -25,9 +25,9 @@ defmodule DocsCaseExpressionsExamplesTest do
               {{"rating", "NC-17"}, {:literal, "Adults Only"}}
             ], {:literal, "Not Rated"}}
           ])
-      
+
       {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
-      
+
       assert sql =~ ~r/case/i
       assert sql =~ ~r/when.*rating.*=/i
       assert sql =~ ~r/then/i
@@ -40,9 +40,9 @@ defmodule DocsCaseExpressionsExamplesTest do
 
     test "numeric comparison in CASE" do
       selecto = configure_test_selecto("film")
-      
+
       # Using comparison operators in CASE
-      result = 
+      result =
         selecto
         |> Selecto.select([
             "title",
@@ -52,9 +52,9 @@ defmodule DocsCaseExpressionsExamplesTest do
               {{"length", {">=", 90}}, {:literal, "Medium"}}
             ], {:literal, "Short"}}
           ])
-      
+
       {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
-      
+
       assert sql =~ ~r/case/i
       assert sql =~ ~r/length.*>/i
       assert sql =~ ~r/then/i
@@ -69,9 +69,9 @@ defmodule DocsCaseExpressionsExamplesTest do
 
     test "simple CASE without ELSE clause" do
       selecto = configure_test_selecto("film")
-      
+
       # CASE without ELSE clause - just omit the third argument
-      result = 
+      result =
         selecto
         |> Selecto.select([
             "title",
@@ -80,9 +80,9 @@ defmodule DocsCaseExpressionsExamplesTest do
               {{"rating", "PG"}, {:literal, "Ask Parents"}}
             ]}
           ])
-      
+
       {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
-      
+
       assert sql =~ ~r/case/i
       assert sql =~ ~r/when.*rating.*=/i
       assert sql =~ ~r/then/i
@@ -94,9 +94,9 @@ defmodule DocsCaseExpressionsExamplesTest do
 
     test "CASE with rental rate classification" do
       selecto = configure_test_selecto("film")
-      
+
       # Decimal value comparisons
-      result = 
+      result =
         selecto
         |> Selecto.select([
             "film_id",
@@ -107,9 +107,9 @@ defmodule DocsCaseExpressionsExamplesTest do
               {{"rental_rate", {">=", 0.99}}, {:literal, "Budget"}}
             ], {:literal, "Free"}}
           ])
-      
+
       {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
-      
+
       assert sql =~ ~r/case/i
       assert sql =~ ~r/rental_rate.*>=/i
       assert sql =~ ~r/then/i
@@ -126,9 +126,9 @@ defmodule DocsCaseExpressionsExamplesTest do
   describe "Complex CASE Expressions" do
     test "film classification by multiple criteria" do
       selecto = configure_test_selecto("film")
-      
+
       # Multiple CASE expressions in one query
-      result = 
+      result =
         selecto
         |> Selecto.select([
             "title",
@@ -146,9 +146,9 @@ defmodule DocsCaseExpressionsExamplesTest do
               {{"length", {">=", 60}}, {:literal, "Short"}}
             ], {:literal, "Very Short"}}
           ])
-      
+
       {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
-      
+
       # Should have two case statements
       case_matches = Regex.scan(~r/\bcase\b/i, sql)
       assert length(case_matches) == 2
@@ -163,9 +163,9 @@ defmodule DocsCaseExpressionsExamplesTest do
 
     test "CASE in aggregation context" do
       selecto = configure_test_selecto("film")
-      
+
       # Using CASE with aggregation
-      result = 
+      result =
         selecto
         |> Selecto.select([
             "rating",
@@ -177,9 +177,9 @@ defmodule DocsCaseExpressionsExamplesTest do
             ], {:literal, "Unknown"}}
           ])
         |> Selecto.group_by(["rating"])
-      
+
       {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
-      
+
       assert sql =~ ~r/case/i
       assert sql =~ ~r/count/i
       assert sql =~ ~r/group by/i
@@ -193,9 +193,9 @@ defmodule DocsCaseExpressionsExamplesTest do
   describe "Edge Cases and Special Scenarios" do
     test "CASE with NULL comparisons" do
       selecto = configure_test_selecto("film")
-      
+
       # Testing NULL handling
-      result = 
+      result =
         selecto
         |> Selecto.select([
             "title",
@@ -204,9 +204,9 @@ defmodule DocsCaseExpressionsExamplesTest do
               {{"special_features", {:not, nil}}, {:literal, "Has Special Features"}}
             ]}
           ])
-      
+
       {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
-      
+
       assert sql =~ ~r/case/i
       assert sql =~ ~r/special_features.*is/i
       assert sql =~ ~r/then/i
@@ -217,9 +217,9 @@ defmodule DocsCaseExpressionsExamplesTest do
 
     test "nested value expressions in CASE" do
       selecto = configure_test_selecto("film")
-      
+
       # Using other aggregate functions as results
-      result = 
+      result =
         selecto
         |> Selecto.select([
             "rating",
@@ -229,9 +229,9 @@ defmodule DocsCaseExpressionsExamplesTest do
             ], {:literal, 0}}
           ])
         |> Selecto.group_by(["rating"])
-      
+
       {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
-      
+
       assert sql =~ ~r/case/i
       assert sql =~ ~r/count.*film_id/i or sql =~ ~r/count\(/i
       assert sql =~ ~r/sum.*rental_rate/i or sql =~ ~r/sum\(/i
@@ -244,19 +244,19 @@ defmodule DocsCaseExpressionsExamplesTest do
   describe "CASE in WHERE Clause" do
     test "conditional filtering with CASE" do
       selecto = configure_test_selecto("film")
-      
+
       # Filter using a CASE expression
       # WHERE CASE WHEN rating = 'R' THEN length > 120 ELSE length > 90 END
-      result = 
+      result =
         selecto
         |> Selecto.select(["title", "rating", "length"])
         |> Selecto.filter({:case, [
             {{"rating", "R"}, {"length", {">", 120}}},
             {{"rating", "PG-13"}, {"length", {">", 100}}}
           ], {"length", {">", 90}}})
-      
+
       {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
-      
+
       assert sql =~ ~r/where.*case/i
       assert sql =~ ~r/when.*rating.*=.*then.*length.*>/i
       assert sql =~ ~r/else.*length.*>/i
@@ -267,17 +267,17 @@ defmodule DocsCaseExpressionsExamplesTest do
 
     test "CASE returning boolean in WHERE" do
       selecto = configure_test_selecto("film")
-      
+
       # WHERE CASE WHEN rating IN ('G', 'PG') THEN TRUE ELSE FALSE END
-      result = 
+      result =
         selecto
         |> Selecto.select(["title", "rating"])
         |> Selecto.filter({:case, [
             {{"rating", ["G", "PG"]}, true}
           ], false})
-      
-      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
-      
+
+      {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
+
       assert sql =~ ~r/where.*case/i
       assert sql =~ ~r/when.*rating.*=.*any/i
       assert sql =~ ~r/then.*true/i
@@ -288,9 +288,9 @@ defmodule DocsCaseExpressionsExamplesTest do
   describe "CASE in ORDER BY Clause" do
     test "conditional ordering with CASE" do
       selecto = configure_test_selecto("film")
-      
+
       # ORDER BY CASE WHEN rating = 'G' THEN 1 WHEN rating = 'PG' THEN 2 ELSE 3 END
-      result = 
+      result =
         selecto
         |> Selecto.select(["title", "rating"])
         |> Selecto.order_by([{:case, [
@@ -298,9 +298,9 @@ defmodule DocsCaseExpressionsExamplesTest do
             {{"rating", "PG"}, 2},
             {{"rating", "PG-13"}, 3}
           ], 4}])
-      
+
       {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
-      
+
       assert sql =~ ~r/order by.*case/i
       assert sql =~ ~r/when.*rating.*=.*then/i
       assert sql =~ ~r/else.*\$\d+/i  # ELSE uses a parameter
@@ -310,9 +310,9 @@ defmodule DocsCaseExpressionsExamplesTest do
 
     test "multiple ORDER BY with CASE" do
       selecto = configure_test_selecto("film")
-      
+
       # ORDER BY CASE..., title ASC
-      result = 
+      result =
         selecto
         |> Selecto.select(["title", "rating", "length"])
         |> Selecto.order_by([
@@ -322,9 +322,9 @@ defmodule DocsCaseExpressionsExamplesTest do
             ], 99},
             {"title", :asc}
           ])
-      
+
       {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
-      
+
       assert sql =~ ~r/order by.*case.*when.*then.*end.*,.*title/i
     end
   end
