@@ -27,7 +27,7 @@ defmodule ConnectionAbstractionTest do
       # This should work without specifying adapter
       selecto = Selecto.configure(domain, postgrex_opts, validate: false)
       
-      assert selecto.adapter == Selecto.Adapters.PostgreSQL
+      assert selecto.adapter == Selecto.DB.PostgreSQL
       assert selecto.postgrex_opts == postgrex_opts
     end
     
@@ -53,7 +53,7 @@ defmodule ConnectionAbstractionTest do
       # Verify it's set up correctly
       assert %Selecto{} = selecto
       assert selecto.domain == domain
-      assert selecto.adapter == Selecto.Adapters.PostgreSQL
+      assert selecto.adapter == Selecto.DB.PostgreSQL
     end
   end
   
@@ -62,7 +62,7 @@ defmodule ConnectionAbstractionTest do
       adapters = Connection.discover_adapters()
       
       # Should at least have PostgreSQL
-      assert Enum.any?(adapters, fn a -> a.module == Selecto.Adapters.PostgreSQL end)
+      assert Enum.any?(adapters, fn a -> a.module == Selecto.DB.PostgreSQL end)
       
       # Check structure
       for adapter <- adapters do
@@ -73,14 +73,14 @@ defmodule ConnectionAbstractionTest do
     end
     
     test "adapter_available? correctly identifies available adapters" do
-      assert Connection.adapter_available?(Selecto.Adapters.PostgreSQL)
+      assert Connection.adapter_available?(Selecto.DB.PostgreSQL)
       
       # Non-existent adapter
       refute Connection.adapter_available?(NonExistent.Adapter)
     end
     
     test "default_adapter returns PostgreSQL" do
-      assert Connection.default_adapter() == Selecto.Adapters.PostgreSQL
+      assert Connection.default_adapter() == Selecto.DB.PostgreSQL
     end
   end
   
@@ -149,17 +149,17 @@ defmodule ConnectionAbstractionTest do
       opts = [database: "test"]
       
       # PostgreSQL adapter should be available
-      result = Connection.connect(Selecto.Adapters.PostgreSQL, opts)
+      result = Connection.connect(Selecto.DB.PostgreSQL, opts)
       assert {:ok, _conn} = result
     end
     
     test "execute delegates to adapter" do
       opts = [database: "test"]
-      {:ok, conn} = Connection.connect(Selecto.Adapters.PostgreSQL, opts)
+      {:ok, conn} = Connection.connect(Selecto.DB.PostgreSQL, opts)
       
       # Mock query execution
       result = Connection.execute(
-        Selecto.Adapters.PostgreSQL,
+        Selecto.DB.PostgreSQL,
         conn,
         "SELECT 1",
         []
@@ -184,7 +184,7 @@ defmodule ConnectionAbstractionTest do
   
   describe "adapter dialect detection" do
     test "gets correct dialect for known adapters" do
-      assert Connection.adapter_dialect(Selecto.Adapters.PostgreSQL) == "postgresql"
+      assert Connection.adapter_dialect(Selecto.DB.PostgreSQL) == "postgresql"
       
       if Code.ensure_loaded?(Selecto.DB.SQLite) do
         assert Connection.adapter_dialect(Selecto.DB.SQLite) == "sqlite"
@@ -196,7 +196,7 @@ defmodule ConnectionAbstractionTest do
     end
     
     test "gets adapter name" do
-      assert Connection.adapter_name(Selecto.Adapters.PostgreSQL) == "PostgreSQL"
+      assert Connection.adapter_name(Selecto.DB.PostgreSQL) == "PostgreSQL"
       
       if Code.ensure_loaded?(Selecto.DB.SQLite) do
         assert Connection.adapter_name(Selecto.DB.SQLite) == "SQLite"
@@ -210,7 +210,7 @@ defmodule ConnectionAbstractionTest do
   
   describe "feature detection through adapters" do
     test "PostgreSQL adapter supports all features" do
-      adapter = Selecto.Adapters.PostgreSQL
+      adapter = Selecto.DB.PostgreSQL
       
       # Should support advanced features
       assert Features.supports?(adapter, :cte)
@@ -247,7 +247,8 @@ defmodule ConnectionAbstractionTest do
         
         # Limited support for some features
         refute Features.supports?(adapter, :full_outer_join)
-        refute Features.supports?(adapter, :lateral_join)
+        # MySQL 8.0.14+ supports LATERAL joins
+        assert Features.supports?(adapter, :lateral_join)
       end
     end
   end

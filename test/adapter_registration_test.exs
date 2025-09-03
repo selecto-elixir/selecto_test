@@ -6,11 +6,14 @@ defmodule AdapterRegistrationTest do
   
   describe "adapter registration" do
     test "PostgreSQL adapter is available" do
-      assert Code.ensure_loaded?(Selecto.Adapters.PostgreSQL)
+      assert Code.ensure_loaded?(Selecto.DB.PostgreSQL)
     end
     
     test "PostgreSQL adapter implements required callbacks" do
-      adapter = Selecto.Adapters.PostgreSQL
+      adapter = Selecto.DB.PostgreSQL
+      
+      # Ensure the module is loaded
+      Code.ensure_loaded(adapter)
       
       # Check that all required callbacks are exported
       assert function_exported?(adapter, :connect, 1)
@@ -22,7 +25,11 @@ defmodule AdapterRegistrationTest do
     end
     
     test "PostgreSQL adapter supports required features" do
-      adapter = Selecto.Adapters.PostgreSQL
+      adapter = Selecto.DB.PostgreSQL
+      
+      # Ensure the module is loaded
+      Code.ensure_loaded(adapter)
+      
       capabilities = adapter.capabilities()
       
       # Check required features
@@ -47,6 +54,7 @@ defmodule AdapterRegistrationTest do
     
     test "MySQL adapter capabilities" do
       adapter = Selecto.DB.MySQL
+      Code.ensure_loaded(adapter)
       capabilities = adapter.capabilities()
       
       # MySQL doesn't support some PostgreSQL features
@@ -60,12 +68,14 @@ defmodule AdapterRegistrationTest do
     end
     
     test "MySQL parameter conversion" do
+      Code.ensure_loaded(Selecto.DB.MySQL)
       # MySQL uses ? instead of $1, $2
       assert Selecto.DB.MySQL.parameter_placeholder(1) == "?"
       assert Selecto.DB.MySQL.parameter_placeholder(2) == "?"
     end
     
     test "MySQL identifier quoting" do
+      Code.ensure_loaded(Selecto.DB.MySQL)
       assert Selecto.DB.MySQL.quote_identifier("table") == "`table`"
       assert Selecto.DB.MySQL.quote_identifier("col`umn") == "`col``umn`"
     end
@@ -80,22 +90,26 @@ defmodule AdapterRegistrationTest do
     
     test "SQLite adapter capabilities" do
       adapter = Selecto.DB.SQLite
+      Code.ensure_loaded(adapter)
       capabilities = adapter.capabilities()
       
       # SQLite limitations
-      refute Map.get(capabilities, :right_join)
-      refute Map.get(capabilities, :full_outer_join)
-      refute Map.get(capabilities, :stored_procedures)
+      refute Map.get(capabilities, :arrays)
+      refute Map.get(capabilities, :materialized_views)
+      refute Map.get(capabilities, :schemas)
+      refute Map.get(capabilities, :lateral_joins)
       
       # SQLite features
       assert Map.get(capabilities, :cte)
       assert Map.get(capabilities, :recursive_cte)
       assert Map.get(capabilities, :returning)
-      assert Map.get(capabilities, :in_memory)
+      assert Map.get(capabilities, :json)
+      assert Map.get(capabilities, :regex)
     end
     
     test "SQLite type mappings" do
       adapter = Selecto.DB.SQLite
+      Code.ensure_loaded(adapter)
       
       # SQLite uses TEXT for most string types
       assert adapter.type_name(:string) == "TEXT"
@@ -110,6 +124,7 @@ defmodule AdapterRegistrationTest do
     
     test "SQLite boolean encoding" do
       adapter = Selecto.DB.SQLite
+      Code.ensure_loaded(adapter)
       
       assert adapter.encode_type(true, :boolean) == 1
       assert adapter.encode_type(false, :boolean) == 0
@@ -121,7 +136,7 @@ defmodule AdapterRegistrationTest do
   
   describe "adapter discovery" do
     test "feature detection works across adapters" do
-      pg_adapter = Selecto.Adapters.PostgreSQL
+      pg_adapter = Selecto.DB.PostgreSQL
       
       # PostgreSQL supports everything
       assert Features.supports?(pg_adapter, :lateral_join)
