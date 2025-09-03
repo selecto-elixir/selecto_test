@@ -315,8 +315,7 @@ defmodule DocsWindowFunctionsExamplesTest do
       assert sql =~ "LAST_VALUE(film.title) OVER (PARTITION BY film.rating ORDER BY film.rental_rate DESC RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS lowest_rate_film"
     end
 
-    @tag :skip
-    test "NTH_VALUE function for specific positions (not yet supported)" do
+    test "NTH_VALUE function for specific positions" do
       selecto = configure_test_selecto()
 
       result =
@@ -463,8 +462,6 @@ defmodule DocsWindowFunctionsExamplesTest do
       assert sql =~ ~r/limit/i
     end
 
-    # CUME_DIST not yet supported - skip test
-    @tag :skip
     test "cumulative distribution analysis" do
       selecto = configure_test_selecto()
 
