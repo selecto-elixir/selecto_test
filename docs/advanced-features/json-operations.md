@@ -4,6 +4,8 @@
 
 Selecto provides comprehensive support for PostgreSQL's JSON and JSONB data types, enabling powerful document querying, manipulation, and aggregation. This guide covers all JSON operations available in Selecto with practical examples and best practices.
 
+**Important:** JSON operations are integrated into Selecto's standard `select` and `filter` functions. There are no separate `json_select` or `json_filter` functions - instead, use JSON operations within the existing API.
+
 ## Table of Contents
 
 1. [JSON vs JSONB](#json-vs-jsonb)
@@ -24,11 +26,11 @@ PostgreSQL offers two JSON data types:
 - **JSONB**: Binary format, faster operations, supports indexing, removes duplicates
 
 ```elixir
-# Selecto works with both types
+# Selecto works with both types - CORRECT API
 selecto
 |> Selecto.select([
-    {:json_extract, "config", "$.theme", as: "theme"},      # JSON column
-    {:jsonb_extract, "metadata", "$.tags", as: "tags"}      # JSONB column
+    {:json_get, "config", "theme", as: "theme"},           # JSON column
+    {:jsonb_get, "metadata", "tags", as: "tags"}           # JSONB column
   ])
 ```
 
@@ -37,28 +39,28 @@ selecto
 ### Basic Extraction Operators
 
 ```elixir
-# Extract JSON object field (returns JSON)
+# Extract JSON object field (returns JSON) - CORRECT API
 selecto
 |> Selecto.select([
     "product.name",
     {:json_get, "product.data", "specifications", as: "specs"}  # -> operator
   ])
 
-# Extract JSON value as text
+# Extract JSON value as text - CORRECT API
 selecto
 |> Selecto.select([
     "product.name", 
     {:json_get_text, "product.data", "brand", as: "brand"}  # ->> operator
   ])
 
-# Extract nested values
+# Extract nested values - CORRECT API
 selecto
 |> Selecto.select([
     "product.name",
     {:json_get_path, "product.data", ["specs", "dimensions", "weight"], as: "weight"}
   ])
 
-# Multiple extraction in one query
+# Multiple extraction in one query - CORRECT API
 selecto
 |> Selecto.select([
     "order.id",
@@ -124,7 +126,7 @@ SELECT order.id,
 PostgreSQL 12+ supports SQL/JSON path expressions for complex queries.
 
 ```elixir
-# JSONPath queries
+# JSONPath queries - CORRECT API
 selecto
 |> Selecto.select([
     "product.name",
@@ -132,7 +134,7 @@ selecto
     {:jsonb_path_query_first, "product.data", "$.price", as: "price"}
   ])
 
-# JSONPath with filters
+# JSONPath with filters - CORRECT API
 selecto
 |> Selecto.select([
     "order.id",
@@ -141,7 +143,7 @@ selecto
       as: "bulk_items"}
   ])
 
-# JSONPath exists check
+# JSONPath exists check - CORRECT API
 selecto
 |> Selecto.filter([
     {:jsonb_path_exists, "product.data", "$.specifications.warranty"}

@@ -66,6 +66,7 @@ SelectoKino.selecto_query("films")
 This is the cleanest approach - connect to a running instance of the SelectoTest app to access the real domain configurations and run queries.
 
 First, start your app in one terminal:
+
 ```bash
 # In your app directory
 iex --name selecto_test@127.0.0.1 --cookie selecto_test_cookie -S mix phx.server

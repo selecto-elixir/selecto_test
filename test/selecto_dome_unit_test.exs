@@ -38,7 +38,7 @@ defmodule SelectoDomeUnitTest do
       assert is_map(metadata.tables)
       assert is_map(metadata.column_mapping)
       assert is_list(metadata.constraints)
-      
+
       # Verify result structure
       assert metadata.result_structure.columns == columns
       assert is_map(metadata.result_structure.aliases)  # Should be converted to map
@@ -71,7 +71,7 @@ defmodule SelectoDomeUnitTest do
       {:ok, tracker} = ChangeTracker.add_insert(tracker, %{first_name: "Test", last_name: "Actor"}, metadata)
       assert ChangeTracker.has_changes?(tracker)
 
-      # Add update  
+      # Add update
       {:ok, tracker} = ChangeTracker.add_update(tracker, 1, %{first_name: "Updated"}, metadata)
 
       # Add delete
@@ -105,7 +105,7 @@ defmodule SelectoDomeUnitTest do
 
     test "SelectoDome API structure validation" do
       # Test that we can create the main structures without database
-      
+
       # Mock a complete selecto structure
       selecto = %{
         config: %{
@@ -127,7 +127,7 @@ defmodule SelectoDomeUnitTest do
 
       # Test analysis
       {:ok, metadata} = QueryAnalyzer.analyze_query(selecto, result)
-      
+
       # Create mock dome structure
       dome = %SelectoDome{
         selecto: selecto,
@@ -152,10 +152,10 @@ defmodule SelectoDomeUnitTest do
     end
 
     test "demonstrates SelectoDome core functionality without database" do
-      
+
       # This test demonstrates that SelectoDome works correctly
       # even without actual database operations
-      
+
       selecto = %{
         config: %{
           source: %{
@@ -179,7 +179,7 @@ defmodule SelectoDomeUnitTest do
         ["alias1", "alias2", "alias3"]
       }
 
-      {:ok, metadata} = QueryAnalyzer.analyze_query(selecto, result)
+      {:ok, _metadata} = QueryAnalyzer.analyze_query(selecto, result)
 
       {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 

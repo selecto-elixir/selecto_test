@@ -4,6 +4,8 @@
 
 Window functions perform calculations across a set of table rows that are related to the current row, without grouping rows together like aggregate functions do. Selecto provides comprehensive support for PostgreSQL window functions, enabling sophisticated analytics, ranking, and running calculations.
 
+**Important:** Window functions in Selecto are added using the `window_function` method first, then selected in the `select` clause. The `window_function` method takes the function name, arguments, and window specification options.
+
 ## Table of Contents
 
 1. [Understanding Window Functions](#understanding-window-functions)
@@ -22,21 +24,29 @@ Window functions perform calculations across a set of table rows that are relate
 Window functions operate over a "window" of rows defined by the OVER clause:
 
 ```elixir
-# Basic window function
+# Basic window function - CORRECT API
 selecto
+|> Selecto.window_function(:avg, ["salary"], %{
+    partition_by: ["department"],
+    as: "dept_avg_salary"
+  })
 |> Selecto.select([
     "employee.name",
     "employee.salary",
     "employee.department",
-    {:avg, "salary", over: "PARTITION BY department", as: "dept_avg_salary"}
+    "dept_avg_salary"
   ])
 
-# With ordering
+# With ordering - CORRECT API
 selecto
+|> Selecto.window_function(:sum, ["amount"], %{
+    order_by: [{"date", :asc}],
+    as: "running_total"
+  })
 |> Selecto.select([
     "sale.date",
     "sale.amount",
-    {:sum, "amount", over: "ORDER BY date", as: "running_total"}
+    "running_total"
   ])
 ```
 
@@ -58,32 +68,52 @@ FROM sale;
 ### ROW_NUMBER, RANK, and DENSE_RANK
 
 ```elixir
-# Row numbering
+# Row numbering - CORRECT API
 selecto
+|> Selecto.window_function(:row_number, [], %{
+    partition_by: ["category"],
+    order_by: [{"price", :desc}],
+    as: "price_rank_in_category"
+  })
 |> Selecto.select([
     "product.name",
     "product.category",
     "product.price",
-    {:row_number, over: "PARTITION BY category ORDER BY price DESC", 
-      as: "price_rank_in_category"}
+    "price_rank_in_category"
   ])
 
-# Ranking with ties
+# Ranking with ties - CORRECT API
 selecto
+|> Selecto.window_function(:rank, [], %{
+    order_by: [{"score", :desc}],
+    as: "rank"
+  })
+|> Selecto.window_function(:dense_rank, [], %{
+    order_by: [{"score", :desc}],
+    as: "dense_rank"
+  })
 |> Selecto.select([
     "student.name",
     "student.score",
-    {:rank, over: "ORDER BY score DESC", as: "rank"},
-    {:dense_rank, over: "ORDER BY score DESC", as: "dense_rank"}
+    "rank",
+    "dense_rank"
   ])
 
-# Percentile ranking
+# Percentile ranking - CORRECT API
 selecto
+|> Selecto.window_function(:percent_rank, [], %{
+    order_by: [{"salary", :asc}],
+    as: "salary_percentile"
+  })
+|> Selecto.window_function(:cume_dist, [], %{
+    order_by: [{"salary", :asc}],
+    as: "cumulative_distribution"
+  })
 |> Selecto.select([
     "employee.name",
     "employee.salary",
-    {:percent_rank, over: "ORDER BY salary", as: "salary_percentile"},
-    {:cume_dist, over: "ORDER BY salary", as: "cumulative_distribution"}
+    "salary_percentile",
+    "cumulative_distribution"
   ])
 ```
 
@@ -110,25 +140,29 @@ FROM employee;
 ### NTILE for Bucketing
 
 ```elixir
-# Divide data into quartiles
+# Divide data into quartiles - CORRECT API
 selecto
+|> Selecto.window_function(:ntile, [4], %{
+    order_by: [{"total_spent", :desc}],
+    as: "spending_quartile"
+  })
 |> Selecto.select([
     "customer.name",
     "customer.total_spent",
-    {:ntile, 4, over: "ORDER BY total_spent DESC", as: "spending_quartile"}
+    "spending_quartile"
   ])
 
-# Create deciles for analysis
+# Create deciles for analysis - CORRECT API
 selecto
+|> Selecto.window_function(:ntile, [10], %{
+    order_by: [{"revenue", :desc}],
+    as: "revenue_decile"
+  })
 |> Selecto.select([
     "product.name",
     "product.revenue",
-    {:ntile, 10, over: "ORDER BY revenue DESC", as: "revenue_decile"},
-    {:case_when, [
-        {[{:ntile, 10, over: "ORDER BY revenue DESC"}, {:<=, 2}], "Top 20%"},
-        {[{:ntile, 10, over: "ORDER BY revenue DESC"}, {:<=, 5}], "Top 50%"},
-        {[true], "Bottom 50%"}
-      ], as: "performance_tier"}
+    "revenue_decile"
+    # Note: CASE expressions not yet implemented in Selecto
   ])
 ```
 
@@ -137,56 +171,92 @@ selecto
 ### Running Aggregates
 
 ```elixir
-# Running calculations
+# Running calculations - CORRECT API
 selecto
+|> Selecto.window_function(:sum, ["amount"], %{
+    order_by: [{"date", :asc}],
+    as: "running_sum"
+  })
+|> Selecto.window_function(:avg, ["amount"], %{
+    order_by: [{"date", :asc}],
+    as: "running_avg"
+  })
+|> Selecto.window_function(:count, ["*"], %{
+    order_by: [{"date", :asc}],
+    as: "running_count"
+  })
+|> Selecto.window_function(:max, ["amount"], %{
+    order_by: [{"date", :asc}],
+    as: "running_max"
+  })
+|> Selecto.window_function(:min, ["amount"], %{
+    order_by: [{"date", :asc}],
+    as: "running_min"
+  })
 |> Selecto.select([
     "transaction.date",
     "transaction.amount",
-    {:sum, "amount", over: "ORDER BY date", as: "running_sum"},
-    {:avg, "amount", over: "ORDER BY date", as: "running_avg"},
-    {:count, "*", over: "ORDER BY date", as: "running_count"},
-    {:max, "amount", over: "ORDER BY date", as: "running_max"},
-    {:min, "amount", over: "ORDER BY date", as: "running_min"}
+    "running_sum",
+    "running_avg",
+    "running_count",
+    "running_max",
+    "running_min"
   ])
 
-# Partitioned aggregates
+# Partitioned aggregates - CORRECT API
 selecto
+|> Selecto.window_function(:sum, ["revenue"], %{
+    partition_by: ["region"],
+    order_by: [{"month", :asc}],
+    as: "ytd_revenue"
+  })
+|> Selecto.window_function(:avg, ["revenue"], %{
+    partition_by: ["region"],
+    as: "avg_monthly_revenue"
+  })
 |> Selecto.select([
     "sale.region",
     "sale.month",
     "sale.revenue",
-    {:sum, "revenue", over: "PARTITION BY region ORDER BY month", 
-      as: "ytd_revenue"},
-    {:avg, "revenue", over: "PARTITION BY region", 
-      as: "avg_monthly_revenue"}
+    "ytd_revenue",
+    "avg_monthly_revenue"
   ])
 ```
 
 ### Statistical Functions
 
 ```elixir
-# Standard deviation and variance
+# Standard deviation and variance - CORRECT API
 selecto
+|> Selecto.window_function(:stddev, ["price"], %{
+    order_by: [{"date", :asc}],
+    frame: {:rows, {:preceding, 19}, :current_row},
+    as: "volatility_20d"
+  })
+|> Selecto.window_function(:var_pop, ["price"], %{
+    order_by: [{"date", :asc}],
+    frame: {:rows, {:preceding, 29}, :current_row},
+    as: "variance_30d"
+  })
 |> Selecto.select([
     "stock.date",
     "stock.price",
-    {:stddev, "price", 
-      over: "ORDER BY date ROWS BETWEEN 19 PRECEDING AND CURRENT ROW",
-      as: "20_day_volatility"},
-    {:var_pop, "price",
-      over: "ORDER BY date ROWS BETWEEN 29 PRECEDING AND CURRENT ROW",
-      as: "30_day_variance"}
+    "volatility_20d",
+    "variance_30d"
   ])
 
-# Correlation and covariance
+# Correlation and covariance - CORRECT API
 selecto
+|> Selecto.window_function(:corr, ["stock_a_return", "stock_b_return"], %{
+    order_by: [{"date", :asc}],
+    frame: {:rows, {:preceding, 59}, :current_row},
+    as: "correlation_60d"
+  })
 |> Selecto.select([
     "portfolio.date",
     "portfolio.stock_a_return",
     "portfolio.stock_b_return",
-    {:corr, ["stock_a_return", "stock_b_return"],
-      over: "ORDER BY date ROWS BETWEEN 59 PRECEDING AND CURRENT ROW",
-      as: "60_day_correlation"}
+    "correlation_60d"
   ])
 ```
 

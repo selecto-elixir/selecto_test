@@ -4,6 +4,8 @@
 
 Set operations combine results from multiple queries into a single result set. Selecto supports all standard SQL set operations: UNION, INTERSECT, and EXCEPT, along with their ALL variants. These operations are essential for data comparison, deduplication, and complex analytical queries.
 
+**Important:** Set operations in Selecto (union, intersect, except) take two complete Selecto query instances as arguments. Each query must be independently configured with its domain and connection.
+
 ## Table of Contents
 
 1. [UNION Operations](#union-operations)
@@ -20,32 +22,38 @@ Set operations combine results from multiple queries into a single result set. S
 ### UNION vs UNION ALL
 
 ```elixir
-# UNION - removes duplicates
-selecto
-|> Selecto.union(
-    Selecto.configure(employees_domain, connection)
-    |> Selecto.select(["name", "email", {:literal, "Employee", as: "type"}])
-    |> Selecto.filter([{"active", true}])
-  )
-|> Selecto.union(
-    Selecto.configure(contractors_domain, connection)
-    |> Selecto.select(["name", "email", {:literal, "Contractor", as: "type"}])
-    |> Selecto.filter([{"contract_active", true}])
-  )
-|> Selecto.order_by([{"name", :asc}])
+# UNION - removes duplicates (CORRECT API)
+employees_query = 
+  Selecto.configure(employees_domain, connection)
+  |> Selecto.select(["name", "email", {:literal, "Employee", as: "type"}])
+  |> Selecto.filter([{"active", true}])
 
-# UNION ALL - keeps duplicates (faster)
-selecto
-|> Selecto.select(["product_id", "quantity", "order_date"])
-|> Selecto.from("online_orders")
-|> Selecto.union_all(
-    Selecto.configure(store_orders_domain, connection)
-    |> Selecto.select(["product_id", "quantity", "sale_date AS order_date"])
-  )
-|> Selecto.union_all(
-    Selecto.configure(phone_orders_domain, connection)
-    |> Selecto.select(["product_id", "quantity", "call_date AS order_date"])
-  )
+contractors_query = 
+  Selecto.configure(contractors_domain, connection)
+  |> Selecto.select(["name", "email", {:literal, "Contractor", as: "type"}])
+  |> Selecto.filter([{"contract_active", true}])
+
+# Combine with UNION (removes duplicates)
+result = Selecto.union(employees_query, contractors_query)
+
+# UNION ALL - keeps duplicates (faster) (CORRECT API)
+online_query = 
+  Selecto.configure(online_orders_domain, connection)
+  |> Selecto.select(["product_id", "quantity", "order_date"])
+
+store_query = 
+  Selecto.configure(store_orders_domain, connection)
+  |> Selecto.select(["product_id", "quantity", "sale_date AS order_date"])
+
+phone_query = 
+  Selecto.configure(phone_orders_domain, connection)
+  |> Selecto.select(["product_id", "quantity", "call_date AS order_date"])
+
+# Chain multiple UNION ALL operations
+result = 
+  online_query
+  |> Selecto.union(store_query, all: true)
+  |> Selecto.union(phone_query, all: true)
 ```
 
 **Generated SQL:**
@@ -121,30 +129,39 @@ selecto
 ### Finding Common Records
 
 ```elixir
-# Find customers who are also employees
-selecto
-|> Selecto.select(["email", "name"])
-|> Selecto.from("customers")
-|> Selecto.intersect(
-    Selecto.select(["email", "name"])
-    |> Selecto.from("employees")
-  )
+# Find customers who are also employees (CORRECT API)
+customers_query = 
+  Selecto.configure(customers_domain, connection)
+  |> Selecto.select(["email", "name"])
 
-# Products available in all stores (using INTERSECT ALL)
-selecto
-|> Selecto.select(["product_id"])
-|> Selecto.from("store_inventory")
-|> Selecto.filter([{"store_id", 1}])
-|> Selecto.intersect_all(
-    Selecto.select(["product_id"])
-    |> Selecto.from("store_inventory")
-    |> Selecto.filter([{"store_id", 2}])
-  )
-|> Selecto.intersect_all(
-    Selecto.select(["product_id"])
-    |> Selecto.from("store_inventory")
-    |> Selecto.filter([{"store_id", 3}])
-  )
+employees_query = 
+  Selecto.configure(employees_domain, connection)
+  |> Selecto.select(["email", "name"])
+
+# Find intersection
+result = Selecto.intersect(customers_query, employees_query)
+
+# Products available in all stores (using INTERSECT ALL) (CORRECT API)
+store1_query = 
+  Selecto.configure(inventory_domain, connection)
+  |> Selecto.select(["product_id"])
+  |> Selecto.filter([{"store_id", 1}])
+
+store2_query = 
+  Selecto.configure(inventory_domain, connection)
+  |> Selecto.select(["product_id"])
+  |> Selecto.filter([{"store_id", 2}])
+
+store3_query = 
+  Selecto.configure(inventory_domain, connection)
+  |> Selecto.select(["product_id"])
+  |> Selecto.filter([{"store_id", 3}])
+
+# Find products in all stores
+result = 
+  store1_query
+  |> Selecto.intersect(store2_query, all: true)
+  |> Selecto.intersect(store3_query, all: true)
 ```
 
 ### Validating Data Consistency

@@ -153,7 +153,8 @@ defmodule SelectoDomeIntegrationTest do
       {:ok, result} = Selecto.execute(selecto)
       {:ok, dome} = SelectoDome.from_result(selecto, result, SelectoTest.Repo)
 
-      initial_count = length(elem(result, 0))
+      ## Why is this necessary?
+      _initial_count = length(elem(result, 0))
 
       # Delete actor2
       {:ok, dome_with_delete} = SelectoDome.delete(dome, actor2.actor_id)

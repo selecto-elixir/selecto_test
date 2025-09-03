@@ -167,7 +167,7 @@ defmodule SelectoAdvancedSelectTest do
   end
 
   describe "Mathematical Functions" do
-    test "basic math functions with numeric columns", %{selecto: selecto} do
+    test "basic math functions with numeric columns", %{selecto: _selecto} do
       # This test currently fails because Selecto doesn't properly filter by film_id
       # Basic select shows empty results even though DB has the data
       # Skipping for now as it appears to be a system limitation

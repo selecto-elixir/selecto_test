@@ -4,6 +4,8 @@
 
 Selecto provides comprehensive support for PostgreSQL array operations, enabling powerful list manipulation, aggregation, and transformation capabilities. This guide covers all array functions available in Selecto and demonstrates common usage patterns.
 
+**Note:** Array operations are integrated into Selecto's standard `select` and `filter` functions. There are no separate `array_select` or `array_filter` functions - instead, use array operations within the existing API.
+
 ## Table of Contents
 
 1. [Array Aggregation](#array-aggregation)

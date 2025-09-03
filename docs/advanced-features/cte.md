@@ -4,6 +4,8 @@
 
 Common Table Expressions (CTEs) provide a powerful way to write modular, readable SQL queries. Selecto supports both non-recursive and recursive CTEs, enabling complex hierarchical queries, data transformations, and query organization. CTEs act as named temporary result sets that exist within the scope of a single SQL statement.
 
+**Important:** CTEs in Selecto use the `with_cte` and `with_recursive_cte` functions. The callback function receives a base Selecto instance that you should configure with your domain and connection.
+
 ## Table of Contents
 
 1. [Basic CTEs](#basic-ctes)
@@ -23,9 +25,10 @@ CTEs are defined using the `with_cte` function and can be referenced in the main
 ```elixir
 # Basic CTE for data filtering
 selecto
-|> Selecto.with_cte("active_customers", fn ->
+|> Selecto.with_cte("active_customers", fn _base ->
     Selecto.configure(customer_domain, connection)
     |> Selecto.select(["customer_id", "first_name", "last_name", "email"])
+    |> Selecto.from("customer")  # Specify the table
     |> Selecto.filter([{"active", true}])
     |> Selecto.filter([{"created_at", {:>, "2023-01-01"}}])
   end)
@@ -34,7 +37,7 @@ selecto
 
 # CTE with aggregation
 selecto
-|> Selecto.with_cte("customer_stats", fn ->
+|> Selecto.with_cte("customer_stats", fn _base ->
     Selecto.configure(payment_domain, connection)
     |> Selecto.select([
         "customer_id",
@@ -42,8 +45,9 @@ selecto
         {:count, "*", as: "payment_count"},
         {:avg, "amount", as: "avg_payment"}
       ])
+    |> Selecto.from("payment")  # Specify the table
     |> Selecto.group_by(["customer_id"])
-    |> Selecto.having([{"total_spent", {:>, 1000}}])
+    |> Selecto.having([{:sum, "amount", {:>, 1000}}])  # Use aggregate in having
   end)
 |> Selecto.select(["customer.name", "stats.total_spent", "stats.payment_count"])
 |> Selecto.join(:inner, "customer_stats AS stats", 
@@ -83,7 +87,7 @@ INNER JOIN customer_stats AS stats
 ```elixir
 # CTE with joins and subqueries
 selecto
-|> Selecto.with_cte("recent_rentals", fn ->
+|> Selecto.with_cte("recent_rentals", fn _base ->
     Selecto.configure(rental_domain, connection)
     |> Selecto.select([
         "rental.customer_id",
@@ -116,7 +120,7 @@ You can define multiple CTEs that can reference each other.
 # Multiple independent CTEs
 selecto
 |> Selecto.with_ctes([
-    {"high_value_customers", fn ->
+    {"high_value_customers", fn _base ->
       Selecto.configure(customer_domain, connection)
       |> Selecto.select(["customer_id", "first_name", "last_name"])
       |> Selecto.aggregate([{"payment.amount", :sum, as: "total_spent"}])
@@ -125,7 +129,7 @@ selecto
       |> Selecto.having([{"total_spent", {:>, 200}}])
     end},
     
-    {"popular_films", fn ->
+    {"popular_films", fn _base ->
       Selecto.configure(film_domain, connection)
       |> Selecto.select(["film_id", "title", "rating"])
       |> Selecto.aggregate([{"rental.rental_id", :count, as: "rental_count"}])
@@ -151,14 +155,15 @@ selecto
 ```elixir
 # Dependent CTEs
 selecto
-|> Selecto.with_cte("base_data", fn ->
+|> Selecto.with_cte("base_data", fn _base ->
     Selecto.configure(sales_domain, connection)
     |> Selecto.select(["product_id", "sale_date", "quantity", "price"])
     |> Selecto.filter([{"sale_date", {:>=, "2024-01-01"}}])
   end)
-|> Selecto.with_cte("daily_totals", fn ->
+|> Selecto.with_cte("daily_totals", fn _base ->
     # References base_data CTE
-    Selecto.from("base_data")
+    Selecto.configure(domain, connection)
+    |> Selecto.from("base_data")
     |> Selecto.select([
         "sale_date",
         {:sum, "quantity * price", as: "daily_revenue"},
@@ -166,9 +171,10 @@ selecto
       ])
     |> Selecto.group_by(["sale_date"])
   end)
-|> Selecto.with_cte("running_totals", fn ->
+|> Selecto.with_cte("running_totals", fn _base ->
     # References daily_totals CTE
-    Selecto.from("daily_totals")
+    Selecto.configure(domain, connection)
+    |> Selecto.from("daily_totals")
     |> Selecto.select([
         "sale_date",
         "daily_revenue",
@@ -192,7 +198,7 @@ Recursive CTEs are perfect for hierarchical data like organizational charts, cat
 ```elixir
 # Employee hierarchy
 selecto
-|> Selecto.with_recursive_cte("org_chart",
+|> Selecto.with_recursive_cte("org_chart", %{
     # Base case: top-level employees
     base_query: fn ->
       Selecto.configure(employee_domain, connection)
@@ -220,7 +226,7 @@ selecto
       |> Selecto.join(:inner, cte_name, 
           on: "e.manager_id = #{cte_name}.employee_id")
     end
-  )
+  })
 |> Selecto.select(["*"])
 |> Selecto.from("org_chart")
 |> Selecto.order_by([{"level", :asc}, {"name", :asc}])
@@ -255,7 +261,7 @@ ORDER BY level ASC, name ASC;
 ```elixir
 # Find all subcategories
 selecto
-|> Selecto.with_recursive_cte("category_tree",
+|> Selecto.with_recursive_cte("category_tree", %{
     base_query: fn ->
       Selecto.configure(category_domain, connection)
       |> Selecto.select(["category_id", "name", "parent_id"])
@@ -268,7 +274,7 @@ selecto
       |> Selecto.from("category AS c")
       |> Selecto.join(:inner, cte, on: "c.parent_id = #{cte}.category_id")
     end
-  )
+  })
 |> Selecto.select([
     "category_id",
     "name",
@@ -284,7 +290,7 @@ selecto
 ```elixir
 # Find all connected nodes in a graph
 selecto
-|> Selecto.with_recursive_cte("connected_nodes",
+|> Selecto.with_recursive_cte("connected_nodes", %{
     base_query: fn ->
       Selecto.configure(graph_domain, connection)
       |> Selecto.select([
@@ -312,7 +318,7 @@ selecto
       |> Selecto.filter([{"cn.is_cycle", false}])
       |> Selecto.filter([{"cn.distance", {:<, max_depth}}])
     end
-  )
+  })
 |> Selecto.select(["DISTINCT node_id", "MIN(distance) AS min_distance"])
 |> Selecto.from("connected_nodes")
 |> Selecto.group_by(["node_id"])
@@ -428,7 +434,7 @@ selecto
 ```elixir
 # Find shortest path between nodes
 selecto
-|> Selecto.with_recursive_cte("paths",
+|> Selecto.with_recursive_cte("paths", %{
     base_query: fn ->
       Selecto.select([
           {:literal, start_node, as: "current_node"},
@@ -452,7 +458,7 @@ selecto
           {:not, {:array_contains, "p.path", "e.target_id"}}
         ])
     end
-  )
+  })
 |> Selecto.select([
     "path",
     "total_cost"
@@ -526,7 +532,7 @@ selecto
 ```elixir
 # Add termination conditions to prevent runaway recursion
 selecto
-|> Selecto.with_recursive_cte("hierarchy",
+|> Selecto.with_recursive_cte("hierarchy", %{
     base_query: fn -> ... end,
     recursive_query: fn cte ->
       query
@@ -535,10 +541,9 @@ selecto
           {"is_cycle", false}          # Cycle detection
         ])
       |> Selecto.limit(1000)          # Row limit per iteration
-    end,
-    # Global recursion settings
-    max_recursion: 100  # Maximum iterations
-  )
+    end
+    # Note: max_recursion would be a separate option in actual API
+  })
 ```
 
 ### Index Considerations
@@ -630,14 +635,14 @@ end
 ```elixir
 # Organization chart with reporting lines
 selecto
-|> Selecto.with_recursive_cte("reports_to_ceo",
+|> Selecto.with_recursive_cte("reports_to_ceo", %{
     base_query: fn ->
       Selecto.filter([{"title", "CEO"}])
     end,
     recursive_query: fn cte ->
       Selecto.join(:inner, cte, on: "employee.manager_id = #{cte}.employee_id")
     end
-  )
+  })
 ```
 
 ### Running Totals and Analytics

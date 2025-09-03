@@ -18,9 +18,9 @@ defmodule SelectoDomeNoSandboxTest do
       pool_timeout: 5000,
       timeout: 5000
     ]
-    
+
     {:ok, db_conn} = Postgrex.start_link(postgrex_opts)
-    
+
     try do
       # Create simple domain
       domain = %{
@@ -47,23 +47,23 @@ defmodule SelectoDomeNoSandboxTest do
 
       case Selecto.execute(selecto) do
         {:ok, {rows, columns, aliases}} ->
-          
+
           # Test SelectoDome creation
           case SelectoDome.from_result(selecto, {rows, columns, aliases}, SelectoTest.Repo) do
             {:ok, dome} ->
-              
+
               # Test basic operations without database commits
               {:ok, dome} = SelectoDome.insert(dome, %{first_name: "Test Actor"})
               {:ok, changes} = SelectoDome.preview_changes(dome)
-              
+
               assert changes.total_changes == 1
               assert length(changes.inserts) == 1
-              
-              
-            {:error, reason} ->
+
+
+            {:error, _reason} ->
               flunk("SelectoDome creation failed")
           end
-          
+
         {:error, reason} ->
           flunk("Selecto query failed: #{inspect(reason)}")
       end

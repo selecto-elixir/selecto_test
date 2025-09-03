@@ -425,9 +425,9 @@ defmodule SelectoComplexFiltersTest do
   end
 
   describe "Full-Text Search Filters" do
-    @tag :skip
     setup %{film_selecto: selecto} do
       # Set up film domain with fulltext column
+      # Add fulltext field to existing domain structure
       domain = %{
         source: %{
           source_table: "film",
@@ -444,7 +444,13 @@ defmodule SelectoComplexFiltersTest do
         },
         name: "Film",
         joins: %{},
-        schemas: %{}
+        schemas: %{},
+        fields: %{
+          "film_id" => %{name: "film_id", requires_join: [], type: "integer"},
+          "title" => %{name: "title", requires_join: [], type: "string"},
+          "description" => %{name: "description", requires_join: [], type: "text"},
+          "fulltext" => %{name: "fulltext", requires_join: [], type: "tsvector"}
+        }
       }
 
       fulltext_selecto = Selecto.configure(domain, selecto.postgrex_opts)
@@ -466,7 +472,6 @@ defmodule SelectoComplexFiltersTest do
       end)
     end
 
-    @tag :skip
     test "complex text search with operators", %{fulltext_selecto: selecto} do
       result = selecto
       |> Selecto.select(["title"])
@@ -480,7 +485,6 @@ defmodule SelectoComplexFiltersTest do
       end)
     end
 
-    @tag :skip
     test "text search with OR logic", %{fulltext_selecto: selecto} do
       result = selecto
       |> Selecto.select(["title"])
@@ -494,7 +498,6 @@ defmodule SelectoComplexFiltersTest do
       end)
     end
 
-    @tag :skip
     test "text search with negation", %{fulltext_selecto: selecto} do
       result = selecto
       |> Selecto.select(["title"])
