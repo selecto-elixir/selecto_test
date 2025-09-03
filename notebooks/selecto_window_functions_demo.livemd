@@ -1,0 +1,349 @@
+# SelectoKino Window Functions Demo
+
+```elixir
+Mix.install([
+  {:selecto_kino, path: "../vendor/selecto_kino"},
+  {:selecto, path: "../vendor/selecto"},
+  {:kino, "~> 0.12.0"},
+  {:postgrex, "~> 0.17.0"}
+])
+```
+
+## Introduction
+
+This notebook demonstrates the new **Window Functions** support in SelectoKino, providing interactive builders for creating complex analytical queries with OVER clauses.
+
+Window functions perform calculations across a set of table rows that are somehow related to the current row. Unlike aggregate functions, window functions do not cause rows to become grouped into a single output row.
+
+## Connect to Database
+
+First, let's establish a connection to the database:
+
+```elixir
+# Connect to your database
+connection_form = SelectoKino.connect()
+```
+
+## Window Function Builder
+
+The Window Function Builder provides an interactive interface for configuring window functions:
+
+```elixir
+# Get available columns from a sample domain
+domain_config = %{
+  source: %{
+    source_table: "films",
+    columns: %{
+      id: %{type: :integer},
+      title: %{type: :string},
+      release_year: %{type: :integer},
+      rating: %{type: :string},
+      rental_rate: %{type: :decimal},
+      length: %{type: :integer}
+    }
+  },
+  schemas: %{},
+  name: "Films"
+}
+
+# Create the window function builder
+window_builder = SelectoKino.WindowBuilder.new(
+  available_columns: ["id", "title", "release_year", "rating", "rental_rate", "length"],
+  on_complete: fn config ->
+    IO.puts("Window function configured!")
+    IO.inspect(config, label: "Configuration")
+  end
+)
+```
+
+## Common Window Function Examples
+
+### 1. Row Numbering
+
+Add row numbers to query results, partitioned by rating:
+
+```elixir
+# Example: Number films within each rating category
+row_number_config = SelectoKino.WindowBuilder.build_window(%{
+  function: "row_number()",
+  partition_by: ["rating"],
+  order_by: [{"release_year", "DESC"}]
+})
+
+IO.inspect(row_number_config, label: "Row Number Config", pretty: true)
+```
+
+### 2. Ranking Functions
+
+Compare different ranking approaches:
+
+```elixir
+# RANK vs DENSE_RANK comparison
+configs = [
+  # RANK - with gaps
+  SelectoKino.WindowBuilder.build_window(%{
+    function: "rank()",
+    partition_by: ["rating"],
+    order_by: [{"rental_rate", "DESC"}]
+  }),
+  
+  # DENSE_RANK - without gaps
+  SelectoKino.WindowBuilder.build_window(%{
+    function: "dense_rank()",
+    partition_by: ["rating"],
+    order_by: [{"rental_rate", "DESC"}]
+  }),
+  
+  # PERCENT_RANK - percentage ranking
+  SelectoKino.WindowBuilder.build_window(%{
+    function: "percent_rank()",
+    partition_by: ["rating"],
+    order_by: [{"rental_rate", "DESC"}]
+  })
+]
+
+Enum.each(configs, fn config ->
+  IO.inspect(config, label: config.function, pretty: true)
+end)
+```
+
+### 3. Navigation Functions (LAG/LEAD)
+
+Access values from previous or next rows:
+
+```elixir
+# LAG - Get previous film's rental rate
+lag_config = SelectoKino.WindowBuilder.build_window(%{
+  function: "lag(rental_rate)",
+  partition_by: ["rating"],
+  order_by: [{"release_year", "ASC"}]
+})
+
+# LEAD - Get next film's rental rate
+lead_config = SelectoKino.WindowBuilder.build_window(%{
+  function: "lead(rental_rate)",
+  partition_by: ["rating"],
+  order_by: [{"release_year", "ASC"}]
+})
+
+IO.inspect([lag: lag_config, lead: lead_config], pretty: true)
+```
+
+### 4. Aggregate Window Functions
+
+Running totals and averages:
+
+```elixir
+# Running sum with frame clause
+running_sum = SelectoKino.WindowBuilder.build_window(%{
+  function: "sum(rental_rate)",
+  partition_by: ["rating"],
+  order_by: [{"release_year", "ASC"}],
+  frame: %{
+    mode: "ROWS",
+    start: "UNBOUNDED PRECEDING",
+    end: "CURRENT ROW"
+  }
+})
+
+# Moving average (3-row window)
+moving_avg = SelectoKino.WindowBuilder.build_window(%{
+  function: "avg(rental_rate)",
+  partition_by: ["rating"],
+  order_by: [{"release_year", "ASC"}],
+  frame: %{
+    mode: "ROWS",
+    start: "2 PRECEDING",
+    end: "CURRENT ROW"
+  }
+})
+
+IO.inspect([running_sum: running_sum, moving_avg: moving_avg], pretty: true)
+```
+
+## Advanced Frame Clauses
+
+Frame clauses define the window of rows for aggregate calculations:
+
+```elixir
+frame_examples = [
+  # Default frame (RANGE UNBOUNDED PRECEDING)
+  %{
+    name: "Default cumulative",
+    frame: nil
+  },
+  
+  # Physical row boundaries
+  %{
+    name: "Last 3 rows",
+    frame: %{
+      mode: "ROWS",
+      start: "2 PRECEDING",
+      end: "CURRENT ROW"
+    }
+  },
+  
+  # Logical boundaries (based on values)
+  %{
+    name: "Within 5 years",
+    frame: %{
+      mode: "RANGE",
+      start: "5 PRECEDING",
+      end: "5 FOLLOWING"
+    }
+  },
+  
+  # Entire partition
+  %{
+    name: "Entire partition",
+    frame: %{
+      mode: "ROWS",
+      start: "UNBOUNDED PRECEDING",
+      end: "UNBOUNDED FOLLOWING"
+    }
+  }
+]
+
+Enum.each(frame_examples, fn example ->
+  config = SelectoKino.WindowBuilder.build_window(%{
+    function: "count(*)",
+    order_by: [{"release_year", "ASC"}],
+    frame: example.frame
+  })
+  
+  IO.puts("\n#{example.name}:")
+  IO.inspect(config, pretty: true)
+end)
+```
+
+## NTILE - Dividing into Buckets
+
+Divide results into equal-sized buckets:
+
+```elixir
+# Divide films into quartiles by rental rate
+quartile_config = SelectoKino.WindowBuilder.build_window(%{
+  function: "ntile(4)",
+  partition_by: ["rating"],
+  order_by: [{"rental_rate", "DESC"}]
+})
+
+# Divide into deciles (10 groups)
+decile_config = SelectoKino.WindowBuilder.build_window(%{
+  function: "ntile(10)",
+  order_by: [{"rental_rate", "DESC"}]
+})
+
+IO.inspect([quartiles: quartile_config, deciles: decile_config], pretty: true)
+```
+
+## First and Last Values
+
+Get boundary values within windows:
+
+```elixir
+# First and last values in partition
+boundary_configs = [
+  # First value (default frame)
+  SelectoKino.WindowBuilder.build_window(%{
+    function: "first_value(title)",
+    partition_by: ["rating"],
+    order_by: [{"release_year", "ASC"}]
+  }),
+  
+  # Last value (need full partition frame)
+  SelectoKino.WindowBuilder.build_window(%{
+    function: "last_value(title)",
+    partition_by: ["rating"],
+    order_by: [{"release_year", "ASC"}],
+    frame: %{
+      mode: "ROWS",
+      start: "UNBOUNDED PRECEDING",
+      end: "UNBOUNDED FOLLOWING"
+    }
+  }),
+  
+  # Nth value (3rd film in each rating)
+  SelectoKino.WindowBuilder.build_window(%{
+    function: "nth_value(title, 3)",
+    partition_by: ["rating"],
+    order_by: [{"release_year", "ASC"}],
+    frame: %{
+      mode: "ROWS",
+      start: "UNBOUNDED PRECEDING",
+      end: "UNBOUNDED FOLLOWING"
+    }
+  })
+]
+
+Enum.each(boundary_configs, fn config ->
+  IO.inspect(config, label: config.function, pretty: true)
+end)
+```
+
+## Validation Examples
+
+The builder includes validation to catch common errors:
+
+```elixir
+# Test validation
+invalid_configs = [
+  # Missing function
+  %{function: nil, over: %{}},
+  
+  # Invalid frame without ORDER BY (for RANGE/GROUPS)
+  %{
+    function: "sum(amount)",
+    over: %{
+      frame: %{mode: "RANGE", start: "UNBOUNDED PRECEDING", end: "CURRENT ROW"}
+    }
+  }
+]
+
+Enum.each(invalid_configs, fn config ->
+  case SelectoKino.WindowBuilder.validate_window(config) do
+    {:ok, _} -> IO.puts("✓ Valid")
+    {:error, errors} -> IO.puts("✗ Invalid: #{inspect(errors)}")
+  end
+end)
+```
+
+## Integration with Selecto
+
+When integrated with a Selecto query, window functions can be used like this:
+
+```elixir
+# This would work with a configured Selecto instance
+# Example of how the window spec integrates with Selecto
+
+window_spec = SelectoKino.WindowBuilder.to_selecto_spec(%{
+  function: "row_number()",
+  over: %{
+    partition_by: ["rating"],
+    order_by: [{"release_year", "DESC"}]
+  },
+  alias: "row_num"
+})
+
+IO.puts("Selecto Window Specification:")
+IO.inspect(window_spec, pretty: true)
+
+# In actual usage with Selecto:
+# selecto
+# |> Selecto.select(["title", "rating", "release_year"])
+# |> Selecto.window([window_spec])
+# |> Selecto.execute()
+```
+
+## Summary
+
+Window functions in SelectoKino provide:
+
+1. **Interactive Configuration** - Visual builder for complex window specifications
+2. **Frame Clause Support** - ROWS, RANGE, and GROUPS boundaries
+3. **All Major Functions** - ROW_NUMBER, RANK, LAG/LEAD, aggregates, etc.
+4. **Validation** - Catches configuration errors before query execution
+5. **SQL Preview** - See the generated SQL before running
+6. **Selecto Integration** - Seamless integration with Selecto query builder
+
+This makes it easy to build sophisticated analytical queries without manually writing complex SQL.
