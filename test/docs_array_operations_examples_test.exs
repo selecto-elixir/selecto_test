@@ -474,8 +474,8 @@ defmodule DocsArrayOperationsExamplesTest do
       
       {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
       
-      assert sql =~ "UNNEST.*items.*AS item"
-      assert sql =~ "UNNEST.*metadata.*AS quantity"
+      assert sql =~ ~r/UNNEST.*items.*AS item/
+      assert sql =~ ~r/UNNEST.*metadata.*AS quantity/
     end
   end
 

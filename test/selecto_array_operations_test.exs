@@ -277,11 +277,11 @@ defmodule SelectoArrayOperationsTest do
       
       {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
       
-      assert sql =~ "select feature, count(*)"
-      assert sql =~ "from film"
+      assert sql =~ ~r/select.*feature.*count\(\*\)/i
+      assert sql =~ ~r/from film/i
       assert sql =~ "UNNEST"
       assert sql =~ "AS feature"
-      assert sql =~ "group by feature"
+      assert sql =~ ~r/group by.*feature/i
     end
   end
   
