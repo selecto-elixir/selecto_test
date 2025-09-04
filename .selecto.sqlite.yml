@@ -1,0 +1,142 @@
+# SelectoMix SQLite-Specific Configuration
+version: "1.0"
+
+# SQLite-focused configuration
+defaults:
+  adapter: sqlite
+  validate: true
+  associations: true
+  joins: basic  # SQLite limitations
+  join_depth: 2  # Keep shallow for performance
+  join_strategy: lazy
+  detect_cycles: true
+
+adapters:
+  sqlite:
+    version: "3.35.0"
+    # SQLite extensions to enable
+    extensions: 
+      - json1      # JSON support
+      - fts5       # Full-text search
+      - rtree      # Spatial indexing
+    # Connection settings
+    journal_mode: wal
+    foreign_keys: on
+    cache_size: -2000  # 2MB cache
+    temp_store: memory
+    # Features in this version
+    features:
+      ctes: true
+      recursive_ctes: true
+      window_functions: true  # 3.25+
+      generated_columns: true  # 3.31+
+      partial_indexes: true
+
+generation:
+  output: lib/selecto_test/sqlite_domains
+  style: clean  # Simpler for SQLite
+  format: compact
+  namespace: SelectoTest.SQLite
+  
+  # SQLite-specific generation features
+  features:
+    custom_columns: true
+    filters: true
+    aggregates: false  # Limited aggregation
+    saved_views: false
+    tests: true
+    migrations: true
+    live: false  # Simplified UI for SQLite
+    
+  # SQLite-specific adaptations
+  adaptations:
+    arrays_as_json: true
+    uuid_as_text: true
+    boolean_as_integer: true  # 0/1
+    datetime_as_text: true
+    decimal_as_real: true
+    
+  # SQLite-specific optimizations
+  optimizations:
+    use_without_rowid: false  # For specific tables
+    use_strict_tables: true  # SQLite 3.37+
+    enable_query_planner: true
+
+# SQLite-specific type mappings
+type_mappings:
+  uuid: text
+  binary_id: text
+  array: text  # JSON stored as TEXT
+  json: text
+  jsonb: text
+  boolean: integer
+  bigint: integer
+  decimal: real
+  timestamp: text
+  timestamptz: text
+  date: text
+  time: text
+  macaddr: text
+  inet: text
+  cidr: text
+  
+# SQLite FTS configuration
+full_text_search:
+  enabled: true
+  version: fts5
+  tokenizer: unicode61
+  fields_to_index:
+    - description
+    - notes
+    - search_vector
+    
+environments:
+  development:
+    adapter: sqlite
+    validate: false
+    connection:
+      database: priv/database/dev.db
+      
+  test:
+    adapter: sqlite
+    validate: false
+    connection:
+      database: ":memory:"  # In-memory for tests
+      
+  production:
+    adapter: sqlite
+    validate: true
+    connection:
+      database: ${SQLITE_DATABASE_PATH}
+    generation:
+      format: compact
+      optimize: true
+
+profiles:
+  embedded:
+    # For embedded/mobile applications
+    generation:
+      optimizations:
+        minimize_size: true
+        use_without_rowid: true
+    connection:
+      cache_size: -500  # 500KB cache
+      temp_store: file
+      
+  memory:
+    # Fully in-memory database
+    connection:
+      database: ":memory:"
+    generation:
+      migrations: false  # No migrations for memory DB
+      
+  portable:
+    # Maximum portability
+    adapters:
+      sqlite:
+        version: "3.25.0"  # Widely available version
+        extensions: []  # No extensions required
+    generation:
+      adaptations:
+        use_basic_types_only: true
+        no_foreign_keys: true
