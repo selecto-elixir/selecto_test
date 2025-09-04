@@ -26,9 +26,10 @@ import hooks from "./hooks";
 // Load Chart.js globally
 import "../vendor/chart.js"
 
-let myHooks = {
-    ...hooks
-}
+// Import colocated hooks from SelectoComponents
+import {hooks as colocatedHooks} from "selecto_components"
+
+let myHooks = {...hooks, ...colocatedHooks}
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
     params: {_csrf_token: csrfToken},

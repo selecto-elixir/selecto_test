@@ -177,7 +177,8 @@
       "Bash(sqlite3:*)",
       "Read(/private/tmp/**)",
       "Bash(mysql:*)",
-      "Bash(MIX_ENV=test timeout 30 mix test test/db_adapter_mysql_test.exs --trace)"
+      "Bash(MIX_ENV=test timeout 30 mix test test/db_adapter_mysql_test.exs --trace)",
+      "Bash(PORT=4086 timeout 10 mix phx.server --no-halt)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
