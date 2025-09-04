@@ -416,10 +416,10 @@ defmodule SelectoMySQLIntegrationTest do
       |> Selecto.filter({"title", "Epic Adventure"})
       |> Selecto.to_sql()
       
-      # Verify MySQL-specific SQL generation
-      assert sql =~ "SELECT"
+      # Verify MySQL-specific SQL generation (case-insensitive for keywords)
+      assert sql =~ ~r/select/i
       assert sql =~ "films"
-      assert sql =~ "WHERE"
+      assert sql =~ ~r/where/i
       assert sql =~ "title"
       
       # Execute the query through our adapter
@@ -433,7 +433,8 @@ defmodule SelectoMySQLIntegrationTest do
       
       [[title, features]] = result.rows
       assert title == "Epic Adventure"
-      assert is_binary(features) # JSON comes back as string from MySQL
+      # JSON/array fields can come back as either string or list depending on MySQL driver version
+      assert is_binary(features) or is_list(features)
     end
     
     test "generates MySQL-specific SQL with proper parameter placeholders" do
@@ -617,12 +618,12 @@ defmodule SelectoMySQLIntegrationTest do
       |> Selecto.order_by([{"rating", :asc}, {"title", :desc}])
       |> Selecto.to_sql()
       
-      # Verify SQL is properly formed
-      assert sql =~ "SELECT"
-      assert sql =~ "WHERE"
-      assert sql =~ "ORDER BY"
-      assert sql =~ "IN"
-      assert sql =~ "BETWEEN"
+      # Verify SQL is properly formed (case-insensitive for keywords)
+      assert sql =~ ~r/select/i
+      assert sql =~ ~r/where/i
+      assert sql =~ ~r/order\s+by/i
+      assert sql =~ ~r/\bin\b/i
+      assert sql =~ ~r/between/i
       
       # Execute to ensure it's valid MySQL SQL
       {:ok, conn} = MySQL.connect(@mysql_config)

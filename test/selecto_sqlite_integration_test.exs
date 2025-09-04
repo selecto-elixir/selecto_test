@@ -280,8 +280,8 @@ defmodule SelectoSQLiteIntegrationTest do
       {sql, _aliases, params} = Selecto.Builder.Sql.build(query, [])
       sql_string = IO.iodata_to_binary(sql)
       
-      assert sql_string =~ "WHERE"
-      assert sql_string =~ "AND"
+      assert sql_string =~ ~r/where/i
+      assert sql_string =~ ~r/and/i
       assert length(params) == 3  # 4.0, "PG", "PG-13"
       
       # Execute the query

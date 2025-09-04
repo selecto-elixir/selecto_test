@@ -139,3 +139,4 @@ When making changes, you may need to modify code across multiple projects to mai
 - **Code Generation**: Mix tasks for domain and schema generation via SelectoMix
 - **Documentation**: Extensive guides for joins, OLAP patterns, and advanced usage
 - **Multi-Environment**: Development, test, and production configurations with Docker support
+- remember to always use case insensitive tests for SQL keywords
