@@ -47,35 +47,6 @@ defmodule SelectoTestWeb.PagilaLive do
     {:noreply, assign(socket, show_view_configurator: !socket.assigns.show_view_configurator)}
   end
 
-  @impl true
-  def handle_event("graph_drill_down", params, socket) do
-    # Convert graph drill-down to the same format as aggregate drill-down
-    # by delegating to the agg_add_filters handler
-    %{"label" => label} = params
-    
-    # Get the x-axis field from the current selecto configuration
-    x_axis_groups = socket.assigns.selecto.set[:x_axis_groups] || []
-    
-    case x_axis_groups do
-      [{field_config, _field_spec} | _] ->
-        # Build filter params in the same format as aggregate view
-        field = field_config[:colid] || field_config[:field]
-        filter_params = %{field => label}
-        
-        # Delegate to the agg_add_filters handler from SelectoComponents.Form
-        handle_event("agg_add_filters", filter_params, socket)
-        
-      _ ->
-        # No x-axis configured, ignore drill down
-        {:noreply, socket}
-    end
-  end
-
-  @impl true  
-  def handle_event("chart_click", params, socket) do
-    # Also handle chart_click event (in case it comes through with that name)
-    handle_event("graph_drill_down", params, socket)
-  end
 
   @doc """
   Test Domain
