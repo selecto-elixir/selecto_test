@@ -26,7 +26,7 @@ defmodule SelectoEctoAdvancedIntegrationTest do
       |> Selecto.select(["title"])
       |> Selecto.to_sql()
 
-      assert String.downcase(sql) =~ "from film"
+      assert String.downcase(sql) =~ ~r/from\s+(")?film(")?(\s|$)/i
     end
 
     test "can configure with has_many associations" do
@@ -47,7 +47,7 @@ defmodule SelectoEctoAdvancedIntegrationTest do
       |> Selecto.select(["first_name", "last_name"])
       |> Selecto.to_sql()
 
-      assert String.downcase(sql) =~ "from actor"
+      assert String.downcase(sql) =~ ~r/from\s+(")?actor(")?(\s|$)/i
     end
 
     test "handles through associations gracefully" do
@@ -64,7 +64,7 @@ defmodule SelectoEctoAdvancedIntegrationTest do
       |> Selecto.select(["first_name"])
       |> Selecto.to_sql()
 
-      assert String.downcase(sql) =~ "from actor"
+      assert String.downcase(sql) =~ ~r/from\s+(")?actor(")?(\s|$)/i
     end
 
     test "can handle multiple associations" do

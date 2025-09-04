@@ -170,7 +170,15 @@
       "Bash(MIX_ENV=test timeout 30 mix test test/selecto_dome_integration_simple_test.exs --max-cases 1)",
       "Bash(for file in test/selecto_pivot_subselect_simple_test.exs test/selecto_subselect_database_test.exs test/selecto_subfilter_live_data_test.exs test/cte_working_test.exs test/docs_subqueries_subfilters_examples_test.exs)",
       "Bash(do sed -i '' 's/assert sql =~ \"\"WHERE\"\"/assert sql =~ ~r\\/where\\/i/g' \"$file\")",
-      "Bash(psql:*)"
+      "Bash(psql:*)",
+      "Bash(docker-compose:*)",
+      "Bash(docker compose:*)",
+      "Bash(docker exec:*)",
+      "Bash(sqlite3:*)",
+      "Read(/private/tmp/**)",
+      "Bash(mysql:*)",
+      "Bash(MIX_ENV=test timeout 30 mix test test/db_adapter_mysql_test.exs --trace)",
+      "Bash(PORT=4086 timeout 10 mix phx.server --no-halt)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

@@ -23,9 +23,9 @@ defmodule SelectoSubfilterLiveDataTest do
 
       # Validate SQL structure
       assert sql =~ "WHERE (EXISTS ("
-      assert sql =~ "FROM film"
-      assert sql =~ "INNER JOIN film_category ON"
-      assert sql =~ "INNER JOIN category ON"
+      assert sql =~ ~r/from\s+(")?film(")?(\s|$)/i
+      assert sql =~ ~r/inner\s+join\s+(")?film_category(")?(\s|$)/i
+      assert sql =~ ~r/inner\s+join\s+(")?category(")?(\s|$)/i
       assert sql =~ "WHERE category.film_id = film.film_id AND category.name = ?"
       assert params == ["Action"]
 
@@ -42,7 +42,7 @@ defmodule SelectoSubfilterLiveDataTest do
       # Validate SQL structure
       assert sql =~ "WHERE (film.film_id IN ("
       assert sql =~ "SELECT film.film_id"
-      assert sql =~ "FROM film"
+      assert sql =~ ~r/from\s+(")?film(")?(\s|$)/i
       assert sql =~ "WHERE category.name IN (?, ?)"
       assert params == ["Action", "Comedy"]
 
@@ -59,8 +59,8 @@ defmodule SelectoSubfilterLiveDataTest do
       # Validate SQL structure for aggregation (uses direct COUNT comparison, not EXISTS)
       assert sql =~ "WHERE (("
       assert sql =~ "SELECT COUNT(*)"
-      assert sql =~ "FROM film"
-      assert sql =~ "INNER JOIN film_actor ON"
+      assert sql =~ ~r/from\s+(")?film(")?(\s|$)/i
+      assert sql =~ ~r/inner\s+join\s+(")?film_actor(")?(\s|$)/i
       assert sql =~ "> ?)"
       assert params == [5]
 

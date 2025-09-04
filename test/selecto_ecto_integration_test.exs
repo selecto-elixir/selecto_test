@@ -57,7 +57,8 @@ defmodule SelectoEctoIntegrationTest do
           {sql, _params} = Selecto.to_sql(selecto)
           assert sql =~ "first_name"
           assert sql =~ "last_name"
-          assert String.downcase(sql) =~ "from actor"
+          # Table name may be quoted depending on the adapter
+          assert String.downcase(sql) =~ ~r/from\s+(\")?actor(\")?\s+/
           
         {:error, reason} ->
           flunk("Query execution failed: #{inspect(reason)}")
@@ -120,7 +121,8 @@ defmodule SelectoEctoIntegrationTest do
           {sql, _params} = Selecto.to_sql(selecto)
           assert sql =~ "title"
           assert sql =~ "rating"
-          assert String.downcase(sql) =~ "from film"
+          # Table name may be quoted depending on the adapter
+          assert String.downcase(sql) =~ ~r/from\s+(\")?film(\")?\s+/
           
         {:error, reason} ->
           flunk("Query execution failed: #{inspect(reason)}")

@@ -1,41 +1,95 @@
 # Universal Database Support Plan for Selecto
 
-**Version:** 2.0.0  
+**Version:** 3.0.0  
 **Date:** 2025-09-03  
 **Status:** Active  
 **Supersedes:** SELECTO_MYSQL_MSSQL_PLAN.md
 
 ## Executive Summary
 
-This plan outlines a comprehensive strategy for extending Selecto to support multiple database systems including PostgreSQL (current), MySQL, Microsoft SQL Server, SQLite, Oracle, MariaDB, CockroachDB, DuckDB, ClickHouse, and other SQL-compliant databases. The architecture emphasizes modularity, extensibility, and minimal core changes when adding new databases.
+This plan outlines a comprehensive strategy for extending Selecto to support multiple database systems through **separate, independently publishable adapter packages**. Each database adapter will be its own Hex package (e.g., `selecto_db_mysql`, `selecto_db_mssql`, `selecto_db_sqlite`) that can be maintained, versioned, and distributed independently. This approach ensures the core Selecto library remains lightweight while allowing the community to contribute and maintain database-specific adapters.
 
-## Supported Database Targets
+## Package Architecture
 
-### Tier 1 - Priority Implementation
-1. **PostgreSQL** (✅ Already Supported - v9.6+)
-2. **MySQL** (v5.7+, v8.0+)
-3. **SQLite** (v3.35+)
-4. **Microsoft SQL Server** (2016+)
+### Core Package
+- **Package Name:** `selecto` (existing)
+- **Responsibility:** Core query building, adapter interface, common functionality
+- **Database Support:** PostgreSQL built-in for backward compatibility
+- **Size:** Minimal, no heavy dependencies
 
-### Tier 2 - Extended Support
-5. **MariaDB** (v10.5+)
-6. **Oracle Database** (12c+, 19c+)
-7. **CockroachDB** (v21.0+)
-8. **Amazon Redshift**
+### Database Adapter Packages
+Each adapter is a separate Hex package that can be independently:
+- Developed and maintained
+- Versioned and released
+- Installed only when needed
+- Community contributed
 
-### Tier 3 - Analytical/Specialized
-9. **DuckDB** (OLAP workloads)
-10. **ClickHouse** (Real-time analytics)
-11. **Apache Druid**
-12. **Google BigQuery** (via API)
-13. **Snowflake**
-14. **TimescaleDB** (PostgreSQL extension)
+#### Official Adapters (Maintained by Selecto Team)
+1. **selecto_db_mysql** - MySQL/MariaDB adapter
+2. **selecto_db_mssql** - Microsoft SQL Server adapter  
+3. **selecto_db_sqlite** - SQLite adapter
+4. **selecto_db_oracle** - Oracle Database adapter
 
-### Tier 4 - Legacy/Niche
-15. **IBM Db2**
-16. **Firebird**
-17. **Apache Derby**
-18. **H2 Database**
+#### Community Adapters
+5. **selecto_db_cockroach** - CockroachDB adapter
+6. **selecto_db_duckdb** - DuckDB adapter
+7. **selecto_db_clickhouse** - ClickHouse adapter
+8. **selecto_db_redshift** - Amazon Redshift adapter
+9. **selecto_db_bigquery** - Google BigQuery adapter
+10. **selecto_db_snowflake** - Snowflake adapter
+
+### Package Structure Example
+
+```
+# selecto_db_mysql/
+├── lib/
+│   ├── selecto_db_mysql.ex              # Main module
+│   ├── selecto_db_mysql/
+│   │   ├── adapter.ex                   # Implements Selecto.Database.Adapter
+│   │   ├── connection.ex                # MySQL connection management
+│   │   ├── dialect.ex                   # MySQL SQL dialect
+│   │   ├── types.ex                     # Type mappings
+│   │   ├── features.ex                  # Feature capabilities
+│   │   └── query_builder.ex             # MySQL-specific query building
+│   └── mix/
+│       └── tasks/
+│           └── selecto.mysql.setup.ex   # Setup tasks
+├── mix.exs                               # Package definition
+├── README.md                             # Documentation
+├── LICENSE                               # Apache 2.0 or MIT
+└── test/
+    └── selecto_db_mysql_test.exs
+```
+
+### Installation & Usage
+
+```elixir
+# mix.exs - Application using MySQL
+def deps do
+  [
+    {:selecto, "~> 1.0"},
+    {:selecto_db_mysql, "~> 1.0"},  # Only if using MySQL
+    {:myxql, "~> 0.6"}               # MySQL driver
+  ]
+end
+
+# config/config.exs
+config :my_app, :selecto,
+  adapter: Selecto.DB.MySQL,  # Module from selecto_db_mysql
+  connection: [
+    hostname: "localhost",
+    username: "root",
+    password: "secret",
+    database: "myapp_dev"
+  ]
+
+# Usage in code
+selecto = Selecto.configure(
+  MyApp.Store.Film,
+  adapter: Selecto.DB.MySQL,
+  connection: Application.get_env(:my_app, :selecto)[:connection]
+)
+```
 
 ## Universal Architecture Design
 

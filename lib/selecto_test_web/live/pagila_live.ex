@@ -47,6 +47,7 @@ defmodule SelectoTestWeb.PagilaLive do
     {:noreply, assign(socket, show_view_configurator: !socket.assigns.show_view_configurator)}
   end
 
+
   @doc """
   Test Domain
   """

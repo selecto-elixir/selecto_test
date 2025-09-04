@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  sqlite:
+    build: ./docker/sqlite
+    container_name: selecto_sqlite
+    volumes:
+      - sqlite_data:/data
+      - ./priv/sqlite/schema:/scripts/schema
+      - ./priv/sqlite/data:/scripts/data
+    ports:
+      - "8080:8080"  # SQLite Web interface
+    environment:
+      - SQLITE_DATABASE=/data/pagila.db
+    networks:
+      - selecto_network
+    command: >
+      sh -c "
+        if [ ! -f /data/pagila.db ]; then
+          echo 'Initializing SQLite database...'
+          sqlite3 /data/pagila.db < /scripts/schema/init.sql
+          sqlite3 /data/pagila.db < /scripts/data/seed.sql
+        fi;
+        sqlite_web --host 0.0.0.0 --port 8080 /data/pagila.db
+      "
+
+  sqlite-cli:
+    build: ./docker/sqlite
+    container_name: selecto_sqlite_cli
+    volumes:
+      - sqlite_data:/data
+      - ./priv/sqlite/schema:/scripts/schema
+      - ./priv/sqlite/data:/scripts/data
+    networks:
+      - selecto_network
+    command: tail -f /dev/null  # Keep container running for CLI access
+
+volumes:
+  sqlite_data:
+
+networks:
+  selecto_network:
+    driver: bridge
