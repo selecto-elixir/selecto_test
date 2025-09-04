@@ -2,13 +2,17 @@ defmodule Selecto.MySQL.QuotingTest do
   use ExUnit.Case, async: false
 
   test "MySQL adapter uses backticks for identifiers" do
-    # Create a simple domain for testing
+    # Create a simple domain for testing with proper source structure
     domain = %{
-      source: "films",
-      primary_key: "film_id",
-      columns: %{
-        "film_id" => %{name: "Film ID", field: "film_id", type: :integer, requires_join: :selecto_root},
-        "title" => %{name: "Title", field: "title", type: :string, requires_join: :selecto_root}
+      source: %{
+        source_table: "films",
+        primary_key: :film_id,
+        fields: [:film_id, :title],
+        redact_fields: [],
+        columns: %{
+          film_id: %{type: :integer},
+          title: %{type: :string}
+        }
       },
       joins: %{}
     }
@@ -34,13 +38,17 @@ defmodule Selecto.MySQL.QuotingTest do
   end
 
   test "PostgreSQL adapter uses double quotes for identifiers" do
-    # Create a simple domain for testing
+    # Create a simple domain for testing with proper source structure
     domain = %{
-      source: "films",
-      primary_key: "film_id",
-      columns: %{
-        "film_id" => %{name: "Film ID", field: "film_id", type: :integer, requires_join: :selecto_root},
-        "title" => %{name: "Title", field: "title", type: :string, requires_join: :selecto_root}
+      source: %{
+        source_table: "films",
+        primary_key: :film_id,
+        fields: [:film_id, :title],
+        redact_fields: [],
+        columns: %{
+          film_id: %{type: :integer},
+          title: %{type: :string}
+        }
       },
       joins: %{}
     }
