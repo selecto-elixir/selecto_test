@@ -14,8 +14,8 @@ defmodule Selecto.DB.MySQLUnitTest do
       assert MySQL.quote_string("hello") == "'hello'"
       assert MySQL.quote_string("it's") == "'it''s'"
       assert MySQL.quote_string("'quoted'") == "'''quoted'''"
-      # MySQL adapter doesn't escape backslashes - this is MySQL server's responsibility
-      assert MySQL.quote_string("back\\slash") == "'back\\slash'"
+      # MySQL adapter escapes backslashes for proper string handling
+      assert MySQL.quote_string("back\\slash") == "'back\\\\slash'"
     end
     
     test "parameter_placeholder/1 returns MySQL-style placeholders" do

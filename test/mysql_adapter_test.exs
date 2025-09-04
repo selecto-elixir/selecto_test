@@ -224,18 +224,27 @@ defmodule Selecto.DB.MySQLTest do
     end
     
     test "transaction/3 rolls back on error", %{conn: conn} do
+      # Get initial count
+      {:ok, initial_result} = MySQL.execute(conn, "SELECT COUNT(*) FROM test_transactions", [], [])
+      [[initial_count]] = initial_result.rows
+      
       {:error, :test_error} = MySQL.transaction(conn, fn txn_conn ->
         MySQL.execute(txn_conn, "INSERT INTO test_transactions (value) VALUES ('rollback_test')", [], [])
         {:error, :test_error}
       end, [])
       
-      # Verify data was rolled back
+      # Verify data was rolled back - count should not have changed
       {:ok, query_result} = MySQL.execute(conn, "SELECT COUNT(*) FROM test_transactions", [], [])
       [[count]] = query_result.rows
-      assert count == 0
+      # The transaction should have rolled back, so count should remain the same
+      # If initial_count is 0, we expect 0. If it's from a previous test, we expect the same count
+      assert count == initial_count, "Expected count to be #{initial_count} after rollback, but got #{count}"
     end
     
     test "begin/2, commit/1, rollback/1 manual transaction control", %{conn: conn} do
+      # Clear any existing data from previous tests
+      MySQL.execute(conn, "DELETE FROM test_transactions", [], [])
+      
       # Test commit
       {:ok, txn_conn} = MySQL.begin(conn, [])
       MySQL.execute(txn_conn, "INSERT INTO test_transactions (value) VALUES ('manual_commit')", [], [])
@@ -256,6 +265,9 @@ defmodule Selecto.DB.MySQLTest do
     end
     
     test "savepoint/2 and rollback_to_savepoint/2", %{conn: conn} do
+      # Clear any existing data from previous tests
+      MySQL.execute(conn, "DELETE FROM test_transactions", [], [])
+      
       {:ok, txn_conn} = MySQL.begin(conn, [])
       
       # Insert first record

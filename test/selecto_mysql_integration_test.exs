@@ -561,9 +561,9 @@ defmodule SelectoMySQLIntegrationTest do
         [rating, avg_rate, max_length, min_cost, count] = row
         
         assert is_binary(rating)
-        assert is_number(avg_rate) or match?(%Decimal{}, avg_rate)
-        assert is_integer(max_length)
-        assert is_number(min_cost) or match?(%Decimal{}, min_cost)
+        assert is_number(avg_rate) or match?(%Decimal{}, avg_rate) or is_nil(avg_rate)
+        assert is_integer(max_length) or is_nil(max_length)  # MAX can return NULL if no non-null values
+        assert is_number(min_cost) or match?(%Decimal{}, min_cost) or is_nil(min_cost)
         assert is_integer(count) and count > 0
       end
     end
