@@ -14,8 +14,8 @@ defmodule SelectoPivotDatabaseTest do
       selecto = create_selecto()
       |> Selecto.filter([{"first_name", "PENELOPE"}])
       |> Selecto.pivot(:film)
-      |> Selecto.select(["title", "release_year", "rating"])
-      |> Selecto.order_by(["title"])
+      |> Selecto.select(["film.title", "film.release_year", "film.rating"])
+      |> Selecto.order_by(["film.title"])
 
       case Selecto.execute(selecto) do
         {:ok, {rows, _columns, _aliases}} ->
@@ -40,7 +40,7 @@ defmodule SelectoPivotDatabaseTest do
       selecto = create_selecto()
       |> Selecto.filter([{"first_name", "PENELOPE"}, {"last_name", "GUINESS"}])
       |> Selecto.pivot(:film)
-      |> Selecto.select(["title", "description"])
+      |> Selecto.select(["film.title", "film.description"])
 
       case Selecto.execute(selecto) do
         {:ok, {rows, _columns, _aliases}} ->
@@ -57,7 +57,7 @@ defmodule SelectoPivotDatabaseTest do
       selecto = create_selecto()
       |> Selecto.filter([{"first_name", "NICK"}])
       |> Selecto.pivot(:film, subquery_strategy: :exists)
-      |> Selecto.select(["title", "length"])
+      |> Selecto.select(["film.title", "film.length"])
 
       case Selecto.execute(selecto) do
         {:ok, {rows, _columns, _aliases}} ->
@@ -73,7 +73,7 @@ defmodule SelectoPivotDatabaseTest do
       selecto = create_selecto()
       |> Selecto.filter([{"first_name", "PENELOPE"}])
       |> Selecto.pivot(:film, preserve_filters: false)
-      |> Selecto.select(["title"])
+      |> Selecto.select(["film.title"])
 
       case Selecto.execute(selecto) do
         {:ok, {rows, _columns, _aliases}} ->
@@ -94,7 +94,7 @@ defmodule SelectoPivotDatabaseTest do
       |> Selecto.filter([{"rating", "PG-13"}])
       |> Selecto.pivot(:film_actors)  # Pivot to film_actors junction table
       |> Selecto.pivot(:actor)        # Then pivot to actor table
-      |> Selecto.select(["actor[actor_id]"])
+      |> Selecto.select(["actor.actor_id"])
 
       case Selecto.execute(selecto) do
         {:ok, {rows, _columns, _aliases}} ->
@@ -117,8 +117,8 @@ defmodule SelectoPivotDatabaseTest do
       |> Selecto.filter([{"rating", "R"}])
       |> Selecto.pivot(:film_actors)
       |> Selecto.pivot(:actor)
-      |> Selecto.select(["actor[actor_id]"])
-      |> Selecto.order_by([{:desc, "actor[actor_id]"}])
+      |> Selecto.select(["actor.actor_id"])
+      |> Selecto.order_by([{:desc, "actor.actor_id"}])
 
       case Selecto.execute(selecto) do
         {:ok, {rows, _columns, _aliases}} ->
@@ -136,7 +136,7 @@ defmodule SelectoPivotDatabaseTest do
       selecto = create_selecto()
       |> Selecto.filter([{"first_name", "PENELOPE"}])
       |> Selecto.pivot(:film)
-      |> Selecto.select(["title"])
+      |> Selecto.select(["film.title"])
 
       {sql, params} = Selecto.to_sql(selecto)
 
@@ -157,7 +157,7 @@ defmodule SelectoPivotDatabaseTest do
     test "different strategies produce different SQL patterns" do
       base_selecto = create_selecto()
       |> Selecto.filter([{"first_name", "PENELOPE"}])
-      |> Selecto.select(["title"])
+      |> Selecto.select(["film.title"])
 
       # IN strategy
       in_selecto = base_selecto |> Selecto.pivot(:film, subquery_strategy: :in)

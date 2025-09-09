@@ -279,7 +279,7 @@ defmodule SelectoEctoAdvancedIntegrationTest do
       )
 
       # Try to select a joined field - this should work with proper join config
-      case Selecto.select(selecto, ["title", "language[name]"])
+      case Selecto.select(selecto, ["title", "language.name"])
            |> Selecto.execute() do
         {:ok, {rows, _columns, _aliases}} ->
           assert is_list(rows)

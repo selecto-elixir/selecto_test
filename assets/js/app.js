@@ -26,10 +26,16 @@ import hooks from "./hooks";
 // Load Chart.js globally
 import "../vendor/chart.js"
 
-// Import colocated hooks from SelectoComponents
-import {hooks as colocatedHooks} from "selecto_components"
+// Import colocated hooks from Phoenix LiveView
+// Colocated hooks are automatically extracted and compiled
+// Import SelectoComponents colocated hooks
+import { selectoComponentsHooks } from "./selecto_components_hooks"
 
-let myHooks = {...hooks, ...colocatedHooks}
+// Combine all hooks
+let myHooks = {
+  ...hooks,
+  ...selectoComponentsHooks
+}
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
     params: {_csrf_token: csrfToken},

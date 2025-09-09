@@ -300,7 +300,7 @@ defmodule SelectoDomeIntegrationTest do
       # Create join query that includes film information using Postgrex connection
       domain = PagilaDomain.actors_domain()
       selecto = Selecto.configure(domain, SelectoTest.Repo)
-      |> Selecto.select(["first_name", "last_name", "film[title]", "film[rating]"])
+      |> Selecto.select(["first_name", "last_name", "film.title", "film.rating"])
       # Joins are already configured in the domain, no need to add them dynamically
 
       %{

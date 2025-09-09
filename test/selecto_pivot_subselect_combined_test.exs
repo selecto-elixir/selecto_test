@@ -13,7 +13,7 @@ defmodule SelectoPivotSubselectCombinedTest do
       selecto = create_selecto()
       |> Selecto.filter([{"first_name", "PENELOPE"}])  # Filter actors
       |> Selecto.pivot(:film)                         # Pivot to films
-      |> Selecto.select(["film[title]", "film[rating]", "film[release_year]"]) # Film fields
+      |> Selecto.select(["film.title", "film.rating", "film.release_year"]) # Film fields
       |> Selecto.subselect([                         # Add film data as subselect
            %{
              fields: ["title", "rating"],
@@ -56,7 +56,7 @@ defmodule SelectoPivotSubselectCombinedTest do
       selecto = create_selecto()
       |> Selecto.filter([{"last_name", "WAHLBERG"}])
       |> Selecto.pivot(:film)
-      |> Selecto.select(["film[title]", "film[length]"])
+      |> Selecto.select(["film.title", "film.length"])
       |> Selecto.subselect([
            # JSON aggregation of film details
            %{
@@ -113,7 +113,7 @@ defmodule SelectoPivotSubselectCombinedTest do
       selecto = create_selecto()
       |> Selecto.filter([{"first_name", "TOM"}])
       |> Selecto.pivot(:film)
-      |> Selecto.select(["film[title]", "film[rating]"])
+      |> Selecto.select(["film.title", "film.rating"])
       |> Selecto.subselect([
            %{
              fields: ["title", "release_year", "rating"],
@@ -154,7 +154,7 @@ defmodule SelectoPivotSubselectCombinedTest do
       selecto = create_selecto()
       |> Selecto.filter([{"first_name", "JULIA"}, {"last_name", "MCQUEEN"}]) # Specific actor
       |> Selecto.pivot(:film)  # Get their films
-      |> Selecto.select(["film[title]", "film[rating]", "film[length]"])
+      |> Selecto.select(["film.title", "film.rating", "film.length"])
       |> Selecto.subselect([
            # All films by these actors
            %{
@@ -193,7 +193,7 @@ defmodule SelectoPivotSubselectCombinedTest do
       selecto = create_selecto()
       |> Selecto.filter([{"first_name", "NICK"}])
       |> Selecto.pivot(:film, subquery_strategy: :exists)  # Use EXISTS instead of IN
-      |> Selecto.select(["film[title]", "film[description]"])
+      |> Selecto.select(["film.title", "film.description"])
       |> Selecto.subselect([
            %{
              fields: ["title"],
@@ -228,7 +228,7 @@ defmodule SelectoPivotSubselectCombinedTest do
       selecto = create_selecto()
       |> Selecto.filter([{"first_name", "TEST"}])
       |> Selecto.pivot(:film)
-      |> Selecto.select(["film[title]"])
+      |> Selecto.select(["film.title"])
       |> Selecto.subselect([
            %{
              fields: ["title"],
@@ -264,7 +264,7 @@ defmodule SelectoPivotSubselectCombinedTest do
       selecto = create_selecto()
       |> Selecto.filter([{"first_name", "PENELOPE"}])
       |> Selecto.pivot(:film, subquery_strategy: :exists)
-      |> Selecto.select(["film[title]", "film[rating]", "film[length]", "film[release_year]"])
+      |> Selecto.select(["film.title", "film.rating", "film.length", "film.release_year"])
       |> Selecto.subselect([
            %{
              fields: ["title", "rating"],
@@ -299,7 +299,7 @@ defmodule SelectoPivotSubselectCombinedTest do
       assert_raise ArgumentError, ~r/Invalid pivot configuration/, fn ->
         create_selecto()
         |> Selecto.pivot(:invalid_schema)
-        |> Selecto.subselect(["actor[first_name]"])
+        |> Selecto.subselect(["actor.first_name"])
       end
     end
 
@@ -307,7 +307,7 @@ defmodule SelectoPivotSubselectCombinedTest do
       assert_raise ArgumentError, ~r/Target schema.*not found/, fn ->
         create_selecto()
         |> Selecto.pivot(:film)
-        |> Selecto.subselect(["invalid_schema[field]"])
+        |> Selecto.subselect(["invalid_schema.field"])
       end
     end
   end
