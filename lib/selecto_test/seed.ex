@@ -1,8 +1,11 @@
 defmodule SelectoTest.Seed do
   alias SelectoTest.Repo
   alias SelectoTest.Store.{Language, Film, Flag}
+  alias SelectoTest.SavedView
   
   def init() do
+    # Seed saved views first
+    seed_saved_views()
     # Create flags
     Repo.insert! %Flag{name: "F1"}
     Repo.insert! %Flag{name: "F2"}

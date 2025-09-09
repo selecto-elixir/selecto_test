@@ -179,7 +179,11 @@
       "Bash(mysql:*)",
       "Bash(MIX_ENV=test timeout 30 mix test test/db_adapter_mysql_test.exs --trace)",
       "Bash(PORT=4086 timeout 10 mix phx.server --no-halt)",
-      "Bash(PORT=4087 timeout 15 mix phx.server --no-halt)"
+      "Bash(PORT=4087 timeout 15 mix phx.server --no-halt)",
+      "Bash(MIX_ENV=prod mix compile)",
+      "Bash(MIX_ENV=prod mix assets.deploy)",
+      "Bash(PORT=4091 timeout 10 mix phx.server --no-halt)",
+      "Bash(PORT=4092 timeout 15 mix phx.server --no-halt)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
