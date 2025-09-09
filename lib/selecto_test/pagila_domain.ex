@@ -262,4 +262,38 @@ defmodule SelectoTest.PagilaDomain do
     # - Custom formatting or enrichment
     {:ok, selecto, params}
   end
+
+  @doc """
+  Debug configuration for the Pagila domain.
+  Controls what debug information is displayed in development mode.
+  """
+  def debug_config do
+    %{
+      enabled: true,
+      show_query: true,
+      show_params: true,
+      show_timing: true,
+      show_row_count: true,
+      show_execution_plan: false,
+      format_sql: true,
+      max_param_length: 200,
+      views: %{
+        aggregate: %{
+          show_query: true,
+          show_timing: true,
+          show_row_count: true
+        },
+        detail: %{
+          show_query: true,
+          show_params: true,
+          show_row_count: true
+        },
+        graph: %{
+          show_query: false,
+          show_timing: true,
+          show_row_count: false
+        }
+      }
+    }
+  end
 end
