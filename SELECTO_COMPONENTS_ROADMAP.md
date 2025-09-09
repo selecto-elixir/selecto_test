@@ -19,13 +19,20 @@ This roadmap outlines the implementation plan for enhancing SelectoComponents wi
   
 - **Components**
   - Filter Forms
-  - Tabs/Radio Tabs
+  - **Tabs Component** ✨ NEW - Tab-based view type selector (replaced RadioTabs)
   - List Picker
   - Nested Table
   - SQL Debug
   
 - **Colocated Hooks** (Phoenix LiveView 1.1+)
   - JavaScript hooks integrated with components
+
+### 🎉 Recently Completed
+- **Tab View Control for View Type Picker** (December 2024)
+  - Replaced radio buttons with modern tab interface
+  - Improved accessibility with ARIA attributes
+  - Better visual hierarchy and user experience
+  - Responsive design with hover states
 
 ### 🚧 Partially Implemented
 - **Subselect Builder** - Basic functionality exists
@@ -34,7 +41,27 @@ This roadmap outlines the implementation plan for enhancing SelectoComponents wi
 
 ## Phase 1: Core Enhancements (Weeks 1-3) 🎯
 
-### 1.1 Enhanced Table Presentation
+### 1.1 Enhanced Error Reporting 🚨 NEW
+**Priority: CRITICAL** | **Effort: Low**
+- [ ] **Week 1**: Full query error display in UI
+- [ ] **Week 1**: Detailed error information in dev environments
+- [ ] **Week 1**: User-friendly error messages in production
+- [ ] **Week 1**: Error context (query, parameters, stack trace in dev)
+- [ ] **Week 1**: Retry mechanisms for transient errors
+
+**Requirements:**
+- Clear error indication when queries fail
+- Development mode: Show full SQL, parameters, error details
+- Production mode: Generic user-friendly messages
+- Error categorization (connection, syntax, permissions, timeout)
+- Actionable suggestions for common errors
+
+**Files to modify:**
+- `vendor/selecto_components/lib/selecto_components/form.ex` (enhance existing error display)
+- `vendor/selecto_components/lib/selecto_components/error_handler.ex` (new)
+- View components to handle error states
+
+### 1.2 Enhanced Table Presentation
 **Priority: HIGH** | **Effort: Medium**
 - [ ] **Week 1**: Sortable columns with multi-column support
 - [ ] **Week 1**: Column resizing and reordering
@@ -47,7 +74,7 @@ This roadmap outlines the implementation plan for enhancing SelectoComponents wi
 - `vendor/selecto_components/lib/selecto_components/views/aggregate/component.ex`
 - New: `enhanced_table/` module structure
 
-### 1.2 Interactive Filter Panel
+### 1.3 Interactive Filter Panel
 **Priority: HIGH** | **Effort: High**
 - [ ] **Week 1**: User-configurable filters with custom captions
 - [ ] **Week 2**: Dynamic filter addition/removal
