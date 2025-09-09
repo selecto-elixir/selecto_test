@@ -63,7 +63,7 @@ defmodule SelectoJoinsTest do
       ]
       
       result = selecto
-      |> Selecto.select(["first_name", "last_name", "film_actors[film_id]"])
+      |> Selecto.select(["first_name", "last_name", "film_actors.film_id"])
       |> Selecto.filter({"actor_id", actor_ids})
       |> Selecto.execute()
       
@@ -150,7 +150,7 @@ defmodule SelectoJoinsTest do
       selecto = Selecto.configure(domain, SelectoTest.Repo)
       
       result = selecto
-      |> Selecto.select(["first_name", "film[title]", "film[rating]"])
+      |> Selecto.select(["first_name", "film.title", "film.rating"])
       |> Selecto.filter({"actor_id", test_data.actors.actor1.actor_id})  # Alice
       |> Selecto.execute()
       
@@ -230,7 +230,7 @@ defmodule SelectoJoinsTest do
       ]
       
       result = selecto
-      |> Selecto.select(["title", "language[name]"])
+      |> Selecto.select(["title", "language.name"])
       |> Selecto.filter({"film_id", film_ids})
       |> Selecto.execute()
       
@@ -292,8 +292,8 @@ defmodule SelectoJoinsTest do
       selecto = Selecto.configure(domain, SelectoTest.Repo)
       
       result = selecto
-      |> Selecto.select(["title", "language[name]"])
-      |> Selecto.filter({"language[name]", "English"})
+      |> Selecto.select(["title", "language.name"])
+      |> Selecto.filter({"language.name", "English"})
       |> Selecto.execute()
       
       assert {:ok, {rows, columns, _aliases}} = result
@@ -413,8 +413,8 @@ defmodule SelectoJoinsTest do
       |> Selecto.select([
         "first_name", 
         "last_name", 
-        "film[title]",
-        "language[name]"
+        "film.title",
+        "language.name"
       ])
       |> Selecto.filter({"actor_id", test_data.actors.actor1.actor_id})  # Alice
       |> Selecto.execute()
@@ -543,7 +543,7 @@ defmodule SelectoJoinsTest do
       |> Selecto.select([
         "first_name", 
         "last_name",
-        {:count, "film[film_id]"}
+        {:count, "film.film_id"}
       ])
       |> Selecto.group_by([
         "actor_id", 
@@ -650,10 +650,10 @@ defmodule SelectoJoinsTest do
       |> Selecto.select([
         "first_name", 
         "last_name", 
-        "film[title]",
-        "film[rating]"
+        "film.title",
+        "film.rating"
       ])
-      |> Selecto.filter({"film[rating]", "G"})
+      |> Selecto.filter({"film.rating", "G"})
       |> Selecto.execute()
       
       case result do
@@ -774,12 +774,12 @@ defmodule SelectoJoinsTest do
       |> Selecto.select([
         "first_name", 
         "last_name", 
-        "film[title]",
-        "film[rating]",
-        "language[name]"
+        "film.title",
+        "film.rating",
+        "language.name"
       ])
-      |> Selecto.filter({"film[rating]", "G"})
-      |> Selecto.filter({"language[name]", "English"})
+      |> Selecto.filter({"film.rating", "G"})
+      |> Selecto.filter({"language.name", "English"})
       |> Selecto.execute()
       
       case result do
@@ -860,7 +860,7 @@ defmodule SelectoJoinsTest do
       ]
       
       result = selecto
-      |> Selecto.select(["first_name", "last_name", "film_actors[film_id]"])
+      |> Selecto.select(["first_name", "last_name", "film_actors.film_id"])
       |> Selecto.filter({"actor_id", actor_ids})
       |> Selecto.execute()
       
@@ -923,7 +923,7 @@ defmodule SelectoJoinsTest do
       selecto = Selecto.configure(domain, SelectoTest.Repo)
       
       result = selecto
-      |> Selecto.select(["first_name", "film_actors[film_id]"])
+      |> Selecto.select(["first_name", "film_actors.film_id"])
       |> Selecto.execute()
       
       assert {:ok, {rows, columns, _aliases}} = result
@@ -1011,8 +1011,8 @@ defmodule SelectoJoinsTest do
       selecto = Selecto.configure(domain, SelectoTest.Repo)
       
       result = selecto
-      |> Selecto.select(["first_name", "last_name", "film[title]"])
-      |> Selecto.order_by(["last_name", "first_name", "film[title]"])
+      |> Selecto.select(["first_name", "last_name", "film.title"])
+      |> Selecto.order_by(["last_name", "first_name", "film.title"])
       |> Selecto.execute()
       
       case result do

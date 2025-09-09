@@ -75,7 +75,7 @@ defmodule SelectoPivotSubselectSimpleTest do
       selecto = create_test_selecto()
       |> Selecto.filter([{"name", "Alice"}])
       |> Selecto.pivot(:posts)
-      |> Selecto.select(["posts[title]", "posts[content]"])
+      |> Selecto.select(["posts.title", "posts.content"])
 
       {sql, params} = Selecto.to_sql(selecto)
 
@@ -96,7 +96,7 @@ defmodule SelectoPivotSubselectSimpleTest do
     test "different pivot strategies produce different SQL" do
       base_selecto = create_test_selecto()
       |> Selecto.filter([{"name", "Bob"}])
-      |> Selecto.select(["posts[title]"])
+      |> Selecto.select(["posts.title"])
 
       # IN strategy
       in_selecto = base_selecto |> Selecto.pivot(:posts, subquery_strategy: :in)
@@ -117,7 +117,7 @@ defmodule SelectoPivotSubselectSimpleTest do
     test "basic subselect generates correct SQL structure" do
       selecto = create_test_selecto()
       |> Selecto.select(["name", "email"])
-      |> Selecto.subselect(["posts[title]"])
+      |> Selecto.subselect(["posts.title"])
 
       {sql, _params} = Selecto.to_sql(selecto)
 
@@ -191,7 +191,7 @@ defmodule SelectoPivotSubselectSimpleTest do
       selecto = create_test_selecto()
       |> Selecto.filter([{"name", "Charlie"}])
       |> Selecto.pivot(:posts)
-      |> Selecto.select(["posts[title]", "posts[content]"])
+      |> Selecto.select(["posts.title", "posts.content"])
       |> Selecto.subselect([
            %{
              fields: ["name", "email"],
@@ -229,14 +229,14 @@ defmodule SelectoPivotSubselectSimpleTest do
     test "subselect validates target schema exists" do
       assert_raise ArgumentError, ~r/Target schema.*not found/, fn ->
         create_test_selecto()
-        |> Selecto.subselect(["invalid_schema[field]"])
+        |> Selecto.subselect(["invalid_schema.field"])
       end
     end
 
     test "subselect validates fields exist" do
       assert_raise ArgumentError, ~r/Fields.*not found in schema/, fn ->
         create_test_selecto()
-        |> Selecto.subselect(["posts[invalid_field]"])
+        |> Selecto.subselect(["posts.invalid_field"])
       end
     end
   end
