@@ -41,25 +41,58 @@ This roadmap outlines the implementation plan for enhancing SelectoComponents wi
 
 ## Phase 1: Core Enhancements (Weeks 1-3) 🎯
 
-### 1.1 Enhanced Error Reporting 🚨 NEW
-**Priority: CRITICAL** | **Effort: Low**
-- [ ] **Week 1**: Full query error display in UI
-- [ ] **Week 1**: Detailed error information in dev environments
+### 1.1 Enhanced Error Reporting & Debug Configuration 🚨 NEW
+**Priority: CRITICAL** | **Effort: Medium**
+- [ ] **Week 1**: Comprehensive error display for ALL error types (not just query errors)
+- [ ] **Week 1**: Domain-configurable debug information display
+- [ ] **Week 1**: Detailed error information in dev environments with config control
 - [ ] **Week 1**: User-friendly error messages in production
-- [ ] **Week 1**: Error context (query, parameters, stack trace in dev)
+- [ ] **Week 1**: Error context (query, parameters, stack trace) controlled by domain
 - [ ] **Week 1**: Retry mechanisms for transient errors
+- [ ] **Week 1**: Debug panel with query/params display toggle
 
 **Requirements:**
-- Clear error indication when queries fail
-- Development mode: Show full SQL, parameters, error details
-- Production mode: Generic user-friendly messages
-- Error categorization (connection, syntax, permissions, timeout)
-- Actionable suggestions for common errors
+- **Error Coverage:**
+  - Query execution errors
+  - Data processing errors
+  - Rendering errors
+  - LiveView errors
+  - Configuration errors
+- **Domain Configuration (`debug_config/0`):**
+  - Toggle query/params display per domain
+  - Control debug verbosity (full/minimal/off)
+  - Per-view-type debug settings
+  - SQL formatting and truncation options
+  - Sensitive data protection even in dev
+- **Development Mode:**
+  - Show full details based on domain config
+  - Interactive debug panel with toggles
+  - Copy-to-clipboard for errors and queries
+  - Query execution timing and row counts
+- **Production Mode:**
+  - Always sanitized regardless of config
+  - Generic user-friendly messages
+  - Proper error acknowledgment
+- **Error Categorization:**
+  - Connection, syntax, permissions, timeout
+  - Data processing, rendering, LiveView
+  - Configuration and schema errors
+- **Actionable Suggestions:**
+  - Context-aware suggestions per error type
+  - Recovery strategies for transient errors
 
-**Files to modify:**
-- `vendor/selecto_components/lib/selecto_components/form.ex` (enhance existing error display)
-- `vendor/selecto_components/lib/selecto_components/error_handler.ex` (new)
-- View components to handle error states
+**Files to create/modify:**
+- `vendor/selecto_components/lib/selecto_components/error_handling/` (new module structure)
+  - `error_handler.ex`
+  - `error_display.ex`
+  - `error_categorizer.ex`
+  - `error_recovery.ex`
+- `vendor/selecto_components/lib/selecto_components/debug/` (new)
+  - `debug_panel.ex`
+  - `query_display.ex`
+  - `config_reader.ex`
+- `vendor/selecto_components/lib/selecto_components/form.ex` (enhance)
+- Domain files to add `debug_config/0` function
 
 ### 1.2 Enhanced Table Presentation
 **Priority: HIGH** | **Effort: Medium**
@@ -175,6 +208,11 @@ This roadmap outlines the implementation plan for enhancing SelectoComponents wi
 ## Success Metrics
 
 ### Phase 1 (Core Enhancements)
+- [ ] 100% of errors (all types) are properly displayed and categorized
+- [ ] Debug information respects domain configuration 100% of the time
+- [ ] Zero sensitive data exposure in production mode
+- [ ] Error recovery success rate >80% for transient errors
+- [ ] Developer debugging time reduced by 60% with enhanced error details
 - [ ] Table sorting/filtering reduces data exploration time by 50%
 - [ ] Mobile usage increases by 30%
 - [ ] Export feature used by 40% of users
