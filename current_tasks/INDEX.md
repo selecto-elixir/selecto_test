@@ -25,6 +25,7 @@ This directory contains individual task files for implementing SelectoComponents
 - [COMPTASK-0008](COMPTASK-0008.md) - Column Resizing and Reordering **[HIGH]** - 1 day
 - [COMPTASK-0009](COMPTASK-0009.md) - Responsive Table Design **[HIGH]** - 2 days
 - [COMPTASK-0010](COMPTASK-0010.md) - Virtual Scrolling for Large Datasets **[HIGH]** - 2 days
+- [COMPTASK-0099](COMPTASK-0099.md) - Fix Debug Panel Clipboard Functionality **[LOW]** - 2 hours
 
 ### 1.3 Interactive Filter Panel (Weeks 2-3)
 - [COMPTASK-0011](COMPTASK-0011.md) - Dynamic Filter Addition/Removal **[HIGH]** - 1 day
