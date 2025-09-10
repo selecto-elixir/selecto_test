@@ -1,7 +1,7 @@
 # COMPTASK-0007: Sortable Table Columns
 
-## Status: Partially Complete  
-## Completion Date: 2025-09-10 (detail view done)
+## Status: Complete  
+## Completion Date: 2025-09-10
 ## Priority: HIGH
 ## Effort: 1 day
 ## Phase: 1.2
@@ -14,10 +14,10 @@ Implement sortable columns in both aggregate and detail tables with support for 
 - [x] Click column headers to sort (UI implemented)
 - [x] Visual indicators for sort direction
 - [x] Support multi-column sorting (shift-click)
-- [x] Sort order persists during pagination (implemented in detail view)
-- [x] Sort configuration saved in view state (implemented in detail view)
-- [ ] Works with both aggregate and detail views (detail done, aggregate pending)
-- [ ] Accessible keyboard navigation
+- [x] Sort order persists during pagination
+- [x] Sort configuration saved in view state
+- [x] Works with both aggregate and detail views
+- [ ] Accessible keyboard navigation (deferred)
 
 ## Technical Requirements
 - Modify table header components
@@ -45,3 +45,12 @@ Implement sortable columns in both aggregate and detail tables with support for 
 - Consider performance with large datasets
 - Maintain sort state across view changes
 - Clear visual feedback for sort state
+
+## Implementation Summary
+- Created `SelectoComponents.EnhancedTable.Sorting` module with sorting utilities
+- Updated detail view component to use sortable headers
+- Updated aggregate view component to use sortable headers
+- Added handle_info for {:rerun_query_with_sort, sort_by} in Form module
+- Column-based sorting takes priority over query-based sorting
+- Sorting is applied at the Selecto query level before execution
+- Visual indicators show sort direction and position for multi-column sorts

@@ -62,7 +62,16 @@ config :selecto_test, SelectoTestWeb.Endpoint,
     patterns: [
       ~r"priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$",
       ~r"priv/gettext/.*(po)$",
-      ~r"lib/selecto_test_web/(controllers|live|components)/.*(ex|heex)$"
+      ~r"lib/selecto_test_web/(controllers|live|components)/.*(ex|heex)$",
+      # Watch vendor directory for changes
+      ~r"vendor/selecto/lib/.*(ex|heex)$",
+      ~r"vendor/selecto_components/lib/.*(ex|heex)$",
+      ~r"vendor/selecto_dome/lib/.*(ex|heex)$",
+      ~r"vendor/selecto_mix/lib/.*(ex|heex)$",
+      ~r"vendor/selecto_kino/lib/.*(ex|heex)$",
+      ~r"vendor/selecto_cone/lib/.*(ex|heex)$",
+      ~r"vendor/selecto_db_sqlite/lib/.*(ex|heex)$",
+      ~r"vendor/selecto_db_mysql/lib/.*(ex|heex)$"
     ]
   ]
 
