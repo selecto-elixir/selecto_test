@@ -74,6 +74,39 @@ mix test
 timeout 30 mix test test/specific_test.exs --max-cases 1
 ```
 
+## Production Debug Panel
+
+The debug panel can be enabled in production with proper security measures:
+
+**Security Requirements:**
+1. Two environment variables must be set
+2. A secure token must be provided via query parameter or session
+3. Debug panel is completely disabled without both requirements
+
+**To Enable Debug Panel in Production:**
+```bash
+# Generate secure configuration (creates a random token)
+./scripts/enable_production_debug.sh
+
+# Set Fly.io secrets (use the token from the script output)
+fly secrets set SELECTO_DEBUG_ENABLED=true
+fly secrets set SELECTO_DEBUG_TOKEN="<your-secure-token>"
+
+# Access with token in URL
+https://your-app.fly.dev/pagila?debug_token=<your-secure-token>
+```
+
+**To Disable Debug Panel:**
+```bash
+fly secrets unset SELECTO_DEBUG_ENABLED SELECTO_DEBUG_TOKEN
+```
+
+**Security Features:**
+- Requires BOTH `SELECTO_DEBUG_ENABLED=true` AND a valid `SELECTO_DEBUG_TOKEN`
+- Token comparison uses constant-time algorithm to prevent timing attacks
+- Debug panel completely hidden without valid authentication
+- Automatically enabled in dev/test environments without token
+
 ## Architecture Overview
 
 This is a Phoenix LiveView application that serves as a test/development environment for the Selecto ecosystem. The app provides dynamic data visualization interfaces for the Pagila sample database.
