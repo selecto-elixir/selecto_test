@@ -1,6 +1,6 @@
 # COMPTASK-0002: Domain-Configurable Debug Information Display
 
-## Status: Not Started
+## Status: Completed
 ## Priority: CRITICAL
 ## Effort: 1 day
 ## Phase: 1.1
@@ -10,13 +10,13 @@
 Implement domain-level configuration for controlling debug information display, allowing developers to configure what debug information is shown per domain.
 
 ## Acceptance Criteria
-- [ ] Domains can define `debug_config/0` function
-- [ ] Config controls query display (show/hide)
-- [ ] Config controls parameter display (show/hide)
-- [ ] Config controls timing information display
-- [ ] Config supports per-view-type settings
-- [ ] Config supports SQL formatting options
-- [ ] Config reader handles missing configurations gracefully
+- [x] Domains can define `debug_config/0` function
+- [x] Config controls query display (show/hide)
+- [x] Config controls parameter display (show/hide)
+- [x] Config controls timing information display
+- [x] Config supports per-view-type settings
+- [x] Config supports SQL formatting options
+- [x] Config reader handles missing configurations gracefully
 
 ## Technical Requirements
 - Define debug configuration schema

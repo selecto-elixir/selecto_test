@@ -280,18 +280,21 @@ defmodule SelectoTest.PagilaDomain do
       views: %{
         aggregate: %{
           show_query: true,
+          show_params: true,
           show_timing: true,
           show_row_count: true
         },
         detail: %{
           show_query: true,
           show_params: true,
+          show_timing: true,
           show_row_count: true
         },
         graph: %{
-          show_query: false,
+          show_query: true,
+          show_params: true,
           show_timing: true,
-          show_row_count: false
+          show_row_count: true
         }
       }
     }

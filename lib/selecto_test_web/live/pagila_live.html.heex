@@ -20,7 +20,7 @@ Saved Views:
     views={@views}
     saved_view_module={@saved_view_module}
     saved_view_context={@saved_view_context}
-
+    domain_module={@saved_view_module}
   />
 </div>
 
@@ -30,7 +30,10 @@ Saved Views:
   query_results={@query_results}
   applied_view={@applied_view}
   executed={@executed}
+  execution_error={Map.get(assigns, :execution_error)}
   views={@views}
   view_meta={@view_meta}
+  domain_module={@saved_view_module}
+  last_query_info={Map.get(assigns, :last_query_info, %{})}
   id="results"
 />

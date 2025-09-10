@@ -183,7 +183,12 @@
       "Bash(MIX_ENV=prod mix compile)",
       "Bash(MIX_ENV=prod mix assets.deploy)",
       "Bash(PORT=4091 timeout 10 mix phx.server --no-halt)",
-      "Bash(PORT=4092 timeout 15 mix phx.server --no-halt)"
+      "Bash(PORT=4092 timeout 15 mix phx.server --no-halt)",
+      "Bash(npm run build:*)",
+      "Bash(npm run deploy:*)",
+      "Bash(/dev/null)",
+      "Bash(PORT=4088 timeout 30 mix phx.server --no-halt)",
+      "Bash(PORT=4089 timeout 30 mix phx.server --no-halt)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
