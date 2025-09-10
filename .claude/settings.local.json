@@ -188,7 +188,9 @@
       "Bash(npm run deploy:*)",
       "Bash(/dev/null)",
       "Bash(PORT=4088 timeout 30 mix phx.server --no-halt)",
-      "Bash(PORT=4089 timeout 30 mix phx.server --no-halt)"
+      "Bash(PORT=4089 timeout 30 mix phx.server --no-halt)",
+      "Bash(ast-grep scan:*)",
+      "Bash(ast-grep:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

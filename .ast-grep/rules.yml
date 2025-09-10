@@ -1,0 +1,119 @@
+# AST-Grep Rules for Selecto Test Project
+# These rules help identify common patterns and potential issues
+
+rules:
+  # Security and Safety Rules
+  - id: no-mix-env-in-runtime
+    pattern: Mix.env()
+    message: Mix.env() is not available in production releases
+    severity: error
+    files:
+      - "**/*.ex"
+      - "**/*.exs"
+    ignores:
+      - "test/**"
+      - "config/**"
+
+  # Selecto-specific patterns
+  - id: find-selecto-execute
+    pattern: |
+      Selecto.execute($$$ARGS)
+    message: Found Selecto.execute call
+    severity: info
+    language: elixir
+
+  - id: find-selecto-execute-with-metadata
+    pattern: |
+      Selecto.execute_with_metadata($$$ARGS)
+    message: Found Selecto.execute_with_metadata call
+    severity: info
+    language: elixir
+
+  - id: find-custom-columns
+    pattern: |
+      Selecto.custom_column($SELECTO, $NAME, $$$)
+    message: Found custom column definition
+    severity: info
+    language: elixir
+
+  # LiveView Patterns
+  - id: find-liveview-mount
+    pattern: |
+      def mount($$$PARAMS, $SESSION, $SOCKET) do
+        $$$BODY
+      end
+    message: Found LiveView mount function
+    severity: info
+    language: elixir
+
+  - id: find-handle-event
+    pattern: |
+      def handle_event($EVENT, $$$PARAMS, $SOCKET) do
+        $$$BODY
+      end
+    message: Found LiveView handle_event
+    severity: info
+    language: elixir
+
+  # JavaScript/Hooks Patterns
+  - id: find-phoenix-hooks
+    pattern: |
+      hooks: {
+        $$$HOOKS
+      }
+    message: Found Phoenix hooks definition
+    severity: info
+    language: javascript
+
+  - id: find-colocated-hooks-import
+    pattern: |
+      import $VAR from "selecto_components/$$$PATH"
+    message: Found colocated hook import
+    severity: info
+    language: javascript
+
+  # Error Handling Patterns
+  - id: find-error-tuples
+    pattern: |
+      {:error, $ERROR}
+    message: Found error tuple pattern
+    severity: info
+    language: elixir
+
+  - id: find-rescue-blocks
+    pattern: |
+      rescue
+        $$$RESCUE_CLAUSES
+    message: Found rescue block
+    severity: info
+    language: elixir
+
+  # Database Patterns
+  - id: find-ecto-queries
+    pattern: |
+      from($VAR in $SCHEMA, $$$QUERY)
+    message: Found Ecto query
+    severity: info
+    language: elixir
+
+  - id: find-repo-operations
+    pattern: |
+      Repo.$OPERATION($$$ARGS)
+    message: Found Repo operation
+    severity: info
+    language: elixir
+
+  # SelectoComponents Patterns
+  - id: find-selecto-form-usage
+    pattern: |
+      use SelectoComponents.Form
+    message: Found SelectoComponents.Form usage
+    severity: info
+    language: elixir
+
+  - id: find-debug-panel
+    pattern: |
+      SelectoComponents.Debug.DebugDisplay
+    message: Found debug display component
+    severity: info
+    language: elixir

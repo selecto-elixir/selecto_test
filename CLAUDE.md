@@ -2,6 +2,24 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Available Tools
+
+**AST-Grep**: This project has ast-grep configured for advanced code searching and refactoring.
+```bash
+# Search for patterns
+ast-grep --pattern 'Selecto.execute($$$)' --lang elixir
+ast-grep --pattern 'Mix.env()' --lang elixir
+ast-grep --pattern '{:error, $ERROR}' --lang elixir
+
+# Run configured rules
+ast-grep scan                    # Scan with all rules
+ast-grep scan --rule no-mix-env-in-runtime  # Run specific rule
+
+# Configuration files:
+# - .ast-grep/rules.yml - Project-specific rules and patterns
+# - .ast-grep/sgconfig.yml - AST-grep configuration
+```
+
 ## Development Commands
 
 **Setup and Dependencies:**
