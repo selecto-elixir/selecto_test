@@ -191,7 +191,8 @@
       "Bash(PORT=4089 timeout 30 mix phx.server --no-halt)",
       "Bash(ast-grep scan:*)",
       "Bash(ast-grep:*)",
-      "Bash(PORT=4095 timeout 10 mix phx.server --no-halt)"
+      "Bash(PORT=4095 timeout 10 mix phx.server --no-halt)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
