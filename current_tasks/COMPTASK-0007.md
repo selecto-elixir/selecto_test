@@ -1,6 +1,7 @@
 # COMPTASK-0007: Sortable Table Columns
 
-## Status: Not Started
+## Status: Partially Complete  
+## Completion Date: 2025-09-10 (detail view done)
 ## Priority: HIGH
 ## Effort: 1 day
 ## Phase: 1.2
@@ -10,12 +11,12 @@
 Implement sortable columns in both aggregate and detail tables with support for multi-column sorting.
 
 ## Acceptance Criteria
-- [ ] Click column headers to sort
-- [ ] Visual indicators for sort direction
-- [ ] Support multi-column sorting (shift-click)
-- [ ] Sort order persists during pagination
-- [ ] Sort configuration saved in view state
-- [ ] Works with both aggregate and detail views
+- [x] Click column headers to sort (UI implemented)
+- [x] Visual indicators for sort direction
+- [x] Support multi-column sorting (shift-click)
+- [x] Sort order persists during pagination (implemented in detail view)
+- [x] Sort configuration saved in view state (implemented in detail view)
+- [ ] Works with both aggregate and detail views (detail done, aggregate pending)
 - [ ] Accessible keyboard navigation
 
 ## Technical Requirements
