@@ -1,6 +1,6 @@
 # COMPTASK-0008: Column Resizing and Reordering
 
-## Status: Not Started
+## Status: Completed
 ## Priority: HIGH
 ## Effort: 1 day
 ## Phase: 1.2
