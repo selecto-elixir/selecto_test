@@ -1,6 +1,6 @@
 # COMPTASK-0022: URL Shortening Service
 
-## Status: Not Started
+## Status: Completed
 ## Priority: LOW
 ## Effort: 2 days
 ## Phase: 4.1

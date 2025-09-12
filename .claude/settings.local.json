@@ -199,7 +199,15 @@
       "Bash(then basename \"$file\")",
       "Bash(fi)",
       "Bash(while read file)",
-      "Bash(do grep -H \"Status: Not Started\" \"$file\")"
+      "Bash(do grep -H \"Status: Not Started\" \"$file\")",
+      "Bash(awk:*)",
+      "Bash(file=\"/data/chris/projects/selecto_test/current_tasks/COMPTASK-00$i.md\")",
+      "Bash(if [ -f \"$file\" ])",
+      "Bash(then)",
+      "Bash(break)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(head:*)",
+      "Bash(TEST_MYSQL=true elixir test_mysql_config.exs)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

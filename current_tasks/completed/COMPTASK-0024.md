@@ -1,6 +1,6 @@
 # COMPTASK-0024: Subselect UI Components
 
-## Status: Not Started
+## Status: Completed
 ## Priority: HIGH
 ## Effort: 3 days
 ## Phase: 4.2

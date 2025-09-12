@@ -1,6 +1,6 @@
 # COMPTASK-0023: Shareable View Links
 
-## Status: Not Started
+## Status: Completed
 ## Priority: MEDIUM
 ## Effort: 1 day
 ## Phase: 4.1

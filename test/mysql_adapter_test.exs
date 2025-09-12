@@ -15,24 +15,34 @@ defmodule Selecto.DB.MySQLTest do
   ]
   
   setup_all do
-    # Check if MySQL is available for testing
-    case MySQL.connect(@mysql_config) do
-      {:ok, conn} ->
-        MySQL.disconnect(conn)
-        :ok
-      {:error, reason} ->
-        IO.puts("MySQL not available for testing: #{inspect(reason)}. All tests will be skipped.")
-        :ok
+    # Skip setup if MySQL tests are excluded
+    if :mysql_integration in ExUnit.configuration()[:exclude] do
+      :ok
+    else
+      # Check if MySQL is available for testing
+      case MySQL.connect(@mysql_config) do
+        {:ok, conn} ->
+          MySQL.disconnect(conn)
+          :ok
+        {:error, reason} ->
+          IO.puts("MySQL not available for testing: #{inspect(reason)}. All tests will be skipped.")
+          :ok
+      end
     end
   end
   
-  setup do
-    # Try to connect before each test
-    case MySQL.connect(@mysql_config) do
-      {:ok, _conn} ->
-        :ok
-      {:error, _} ->
-        {:skip, "MySQL not available"}
+  setup context do
+    # Skip if tests are excluded via tag
+    if Map.get(context, :skip, false) do
+      :ok
+    else
+      # Try to connect before each test
+      case MySQL.connect(@mysql_config) do
+        {:ok, _conn} ->
+          :ok
+        {:error, _} ->
+          {:skip, "MySQL not available"}
+      end
     end
   end
   

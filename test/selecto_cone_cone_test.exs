@@ -13,6 +13,7 @@ defmodule SelectoCone.ConeTest do
         domain,
         SelectoTest.Repo,
         provider,
+        validate: false,
         depth_limit: 3,
         validations: [
           {:rentals, :inventory_id, {:validate_with, :inventory}}
@@ -43,6 +44,7 @@ defmodule SelectoCone.ConeTest do
         domain,
         SelectoTest.Repo,
         provider,
+        validate: false,
         changeset_module: MyApp.CustomChangeset
       )
       
@@ -59,6 +61,7 @@ defmodule SelectoCone.ConeTest do
         domain,
         SelectoTest.Repo,
         provider,
+        validate: false,
         behaviors: behaviors
       )
       
@@ -248,6 +251,7 @@ defmodule SelectoCone.ConeTest do
         domain,
         SelectoTest.Repo,
         provider,
+        validate: false,
         validations: [
           {:author_id, {:validate_with, :authors}},
           {:comments, :author_id, {:validate_with, :authors}}
@@ -285,6 +289,7 @@ defmodule SelectoCone.ConeTest do
         domain,
         SelectoTest.Repo,
         provider,
+        validate: false,
         depth_limit: 3
       )
       
@@ -338,14 +343,14 @@ defmodule SelectoCone.ConeTest do
       name: "Inventory"
     }
     
-    Provider.init(domain, SelectoTest.Repo, %{}, :public)
+    Provider.init(domain, SelectoTest.Repo, %{}, :public, validate: false)
   end
   
   defp create_test_cone do
     provider = create_test_provider()
     domain = create_customer_domain()
     
-    Cone.init(domain, SelectoTest.Repo, provider)
+    Cone.init(domain, SelectoTest.Repo, provider, validate: false)
   end
   
   defp create_test_cone_with_rentals do
@@ -356,6 +361,7 @@ defmodule SelectoCone.ConeTest do
       domain,
       SelectoTest.Repo,
       provider,
+      validate: false,
       validations: [
         {:rentals, :inventory_id, {:validate_with, :inventory}}
       ]
@@ -369,6 +375,7 @@ defmodule SelectoCone.ConeTest do
       domain,
       SelectoTest.Repo,
       provider,
+      validate: false,
       validations: [
         {:rentals, :inventory_id, {:validate_with, :inventory}}
       ]
@@ -379,7 +386,7 @@ defmodule SelectoCone.ConeTest do
     provider = create_test_provider()
     domain = create_deep_nested_domain()
     
-    Cone.init(domain, SelectoTest.Repo, provider, depth_limit: 3)
+    Cone.init(domain, SelectoTest.Repo, provider, validate: false, depth_limit: 3)
   end
   
   defp create_customer_domain do
@@ -414,7 +421,7 @@ defmodule SelectoCone.ConeTest do
         },
         associations: %{
           rentals: %{
-            queryable: SelectoTest.Store.Rental,
+            queryable: "rental",
             cardinality: :many
           }
         }
@@ -422,8 +429,10 @@ defmodule SelectoCone.ConeTest do
       schemas: %{
         rentals: %{
           source_table: "rental",
+          primary_key: :rental_id,
           fields: [:rental_id, :rental_date, :inventory_id],
           columns: %{
+            rental_id: %{type: :integer},
             rental_date: %{type: :utc_datetime, required: true},
             inventory_id: %{type: :integer, required: true}
           }
@@ -443,16 +452,24 @@ defmodule SelectoCone.ConeTest do
         },
         associations: %{
           rentals: %{
-            queryable: SelectoTest.Store.Rental,
+            queryable: "rental",
             cardinality: :many
           }
         }
       },
       schemas: %{
         rentals: %{
+          source_table: "rental",
+          primary_key: :rental_id,
+          fields: [:rental_id, :rental_date, :inventory_id],
+          columns: %{
+            rental_id: %{type: :integer},
+            rental_date: %{type: :utc_datetime},
+            inventory_id: %{type: :integer}
+          },
           associations: %{
             inventory: %{
-              queryable: SelectoTest.Store.Inventory,
+              queryable: "inventory",
               cardinality: :one
             }
           }
@@ -502,15 +519,18 @@ defmodule SelectoCone.ConeTest do
         },
         associations: %{
           comments: %{
-            queryable: SelectoTest.Blog.Comment,
+            queryable: "comment",
             cardinality: :many
           }
         }
       },
       schemas: %{
         comments: %{
+          source_table: "comment",
+          primary_key: :id,
           fields: [:id, :body, :author_id],
           columns: %{
+            id: %{type: :integer},
             body: %{type: :text, required: true},
             author_id: %{type: :integer, required: true}
           }
@@ -530,7 +550,7 @@ defmodule SelectoCone.ConeTest do
       schemas: %{},
       name: "SolarSystem"
     }
-    Provider.init(domain, SelectoTest.Repo, %{}, :public)
+    Provider.init(domain, SelectoTest.Repo, %{}, :public, validate: false)
   end
   
   defp create_solar_system_domain do
@@ -544,7 +564,7 @@ defmodule SelectoCone.ConeTest do
         },
         associations: %{
           planets: %{
-            queryable: SelectoTest.Test.Planet,
+            queryable: "planet",
             cardinality: :many
           }
         }
@@ -558,7 +578,7 @@ defmodule SelectoCone.ConeTest do
           },
           associations: %{
             satellites: %{
-              queryable: SelectoTest.Test.Satellite,
+              queryable: "satellite",
               cardinality: :many
             }
           }

@@ -1,6 +1,6 @@
 # COMPTASK-0013: Saved Filter Sets
 
-## Status: Not Started
+## Status: Completed
 ## Priority: MEDIUM
 ## Effort: 1 day
 ## Phase: 1.3

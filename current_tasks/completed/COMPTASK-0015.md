@@ -1,6 +1,6 @@
 # COMPTASK-0015: Inline Editing in Tables
 
-## Status: Not Started
+## Status: Completed
 ## Priority: HIGH
 ## Effort: 2 days
 ## Phase: 2.1

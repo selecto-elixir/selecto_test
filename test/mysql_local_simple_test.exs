@@ -1,6 +1,9 @@
 defmodule MySQLLocalSimpleTest do
   use ExUnit.Case, async: false
   
+  # Skip MySQL-dependent tests by default
+  @moduletag :mysql_integration
+  
   alias Selecto.DB.MySQL
   
   @mysql_config [
@@ -12,17 +15,22 @@ defmodule MySQLLocalSimpleTest do
   ]
   
   setup_all do
-    # Use local MySQL installation
-    IO.puts("Connecting to local MySQL installation...")
-    
-    # Create test database and schema
-    setup_mysql_test_db()
-    
-    on_exit(fn ->
-      cleanup_mysql_test_data()
-    end)
-    
-    :ok
+    # Skip setup if MySQL tests are excluded
+    if :mysql_integration in ExUnit.configuration()[:exclude] do
+      :ok
+    else
+      # Use local MySQL installation
+      IO.puts("Connecting to local MySQL installation...")
+      
+      # Create test database and schema
+      setup_mysql_test_db()
+      
+      on_exit(fn ->
+        cleanup_mysql_test_data()
+      end)
+      
+      :ok
+    end
   end
   
   defp setup_mysql_test_db do

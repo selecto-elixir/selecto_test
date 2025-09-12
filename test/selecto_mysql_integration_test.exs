@@ -1,6 +1,9 @@
 defmodule SelectoMySQLIntegrationTest do
   use ExUnit.Case, async: false
   
+  # Skip MySQL-dependent tests by default
+  @moduletag :mysql_integration
+  
   alias Selecto.DB.MySQL
   alias Selecto
   
@@ -13,17 +16,22 @@ defmodule SelectoMySQLIntegrationTest do
   ]
   
   setup_all do
-    # Use local MySQL installation instead of Docker
-    IO.puts("Connecting to local MySQL installation...")
-    
-    # Create test database and schema
-    setup_mysql_test_db()
-    
-    on_exit(fn ->
-      cleanup_mysql_test_data()
-    end)
-    
-    :ok
+    # Skip setup if MySQL tests are excluded
+    if :mysql_integration in ExUnit.configuration()[:exclude] do
+      :ok
+    else
+      # Use local MySQL installation instead of Docker
+      IO.puts("Connecting to local MySQL installation...")
+      
+      # Create test database and schema
+      setup_mysql_test_db()
+      
+      on_exit(fn ->
+        cleanup_mysql_test_data()
+      end)
+      
+      :ok
+    end
   end
   
   # No longer needed - using local MySQL
