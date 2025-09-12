@@ -209,7 +209,8 @@
       "Bash(head:*)",
       "Bash(TEST_MYSQL=true elixir test_mysql_config.exs)",
       "Bash(kill:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
