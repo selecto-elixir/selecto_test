@@ -92,9 +92,9 @@ defmodule CaseExpressionSimpleTest do
 
       # Verify SQL structure
       assert sql_string =~ "CASE"
-      assert sql_string =~ "selecto_root\".\"price\" >= $1"
-      assert sql_string =~ "selecto_root\".\"price\" >= $3"
-      assert sql_string =~ "selecto_root\".\"price\" > $5"
+      assert sql_string =~ "selecto_root.price >= $1"
+      assert sql_string =~ "selecto_root.price >= $3"
+      assert sql_string =~ "selecto_root.price > $5"
       assert sql_string =~ "ELSE $7"
       assert sql_string =~ "END AS price_tier"
 
@@ -158,12 +158,12 @@ defmodule CaseExpressionSimpleTest do
 
       # Verify SQL structure for complex conditions
       assert sql_string =~ "CASE"
-      assert sql_string =~ "selecto_root\".\"status\" = $1"
-      assert sql_string =~ "selecto_root\".\"priority\" = $2"
-      assert sql_string =~ "selecto_root\".\"vip\" = $3"
+      assert sql_string =~ "selecto_root.status = $1"
+      assert sql_string =~ "selecto_root.priority = $2"
+      assert sql_string =~ "selecto_root.vip = $3"
       assert sql_string =~ "THEN $4"
-      assert sql_string =~ "selecto_root\".\"status\" = $5"
-      assert sql_string =~ "selecto_root\".\"status\" = $7"
+      assert sql_string =~ "selecto_root.status = $5"
+      assert sql_string =~ "selecto_root.status = $7"
       assert sql_string =~ "ELSE $9"
       assert sql_string =~ "END AS handling"
 

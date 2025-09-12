@@ -169,7 +169,7 @@ defmodule SelectoComponentsErrorHandlingTest do
       assert ErrorCategorizer.recovery_suggestion(connection_error) =~ "refresh"
       
       lifecycle_error = %{category: :lifecycle}
-      assert ErrorCategorizer.recovery_suggestion(lifecycle_error) =~ "refresh the view"
+      assert ErrorCategorizer.recovery_suggestion(lifecycle_error) =~ "refreshing the view"
       
       unknown_error = %{category: :unknown}
       assert ErrorCategorizer.recovery_suggestion(unknown_error) == nil
