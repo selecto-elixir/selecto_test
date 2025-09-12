@@ -210,7 +210,10 @@
       "Bash(TEST_MYSQL=true elixir test_mysql_config.exs)",
       "Bash(kill:*)",
       "Bash(python3:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(do grep -l \"Status: Completed\" \"$file\")",
+      "Bash(xargs:*)",
+      "Bash(PORT=4000 mix phx.server)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
