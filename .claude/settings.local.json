@@ -207,7 +207,8 @@
       "Bash(break)",
       "Bash(do echo \"=== $file ===\")",
       "Bash(head:*)",
-      "Bash(TEST_MYSQL=true elixir test_mysql_config.exs)"
+      "Bash(TEST_MYSQL=true elixir test_mysql_config.exs)",
+      "Bash(kill:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
