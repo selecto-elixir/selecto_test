@@ -52,6 +52,22 @@ defmodule SelectoTestWeb.PagilaLive do
     {:noreply, assign(socket, show_view_configurator: !socket.assigns.show_view_configurator)}
   end
 
+  @impl true
+  def handle_info({:apply_filter_set, filter_set}, socket) do
+    # Convert the saved filters from the filter set into the view_config format
+    filters = filter_set.filters
+    |> Enum.map(fn {uuid, filter_data} ->
+      {uuid, "filters", filter_data}
+    end)
+
+    # Update the view_config with the loaded filters
+    view_config = Map.put(socket.assigns.view_config, :filters, filters)
+
+    {:noreply,
+     socket
+     |> assign(view_config: view_config)
+     |> assign(page_title: "View: #{filter_set.name}")}
+  end
 
   @doc """
   Test Domain

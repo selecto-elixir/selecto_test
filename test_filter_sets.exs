@@ -10,7 +10,7 @@ IO.puts "Testing filter set creation..."
 attrs = %{
   name: "Test Filter Set",
   description: "A test filter set",
-  domain: "/pagila",
+  domain: "pagila",
   filters: %{
     "actor_id" => %{"comp" => ">", "value" => "10", "filter" => "actor_id"},
     "first_name" => %{"comp" => "starts", "value" => "A", "filter" => "first_name"}
