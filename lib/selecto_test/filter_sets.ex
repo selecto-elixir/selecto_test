@@ -3,19 +3,40 @@ defmodule SelectoTest.FilterSets do
   Context for managing saved filter sets.
   """
   
+  @behaviour SelectoComponents.FilterSetsBehaviour
+  
   import Ecto.Query, warn: false
   alias SelectoTest.Repo
   alias SelectoTest.FilterSets.FilterSet
   
   @doc """
-  Lists all filter sets for a user and domain.
+  Lists personal filter sets for a user and domain.
   """
-  def list_filter_sets(user_id, domain) do
+  def list_personal_filter_sets(user_id, domain) do
     FilterSet
     |> where([f], f.user_id == ^user_id and f.domain == ^domain)
-    |> or_where([f], f.is_shared == true and f.domain == ^domain)
-    |> or_where([f], f.is_system == true and f.domain == ^domain)
+    |> where([f], f.is_shared == false and f.is_system == false)
     |> order_by([f], [desc: f.is_default, asc: f.name])
+    |> Repo.all()
+  end
+  
+  @doc """
+  Lists shared filter sets for a domain.
+  """
+  def list_shared_filter_sets(_user_id, domain) do
+    FilterSet
+    |> where([f], f.is_shared == true and f.domain == ^domain)
+    |> order_by([f], asc: f.name)
+    |> Repo.all()
+  end
+  
+  @doc """
+  Lists system filter sets for a domain.
+  """
+  def list_system_filter_sets(domain) do
+    FilterSet
+    |> where([f], f.is_system == true and f.domain == ^domain)
+    |> order_by([f], asc: f.name)
     |> Repo.all()
   end
   
@@ -24,7 +45,7 @@ defmodule SelectoTest.FilterSets do
   """
   def get_filter_set!(id), do: Repo.get!(FilterSet, id)
   
-  def get_filter_set(id) do
+  def get_filter_set(id, _user_id) do
     case Repo.get(FilterSet, id) do
       nil -> {:error, :not_found}
       filter_set -> {:ok, filter_set}
@@ -51,25 +72,37 @@ defmodule SelectoTest.FilterSets do
   @doc """
   Updates a filter set.
   """
-  def update_filter_set(%FilterSet{} = filter_set, attrs) do
-    # If setting as default, unset other defaults
-    attrs = if Map.get(attrs, :is_default) || Map.get(attrs, "is_default") do
-      unset_defaults(filter_set.user_id, filter_set.domain)
-      attrs
+  def update_filter_set(id, attrs, user_id) do
+    with {:ok, filter_set} <- get_filter_set(id, user_id),
+         true <- filter_set.user_id == user_id do
+      # If setting as default, unset other defaults
+      attrs = if Map.get(attrs, :is_default) || Map.get(attrs, "is_default") do
+        unset_defaults(filter_set.user_id, filter_set.domain)
+        attrs
+      else
+        attrs
+      end
+      
+      filter_set
+      |> FilterSet.changeset(attrs)
+      |> Repo.update()
     else
-      attrs
+      false -> {:error, :unauthorized}
+      error -> error
     end
-    
-    filter_set
-    |> FilterSet.changeset(attrs)
-    |> Repo.update()
   end
   
   @doc """
   Deletes a filter set.
   """
-  def delete_filter_set(%FilterSet{} = filter_set) do
-    Repo.delete(filter_set)
+  def delete_filter_set(id, user_id) do
+    with {:ok, filter_set} <- get_filter_set(id, user_id),
+         true <- filter_set.user_id == user_id do
+      Repo.delete(filter_set)
+    else
+      false -> {:error, :unauthorized}
+      error -> error
+    end
   end
   
   @doc """
@@ -82,14 +115,14 @@ defmodule SelectoTest.FilterSets do
   @doc """
   Duplicates a filter set.
   """
-  def duplicate_filter_set(id, user_id) do
-    with {:ok, original} <- get_filter_set(id) do
+  def duplicate_filter_set(id, new_name, user_id) do
+    with {:ok, original} <- get_filter_set(id, user_id) do
       attrs = Map.from_struct(original)
       |> Map.delete(:__meta__)
       |> Map.delete(:id)
       |> Map.delete(:inserted_at)
       |> Map.delete(:updated_at)
-      |> Map.put(:name, "#{original.name} (Copy)")
+      |> Map.put(:name, new_name || "#{original.name} (Copy)")
       |> Map.put(:user_id, user_id)
       |> Map.put(:is_default, false)
       |> Map.put(:usage_count, 0)
@@ -101,21 +134,25 @@ defmodule SelectoTest.FilterSets do
   @doc """
   Increments the usage count for a filter set.
   """
-  def increment_usage(id) do
+  def increment_usage_count(id) do
     from(f in FilterSet, where: f.id == ^id)
     |> Repo.update_all(inc: [usage_count: 1])
+    :ok
   end
   
   @doc """
   Sets a filter set as default for a user/domain.
   """
-  def set_as_default(id, user_id) do
-    with {:ok, filter_set} <- get_filter_set(id),
+  def set_default_filter_set(id, user_id) do
+    with {:ok, filter_set} <- get_filter_set(id, user_id),
          true <- filter_set.user_id == user_id do
       unset_defaults(user_id, filter_set.domain)
-      update_filter_set(filter_set, %{is_default: true})
+      filter_set
+      |> FilterSet.changeset(%{is_default: true})
+      |> Repo.update()
     else
-      _ -> {:error, :unauthorized}
+      false -> {:error, :unauthorized}
+      error -> error
     end
   end
   
@@ -133,8 +170,8 @@ defmodule SelectoTest.FilterSets do
   @doc """
   Exports a filter set as JSON.
   """
-  def export_filter_set(id) do
-    with {:ok, filter_set} <- get_filter_set(id) do
+  def export_filter_set(id, user_id) do
+    with {:ok, filter_set} <- get_filter_set(id, user_id) do
       json = %{
         name: filter_set.name,
         description: filter_set.description,
@@ -175,8 +212,8 @@ defmodule SelectoTest.FilterSets do
   @doc """
   Generates a shareable URL for a filter set.
   """
-  def generate_share_url(id, base_url) do
-    with {:ok, filter_set} <- get_filter_set(id) do
+  def generate_share_url(id, user_id, base_url) do
+    with {:ok, filter_set} <- get_filter_set(id, user_id) do
       # Encode the filters as a compressed base64 string
       encoded = filter_set.filters
       |> Jason.encode!()

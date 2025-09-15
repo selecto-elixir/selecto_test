@@ -33,6 +33,11 @@ defmodule SelectoTestWeb.PagilaLive do
         my_path: path,
         saved_view_module: SelectoTest.PagilaDomain,
         saved_view_context: path,
+        
+        # Filter sets adapter
+        filter_sets_adapter: SelectoTest.FilterSets,
+        user_id: "demo_user", # In a real app, this would come from the session
+        domain: path,
 
         ### For saved view links
         path: path,
