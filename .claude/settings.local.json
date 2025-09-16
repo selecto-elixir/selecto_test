@@ -214,7 +214,8 @@
       "Bash(do grep -l \"Status: Completed\" \"$file\")",
       "Bash(xargs:*)",
       "Bash(PORT=4000 mix phx.server)",
-      "Bash(PORT=4000 timeout 10 mix phx.server --no-halt)"
+      "Bash(PORT=4000 timeout 10 mix phx.server --no-halt)",
+      "Bash(PORT=4087 mix phx.server)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

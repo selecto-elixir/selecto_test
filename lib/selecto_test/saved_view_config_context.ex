@@ -132,6 +132,14 @@ defmodule SelectoTest.SavedViewConfigContext do
       end
 
       @doc """
+      Load a view configuration by name.
+      Alias for get_view_config for compatibility.
+      """
+      def load_view_config(name, context, view_type, opts \\ []) do
+        get_view_config(name, context, view_type, opts)
+      end
+
+      @doc """
       Update a view configuration.
       """
       def update_view_config(name, context, view_type, params, opts \\ []) do
