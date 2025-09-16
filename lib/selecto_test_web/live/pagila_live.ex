@@ -34,6 +34,10 @@ defmodule SelectoTestWeb.PagilaLive do
         saved_view_module: SelectoTest.PagilaDomain,
         saved_view_context: path,
 
+        # New saved view configs with view type separation
+        saved_view_config_module: module,
+        current_user_id: "demo_user", # In a real app, this would come from the session
+
         # Filter sets adapter
         filter_sets_adapter: SelectoTest.FilterSets,
         user_id: "demo_user", # In a real app, this would come from the session

@@ -4,6 +4,7 @@ defmodule SelectoTest.PagilaDomain do
   import SelectoComponents.Components.Common
 
   use SelectoTest.SavedViewContext
+  use SelectoTest.SavedViewConfigContext
   # Film rating aggregation filters have been tested and are working correctly as per test results
 
   def actors_domain() do

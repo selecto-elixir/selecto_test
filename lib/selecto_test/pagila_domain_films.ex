@@ -1,6 +1,7 @@
 defmodule SelectoTest.PagilaDomainFilms do
   use SelectoTestWeb, :verified_routes
   use SelectoTest.SavedViewContext
+  use SelectoTest.SavedViewConfigContext
 
   # Fixed: rating filter configured in filters section for dropdown UI
 
