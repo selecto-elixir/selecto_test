@@ -33,7 +33,7 @@ defmodule SelectoTestWeb.PagilaLive do
         my_path: path,
         saved_view_module: SelectoTest.PagilaDomain,
         saved_view_context: path,
-        
+
         # Filter sets adapter
         filter_sets_adapter: SelectoTest.FilterSets,
         user_id: "demo_user", # In a real app, this would come from the session
@@ -41,7 +41,12 @@ defmodule SelectoTestWeb.PagilaLive do
 
         ### For saved view links
         path: path,
-        available_saved_views: saved_views
+        available_saved_views: saved_views,
+
+        # Enable modal detail view (opt-in feature)
+        enable_modal_detail: true,
+        show_detail_modal: false,
+        modal_detail_data: nil
       )
 
     {:ok, assign(socket, state)}

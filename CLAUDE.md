@@ -192,3 +192,4 @@ When making changes, you may need to modify code across multiple projects to mai
 - **Multi-Environment**: Development, test, and production configurations with Docker support
 - remember to always use case insensitive tests for SQL keywords
 - remember that selecto and all the other items in vendor/ are in scope
+- when adding code, make sure it does not create warnings
