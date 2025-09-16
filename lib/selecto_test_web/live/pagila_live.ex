@@ -79,33 +79,17 @@ defmodule SelectoTestWeb.PagilaLive do
   end
 
   def handle_info({:apply_view_config, saved_config}, socket) do
-    IO.puts("=== APPLYING VIEW CONFIG IN LIVEVIEW ===")
-    IO.puts("Received saved_config:")
-    IO.inspect(saved_config, pretty: true, limit: :infinity)
-
     # Apply the loaded view configuration params
     # Convert string keys to atoms for consistency
     params = saved_config.params || %{}
-
-    IO.puts("Params before atomization:")
-    IO.inspect(params, pretty: true, limit: :infinity)
-
     params = deep_atomize_keys(params)
-
-    IO.puts("Params after atomization:")
-    IO.inspect(params, pretty: true, limit: :infinity)
 
     # Get the current view type
     view_type = socket.assigns.view_config.view_mode || "detail"
     view_type_atom = String.to_existing_atom(view_type)
 
-    IO.puts("View type: #{view_type}, atom: #{inspect(view_type_atom)}")
-
     # Extract the saved configuration for this view type
     saved_view_config = Map.get(params, view_type_atom, Map.get(params, view_type, %{}))
-
-    IO.puts("Extracted view config for #{view_type}:")
-    IO.inspect(saved_view_config, pretty: true, limit: :infinity)
 
     # For detail view, we need to update the selecto object with the columns
     socket = case view_type do
@@ -130,15 +114,9 @@ defmodule SelectoTestWeb.PagilaLive do
           Map.get(col, "field", Map.get(col, :field))
         end)
 
-        IO.puts("Fields to select:")
-        IO.inspect(fields, pretty: true)
-
         # Clear existing selections and apply new ones
         selecto = %{selecto | set: %{selecto.set | selected: [], columns: []}}
         selecto = Selecto.select(selecto, fields)
-
-        IO.puts("Selecto after select:")
-        IO.inspect(selecto.set.selected, pretty: true, limit: :infinity)
 
         # Apply order by
         order_by_fields = Enum.map(order_by, fn
@@ -181,9 +159,6 @@ defmodule SelectoTestWeb.PagilaLive do
       _ ->
         view_config
     end
-
-    IO.puts("Final view_config being set:")
-    IO.inspect(view_config, pretty: true, limit: :infinity)
 
     # Force the Form component to re-render with the new view_config
     socket = socket

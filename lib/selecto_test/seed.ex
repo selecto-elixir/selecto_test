@@ -58,8 +58,6 @@ defmodule SelectoTest.Seed do
   end
 
   defp seed_saved_views() do
-    IO.puts("Seeding saved views...")
-    
     # Graph View: Film Ratings Distribution
     insert_or_update_view(%{
       name: "Film Ratings Distribution",
@@ -276,8 +274,6 @@ defmodule SelectoTest.Seed do
         }
       }
     })
-
-    IO.puts("✓ Saved views seeded successfully")
   end
 
   defp insert_or_update_view(attrs) do

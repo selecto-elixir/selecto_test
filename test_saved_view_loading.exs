@@ -1,39 +1,24 @@
-# Test script to verify saved view loading
-# Run with: mix run test_saved_view_loading.exs
+#!/usr/bin/env elixir
 
-alias SelectoTest.Repo
-alias SelectoTest.SavedViewConfig
+# Test script to verify saved view loading with order_by dir settings
 
-IO.puts("\n=== Testing Saved View Loading ===\n")
+IO.puts("""
+Testing Saved View Loading with Order By Direction
 
-# Get the test saved view
-case Repo.get_by(SavedViewConfig, name: "test", context: "/pagila", view_type: "detail") do
-  nil ->
-    IO.puts("❌ No saved view found with name 'test'")
+Steps to test:
+1. Navigate to http://localhost:4085/pagila
+2. Click 'View Configuration' to open the form
+3. Go to the Detail view tab
+4. Add a column to Order By list
+5. Set it to Descending
+6. Save the view configuration with a name
+7. Reload the page
+8. Load the saved view
+9. Check if the Descending radio button is selected
 
-  config ->
-    IO.puts("✅ Found saved view 'test'")
-    IO.puts("\nView configuration:")
-    IO.inspect(config.params, pretty: true, limit: :infinity)
+Watch the console output for debug messages showing:
+- The order_by params being loaded
+- The resulting view_config structure
 
-    # Check the detail view config
-    detail_config = config.params["detail"] || config.params[:detail]
-
-    if detail_config do
-      selected = detail_config["selected"] || detail_config[:selected] || []
-      IO.puts("\n📋 Saved columns (#{length(selected)} total):")
-
-      Enum.each(selected, fn
-        [_uuid, field, _data] ->
-          IO.puts("  • #{field}")
-        {_uuid, field, _data} ->
-          IO.puts("  • #{field}")
-        _ ->
-          IO.puts("  • (unknown format)")
-      end)
-    else
-      IO.puts("\n⚠️  No detail configuration found in saved view")
-    end
-end
-
-IO.puts("\n=== End Test ===\n")
+Expected: The dir field should be preserved and the correct radio button should be selected.
+""")
