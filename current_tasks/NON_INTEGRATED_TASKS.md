@@ -26,15 +26,15 @@ Generated: 2025-09-11
    - Integration needed: Enable edit mode in Detail view table cells
    - Impact: Allows direct data manipulation
 
-4. **COMPTASK-0024: Subselect UI Components**
-   - Status: Components exist in `subselect/` directory
-   - Integration needed: Add subselect builder to filter panel
-   - Impact: Enables complex nested queries
+4. **COMPTASK-0024: Subselect UI Components** 🗑️ REMOVED
+   - Status: Components removed from codebase (available in git history)
+   - Decision: Removed for reconsideration of approach
+   - Impact: Will revisit complex nested query UI in future
 
-5. **COMPTASK-0025: CTE Visualization and Management**
-   - Status: Components exist in `cte/` directory
-   - Integration needed: Add CTE builder and visualizer to form
-   - Impact: Supports advanced SQL patterns
+5. **COMPTASK-0025: CTE Visualization and Management** 🗑️ REMOVED
+   - Status: Components removed from codebase (available in git history)
+   - Decision: Removed for reconsideration of approach
+   - Impact: Will revisit CTE builder UI in future
 
 ### Medium Priority Integration Needs
 
@@ -63,10 +63,10 @@ Generated: 2025-09-11
     - Integration needed: Add selection checkboxes and bulk action dropdown
     - Impact: Enables batch operations
 
-11. **COMPTASK-0023: Shareable View Links**
-    - Status: Components exist at `sharing/link_generator.ex` and `link_preview.ex`
-    - Integration needed: Add share button and link generation UI
-    - Impact: Easy view sharing
+11. **COMPTASK-0023: Shareable View Links** 🗑️ REMOVED
+    - Status: Components removed from codebase (available in git history)
+    - Decision: Removed for reconsideration of approach
+    - Impact: Will revisit view sharing UI in future
 
 12. **COMPTASK-0026: Performance Monitoring Dashboard** ✅ COMPLETED
     - Status: Fully integrated
@@ -80,10 +80,10 @@ Generated: 2025-09-11
     - Integration needed: Add theme switcher to UI and apply theme classes
     - Impact: Customizable appearance
 
-14. **COMPTASK-0022: URL Shortening Service**
-    - Status: Implemented in main app at `lib/selecto_test/url_shortener.ex`
-    - Integration needed: Connect to shareable links feature
-    - Impact: Cleaner URLs for sharing
+14. **COMPTASK-0022: URL Shortening Service** 🗑️ REMOVED
+    - Status: Components removed from codebase (available in git history)
+    - Decision: Removed for reconsideration of approach
+    - Impact: Will revisit URL shortening in future
 
 ## Integration Recommendations
 
@@ -99,8 +99,8 @@ Generated: 2025-09-11
 
 ### Significant Effort (1-2 days each)
 - Inline Editing (COMPTASK-0015) - Complex state management
-- Subselect UI (COMPTASK-0024) - Complex UI interactions
-- CTE Visualization (COMPTASK-0025) - Graph rendering
+- ~~Subselect UI (COMPTASK-0024)~~ 🗑️ Removed - Will reconsider approach
+- ~~CTE Visualization (COMPTASK-0025)~~ 🗑️ Removed - Will reconsider approach
 
 ## Next Steps
 
