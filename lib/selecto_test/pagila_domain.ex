@@ -149,11 +149,13 @@ defmodule SelectoTest.PagilaDomain do
             # Note: Multiple selections of same column with different parameters need proper handling
             ~w(actor_id first_name last_name) ++
               [
-                {:subquery, "array(select row( f.title, f.release_year )
-                      from film f join film_actor af on f.film_id = af.film_id
-                      where af.actor_id = selecto_root.actor_id
-                      order by release_year desc
-                      limit ^SelectoParam^)", [limit]}
+                {:subquery, [
+                  "array(select row( f.title, f.release_year )",
+                  " from film f join film_actor af on f.film_id = af.film_id",
+                  " where af.actor_id = selecto_root.actor_id",
+                  " order by release_year desc",
+                  " limit ", {:param, limit}, ")"
+                ], []}
               ]
           end,
           format: :component,
