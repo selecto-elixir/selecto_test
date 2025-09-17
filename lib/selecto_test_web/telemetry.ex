@@ -74,7 +74,47 @@ defmodule SelectoTestWeb.Telemetry do
           "The time the connection spent waiting before being checked out for the query"
       ),
 
+      # Selecto Metrics
+      summary("selecto.query.complete.duration",
+        event_name: [:selecto, :query, :complete],
+        measurement: :duration,
+        unit: {:native, :millisecond},
+        description: "Selecto query execution time",
+        tags: [],
+        tag_values: &(&1)
+      ),
+      summary("selecto.query.complete.execution_time",
+        event_name: [:selecto, :query, :complete],
+        measurement: :execution_time,
+        unit: {:native, :millisecond},
+        description: "Time spent executing the query",
+        tags: [],
+        tag_values: &(&1)
+      ),
+      counter("selecto.query.error.count",
+        event_name: [:selecto, :query, :error],
+        measurement: :count,
+        description: "Number of query errors",
+        tags: [],
+        tag_values: &(&1)
+      ),
+      counter("selecto.cache.hit.count",
+        event_name: [:selecto, :cache, :hit],
+        measurement: :count,
+        description: "Number of cache hits",
+        tags: [],
+        tag_values: &(&1)
+      ),
+      counter("selecto.cache.miss.count",
+        event_name: [:selecto, :cache, :miss],
+        measurement: :count,
+        description: "Number of cache misses",
+        tags: [],
+        tag_values: &(&1)
+      ),
+
       # VM Metrics
+
       summary("vm.memory.total", unit: {:byte, :kilobyte}),
       summary("vm.total_run_queue_lengths.total"),
       summary("vm.total_run_queue_lengths.cpu"),
