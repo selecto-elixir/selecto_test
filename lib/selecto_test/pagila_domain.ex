@@ -124,6 +124,11 @@ defmodule SelectoTest.PagilaDomain do
       # Custom columns that cannot be created from the schema
       custom_columns: %{
         ### Example custom column with group-by and filter directives
+        # Test error column - will cause SQL error
+        "error_test" => %{
+          name: "Error Test Column",
+          select: {:raw, "1/0 as division_by_zero_error"}
+        },
         "full_name" => %{
           name: "Full Name",
           ### concat_ws?
