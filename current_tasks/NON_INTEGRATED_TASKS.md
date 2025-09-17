@@ -43,9 +43,9 @@ Generated: 2025-09-11
    - Integration needed: Enable save/load of view configurations
    - Impact: Allows sharing and persisting views
 
-7. **COMPTASK-0005: Query Performance Metrics**
-   - Status: Component exists at `performance/metrics_collector.ex`
-   - Integration needed: Display metrics in debug panel
+7. **COMPTASK-0005: Query Performance Metrics** ✅ COMPLETED
+   - Status: Fully integrated
+   - Metrics collector running and telemetry integrated with LiveDashboard
    - Impact: Helps optimize slow queries
 
 8. **COMPTASK-0013: Saved Filter Sets** ✅ COMPLETED
@@ -68,10 +68,10 @@ Generated: 2025-09-11
     - Integration needed: Add share button and link generation UI
     - Impact: Easy view sharing
 
-12. **COMPTASK-0026: Performance Monitoring Dashboard**
-    - Status: Components exist at `performance/dashboard.ex` and `query_analyzer.ex`
-    - Integration needed: Add performance tab or panel to form
-    - Impact: Query optimization insights
+12. **COMPTASK-0026: Performance Monitoring Dashboard** ✅ COMPLETED
+    - Status: Fully integrated
+    - Performance metrics integrated with Phoenix LiveDashboard
+    - Impact: Query optimization insights available in /dev/dashboard
 
 ### Low Priority Integration Needs
 
@@ -89,7 +89,7 @@ Generated: 2025-09-11
 
 ### Quick Wins (1-2 hours each)
 - ~~Virtual Scrolling (COMPTASK-0010)~~ ❌ Failed - architectural incompatibility
-- Query Performance Metrics (COMPTASK-0005) - Add to debug panel
+- ~~Query Performance Metrics (COMPTASK-0005)~~ ✅ Completed - Integrated with LiveDashboard
 - Shareable View Links (COMPTASK-0023) - Add share button
 
 ### Medium Effort (4-8 hours each)
