@@ -11,12 +11,23 @@ defmodule SelectoTestWeb.Telemetry do
     children = [
       # Telemetry poller will execute the given period measurements
       # every 10_000ms. Learn more here: https://hexdocs.pm/telemetry_metrics
-      {:telemetry_poller, measurements: periodic_measurements(), period: 10_000}
+      {:telemetry_poller, measurements: periodic_measurements(), period: 10_000},
       # Add reporters as children of your supervision tree.
       # {Telemetry.Metrics.ConsoleReporter, metrics: metrics()}
+      # Attach handlers for Selecto metrics
+      {Task, fn -> attach_selecto_handlers() end}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)
+  end
+
+  defp attach_selecto_handlers do
+    # Attach handlers for Selecto metrics to work with LiveDashboard
+    # These need to be attached so that LiveDashboard can receive the events
+
+    # Nothing needed here for now - LiveDashboard should auto-discover metrics
+    # from the metrics/0 function
+    :ok
   end
 
   def metrics do
@@ -76,41 +87,21 @@ defmodule SelectoTestWeb.Telemetry do
 
       # Selecto Metrics
       summary("selecto.query.complete.duration",
-        event_name: [:selecto, :query, :complete],
-        measurement: :duration,
         unit: {:native, :millisecond},
-        description: "Selecto query execution time",
-        tags: [],
-        tag_values: &(&1)
+        description: "Selecto query execution time"
       ),
       summary("selecto.query.complete.execution_time",
-        event_name: [:selecto, :query, :complete],
-        measurement: :execution_time,
         unit: {:native, :millisecond},
-        description: "Time spent executing the query",
-        tags: [],
-        tag_values: &(&1)
+        description: "Time spent executing the query"
       ),
       counter("selecto.query.error.count",
-        event_name: [:selecto, :query, :error],
-        measurement: :count,
-        description: "Number of query errors",
-        tags: [],
-        tag_values: &(&1)
+        description: "Number of query errors"
       ),
       counter("selecto.cache.hit.count",
-        event_name: [:selecto, :cache, :hit],
-        measurement: :count,
-        description: "Number of cache hits",
-        tags: [],
-        tag_values: &(&1)
+        description: "Number of cache hits"
       ),
       counter("selecto.cache.miss.count",
-        event_name: [:selecto, :cache, :miss],
-        measurement: :count,
-        description: "Number of cache misses",
-        tags: [],
-        tag_values: &(&1)
+        description: "Number of cache misses"
       ),
 
       # VM Metrics
