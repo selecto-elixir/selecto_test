@@ -1,6 +1,9 @@
 defmodule SelectoMySQLIntegrationTest do
   use ExUnit.Case, async: false
   
+  # Skip MySQL-dependent tests by default
+  @moduletag :mysql_integration
+  
   alias Selecto.DB.MySQL
   alias Selecto
   
@@ -13,17 +16,22 @@ defmodule SelectoMySQLIntegrationTest do
   ]
   
   setup_all do
-    # Use local MySQL installation instead of Docker
-    IO.puts("Connecting to local MySQL installation...")
-    
-    # Create test database and schema
-    setup_mysql_test_db()
-    
-    on_exit(fn ->
-      cleanup_mysql_test_data()
-    end)
-    
-    :ok
+    # Skip setup if MySQL tests are not enabled
+    unless System.get_env("TEST_MYSQL") do
+      :ok
+    else
+      # Use local MySQL installation instead of Docker
+      IO.puts("Connecting to local MySQL installation...")
+      
+      # Create test database and schema
+      setup_mysql_test_db()
+      
+      on_exit(fn ->
+        cleanup_mysql_test_data()
+      end)
+      
+      :ok
+    end
   end
   
   # No longer needed - using local MySQL
@@ -43,15 +51,19 @@ defmodule SelectoMySQLIntegrationTest do
   end
   
   defp setup_mysql_test_db do
-    {:ok, conn} = MySQL.connect(@mysql_config)
-    
-    # Create comprehensive test schema
-    create_mysql_schema(conn)
-    insert_mysql_test_data(conn)
-    
-    MySQL.disconnect(conn)
-    
-    IO.puts("MySQL test database schema and data created")
+    case MySQL.connect(@mysql_config) do
+      {:ok, conn} ->
+        # Create comprehensive test schema
+        create_mysql_schema(conn)
+        insert_mysql_test_data(conn)
+        
+        MySQL.disconnect(conn)
+        
+        IO.puts("MySQL test database schema and data created")
+      {:error, reason} ->
+        IO.puts("Could not connect to MySQL: #{inspect(reason)}")
+        :error
+    end
   end
   
   defp create_mysql_schema(conn) do
@@ -181,19 +193,23 @@ defmodule SelectoMySQLIntegrationTest do
   
   defp cleanup_mysql_test_data do
     # Clean up test data from local MySQL
-    {:ok, conn} = MySQL.connect(@mysql_config)
-    
-    # Drop test tables in reverse order of dependencies
-    tables = [
-      "film_categories", "categories", "films"
-    ]
-    
-    for table <- tables do
-      MySQL.execute(conn, "DROP TABLE IF EXISTS #{table}", [], [])
+    case MySQL.connect(@mysql_config) do
+      {:ok, conn} ->
+        # Drop test tables in reverse order of dependencies
+        tables = [
+          "film_categories", "categories", "films"
+        ]
+        
+        for table <- tables do
+          MySQL.execute(conn, "DROP TABLE IF EXISTS #{table}", [], [])
+        end
+        
+        MySQL.disconnect(conn)
+        IO.puts("MySQL test data cleaned up")
+      {:error, reason} ->
+        IO.puts("Could not connect to MySQL for cleanup: #{inspect(reason)}")
+        :ok
     end
-    
-    MySQL.disconnect(conn)
-    IO.puts("MySQL test data cleaned up")
   end
   
   defp ignore_error({:ok, result}), do: {:ok, result}

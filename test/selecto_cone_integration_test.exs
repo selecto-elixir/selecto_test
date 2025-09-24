@@ -8,26 +8,41 @@ defmodule SelectoCone.IntegrationTest do
     setup do
       # Create a provider for available inventory
       inventory_domain = %{
-        source: %{
-          source_table: "inventory",
-          primary_key: :inventory_id,
-          schema_module: SelectoTest.Store.Inventory,
-          fields: [:inventory_id, :film_id, :store_id],
-          columns: %{
-            inventory_id: %{type: :integer},
-            film_id: %{type: :integer, required: true},
-            store_id: %{type: :integer, required: true}
+        schemas: %{
+          inventory: %{
+            source_table: "inventory",
+            primary_key: :inventory_id,
+            schema_module: SelectoTest.Store.Inventory,
+            fields: [:inventory_id, :film_id, :store_id],
+            columns: %{
+              inventory_id: %{type: :integer},
+              film_id: %{type: :integer, required: true},
+              store_id: %{type: :integer, required: true}
+            },
+            associations: %{
+              film: %{
+                queryable: :film,
+                field: :film,
+                owner_key: :film_id,
+                related_key: :film_id,
+                cardinality: :one
+              }
+            }
           },
-          associations: %{
-            film: %{
-              queryable: SelectoTest.Store.Film,
-              field: :film,
-              owner_key: :film_id,
-              related_key: :film_id,
-              cardinality: :one
+          film: %{
+            source_table: "film",
+            primary_key: :film_id,
+            schema_module: SelectoTest.Store.Film,
+            fields: [:film_id, :title, :rating, :rental_rate],
+            columns: %{
+              film_id: %{type: :integer},
+              title: %{type: :string},
+              rating: %{type: :string},
+              rental_rate: %{type: :decimal}
             }
           }
-        }
+        },
+        source: :inventory
       }
       
       provider = Provider.init(
@@ -55,36 +70,57 @@ defmodule SelectoCone.IntegrationTest do
       
       # Create a cone for rental creation
       rental_domain = %{
-        source: %{
-          source_table: "rental",
-          primary_key: :rental_id,
-          schema_module: SelectoTest.Store.Rental,
-          fields: [:rental_id, :rental_date, :inventory_id, :customer_id, :return_date, :staff_id],
-          columns: %{
-            rental_id: %{type: :integer},
-            rental_date: %{type: :utc_datetime, required: true},
-            inventory_id: %{type: :integer, required: true},
-            customer_id: %{type: :integer, required: true},
-            return_date: %{type: :utc_datetime},
-            staff_id: %{type: :integer, required: true}
-          },
-          associations: %{
-            inventory: %{
-              queryable: SelectoTest.Store.Inventory,
-              field: :inventory,
-              owner_key: :inventory_id,
-              related_key: :inventory_id,
-              cardinality: :one
+        schemas: %{
+          rental: %{
+            source_table: "rental",
+            primary_key: :rental_id,
+            schema_module: SelectoTest.Store.Rental,
+            fields: [:rental_id, :rental_date, :inventory_id, :customer_id, :return_date, :staff_id],
+            columns: %{
+              rental_id: %{type: :integer},
+              rental_date: %{type: :utc_datetime, required: true},
+              inventory_id: %{type: :integer, required: true},
+              customer_id: %{type: :integer, required: true},
+              return_date: %{type: :utc_datetime},
+              staff_id: %{type: :integer, required: true}
             },
-            customer: %{
-              queryable: SelectoTest.Store.Customer,
-              field: :customer,
-              owner_key: :customer_id,
-              related_key: :customer_id,
-              cardinality: :one
+            associations: %{
+              inventory: %{
+                queryable: :inventory,
+                field: :inventory,
+                owner_key: :inventory_id,
+                related_key: :inventory_id,
+                cardinality: :one
+              },
+              customer: %{
+                queryable: :customer,
+                field: :customer,
+                owner_key: :customer_id,
+                related_key: :customer_id,
+                cardinality: :one
+              }
+            }
+          },
+          inventory: %{
+            source_table: "inventory",
+            primary_key: :inventory_id,
+            schema_module: SelectoTest.Store.Inventory,
+            fields: [:inventory_id],
+            columns: %{
+              inventory_id: %{type: :integer}
+            }
+          },
+          customer: %{
+            source_table: "customer",
+            primary_key: :customer_id,
+            schema_module: SelectoTest.Store.Customer,
+            fields: [:customer_id],
+            columns: %{
+              customer_id: %{type: :integer}
             }
           }
-        }
+        },
+        source: :rental
       }
       
       cone = Cone.init(
@@ -160,38 +196,41 @@ defmodule SelectoCone.IntegrationTest do
       
       # Cone for customer with rentals
       customer_domain = %{
-        source: %{
-          source_table: "customer",
-          primary_key: :customer_id,
-          schema_module: SelectoTest.Store.Customer,
-          fields: [:customer_id, :first_name, :last_name, :email, :active],
-          columns: %{
-            customer_id: %{type: :integer},
-            first_name: %{type: :string, required: true},
-            last_name: %{type: :string, required: true},
-            email: %{type: :string, required: true},
-            active: %{type: :integer}
-          },
-          associations: %{
-            rentals: %{
-              queryable: SelectoTest.Store.Rental,
-              field: :rentals,
-              foreign_key: :customer_id,
-              cardinality: :many
-            }
-          }
-        },
         schemas: %{
-          rentals: %{
+          customer: %{
+            source_table: "customer",
+            primary_key: :customer_id,
+            schema_module: SelectoTest.Store.Customer,
+            fields: [:customer_id, :first_name, :last_name, :email, :active],
+            columns: %{
+              customer_id: %{type: :integer},
+              first_name: %{type: :string, required: true},
+              last_name: %{type: :string, required: true},
+              email: %{type: :string, required: true},
+              active: %{type: :integer}
+            },
+            associations: %{
+              rentals: %{
+                queryable: :rental,
+                field: :rentals,
+                foreign_key: :customer_id,
+                cardinality: :many
+              }
+            }
+          },
+          rental: %{
             source_table: "rental",
+            primary_key: :rental_id,
             fields: [:rental_id, :rental_date, :inventory_id, :return_date],
             columns: %{
+              rental_id: %{type: :integer},
               rental_date: %{type: :utc_datetime, required: true},
               inventory_id: %{type: :integer, required: true},
               return_date: %{type: :utc_datetime}
             }
           }
-        }
+        },
+        source: :customer
       }
       
       cone = Cone.init(
@@ -262,16 +301,20 @@ defmodule SelectoCone.IntegrationTest do
     setup do
       # Provider with event packages and options
       event_domain = %{
-        source: %{
-          source_table: "event",
-          fields: [:event_id, :name, :start_date, :end_date],
-          columns: %{
-            event_id: %{type: :integer},
-            name: %{type: :string, required: true},
-            start_date: %{type: :utc_datetime, required: true},
-            end_date: %{type: :utc_datetime, required: true}
+        schemas: %{
+          event: %{
+            source_table: "event",
+            primary_key: :event_id,
+            fields: [:event_id, :name, :start_date, :end_date],
+            columns: %{
+              event_id: %{type: :integer},
+              name: %{type: :string, required: true},
+              start_date: %{type: :utc_datetime, required: true},
+              end_date: %{type: :utc_datetime, required: true}
+            }
           }
-        }
+        },
+        source: :event
       }
       
       provider = Provider.init(
@@ -303,31 +346,35 @@ defmodule SelectoCone.IntegrationTest do
       
       # Cone for registration
       registration_domain = %{
-        source: %{
-          source_table: "registration",
-          fields: [:registration_id, :event_id, :package_id, :time_slot_id, :total_amount],
-          columns: %{
-            registration_id: %{type: :integer},
-            event_id: %{type: :integer, required: true},
-            package_id: %{type: :integer, required: true},
-            time_slot_id: %{type: :integer, required: true},
-            total_amount: %{type: :decimal}
-          },
-          associations: %{
-            attendees: %{
-              queryable: :attendees,
-              cardinality: :many
-            },
-            add_on_selections: %{
-              queryable: :add_on_selections,
-              cardinality: :many
-            }
-          }
-        },
         schemas: %{
+          registration: %{
+            source_table: "registration",
+            primary_key: :registration_id,
+            fields: [:registration_id, :event_id, :package_id, :time_slot_id, :total_amount],
+            columns: %{
+              registration_id: %{type: :integer},
+              event_id: %{type: :integer, required: true},
+              package_id: %{type: :integer, required: true},
+              time_slot_id: %{type: :integer, required: true},
+              total_amount: %{type: :decimal}
+            },
+            associations: %{
+              attendees: %{
+                queryable: :attendees,
+                cardinality: :many
+              },
+              add_on_selections: %{
+                queryable: :add_on_selections,
+                cardinality: :many
+              }
+            }
+          },
           attendees: %{
+            source_table: "attendees",
+            primary_key: :attendee_id,
             fields: [:attendee_id, :first_name, :last_name, :email, :dietary_restrictions],
             columns: %{
+              attendee_id: %{type: :integer},
               first_name: %{type: :string, required: true},
               last_name: %{type: :string, required: true},
               email: %{type: :string, required: true},
@@ -335,13 +382,17 @@ defmodule SelectoCone.IntegrationTest do
             }
           },
           add_on_selections: %{
+            source_table: "add_on_selections",
+            primary_key: :selection_id,
             fields: [:selection_id, :item_id, :quantity],
             columns: %{
+              selection_id: %{type: :integer},
               item_id: %{type: :integer, required: true},
               quantity: %{type: :integer, required: true}
             }
           }
-        }
+        },
+        source: :registration
       }
       
       cone = Cone.init(
@@ -478,7 +529,8 @@ defmodule SelectoCone.IntegrationTest do
           film_id: %{type: :integer, required: true},
           store_id: %{type: :integer, required: true}
         }
-      }
+      },
+      schemas: %{}
     }
   end
   
@@ -486,6 +538,7 @@ defmodule SelectoCone.IntegrationTest do
     %{
       source: %{
         source_table: "product",
+        primary_key: :product_id,
         fields: [:product_id, :name, :price, :public, :admin_only],
         columns: %{
           product_id: %{type: :integer},
@@ -494,7 +547,8 @@ defmodule SelectoCone.IntegrationTest do
           public: %{type: :boolean},
           admin_only: %{type: :boolean}
         }
-      }
+      },
+      schemas: %{}
     }
   end
   

@@ -4,6 +4,7 @@ defmodule SelectoTest.PagilaDomain do
   import SelectoComponents.Components.Common
 
   use SelectoTest.SavedViewContext
+  use SelectoTest.SavedViewConfigContext
   # Film rating aggregation filters have been tested and are working correctly as per test results
 
   def actors_domain() do
@@ -123,6 +124,11 @@ defmodule SelectoTest.PagilaDomain do
       # Custom columns that cannot be created from the schema
       custom_columns: %{
         ### Example custom column with group-by and filter directives
+        # Test error column - will cause SQL error
+        "error_test" => %{
+          name: "Error Test Column",
+          select: {:raw, "1/0 as division_by_zero_error"}
+        },
         "full_name" => %{
           name: "Full Name",
           ### concat_ws?
@@ -148,11 +154,13 @@ defmodule SelectoTest.PagilaDomain do
             # Note: Multiple selections of same column with different parameters need proper handling
             ~w(actor_id first_name last_name) ++
               [
-                {:subquery, "array(select row( f.title, f.release_year )
-                      from film f join film_actor af on f.film_id = af.film_id
-                      where af.actor_id = selecto_root.actor_id
-                      order by release_year desc
-                      limit ^SelectoParam^)", [limit]}
+                {:subquery, [
+                  "array(select row( f.title, f.release_year )",
+                  " from film f join film_actor af on f.film_id = af.film_id",
+                  " where af.actor_id = selecto_root.actor_id",
+                  " order by release_year desc",
+                  " limit ", {:param, limit}, ")"
+                ], []}
               ]
           end,
           format: :component,
@@ -261,5 +269,42 @@ defmodule SelectoTest.PagilaDomain do
     # - Individual processing for real-time updates
     # - Custom formatting or enrichment
     {:ok, selecto, params}
+  end
+
+  @doc """
+  Debug configuration for the Pagila domain.
+  Controls what debug information is displayed in development mode.
+  """
+  def debug_config do
+    %{
+      enabled: true,
+      show_query: true,
+      show_params: true,
+      show_timing: true,
+      show_row_count: true,
+      show_execution_plan: false,
+      format_sql: true,
+      max_param_length: 200,
+      views: %{
+        aggregate: %{
+          show_query: true,
+          show_params: true,
+          show_timing: true,
+          show_row_count: true
+        },
+        detail: %{
+          show_query: true,
+          show_params: true,
+          show_timing: true,
+          show_row_count: true
+        },
+        graph: %{
+          show_query: true,
+          show_params: true,
+          show_timing: true,
+          show_row_count: true
+        }
+      }
+    }
   end
 end

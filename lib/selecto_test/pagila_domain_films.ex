@@ -1,6 +1,7 @@
 defmodule SelectoTest.PagilaDomainFilms do
   use SelectoTestWeb, :verified_routes
   use SelectoTest.SavedViewContext
+  use SelectoTest.SavedViewConfigContext
 
   # Fixed: rating filter configured in filters section for dropdown UI
 
@@ -156,6 +157,40 @@ defmodule SelectoTest.PagilaDomainFilms do
               type: :left
             }
           }
+        }
+      }
+    }
+  end
+
+  @doc """
+  Debug configuration for the Pagila Films domain.
+  Shows detailed query information for development.
+  """
+  def debug_config do
+    %{
+      enabled: true,
+      show_query: true,
+      show_params: true,
+      show_timing: true,
+      show_row_count: true,
+      show_execution_plan: false,
+      format_sql: true,
+      max_param_length: 200,
+      views: %{
+        aggregate: %{
+          show_query: true,
+          show_timing: true,
+          show_row_count: true
+        },
+        detail: %{
+          show_query: true,
+          show_params: true,
+          show_row_count: true
+        },
+        graph: %{
+          show_query: true,
+          show_timing: true,
+          show_row_count: false
         }
       }
     }

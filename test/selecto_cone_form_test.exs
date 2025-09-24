@@ -104,9 +104,9 @@ defmodule SelectoCone.FormTest do
       
       nested_forms = Builder.build_nested_forms(cone)
       
-      items_form = Enum.find(nested_forms, & &1.name == :items)
-      assert items_form.min_items == 1
-      assert items_form.max_items == 10
+      rentals_form = Enum.find(nested_forms, & &1.name == :rentals)
+      assert rentals_form.min_items == 1
+      assert rentals_form.max_items == 10
     end
   end
   
@@ -283,7 +283,8 @@ defmodule SelectoCone.FormTest do
           last_name: %{type: :string},
           email: %{type: :string, required: true}
         }
-      }
+      },
+      schemas: %{}
     }
     
     provider = Provider.init(domain, SelectoTest.Repo, %{}, :public)
@@ -301,7 +302,8 @@ defmodule SelectoCone.FormTest do
           active: %{type: :boolean},
           created_at: %{type: :utc_datetime}
         }
-      }
+      },
+      schemas: %{}
     }
     
     provider = Provider.init(domain, SelectoTest.Repo, %{}, :public)
@@ -319,12 +321,32 @@ defmodule SelectoCone.FormTest do
         },
         associations: %{
           rentals: %{
-            queryable: SelectoTest.Store.Rental,
+            queryable: :rental,
             cardinality: :many
           },
           address: %{
-            queryable: SelectoTest.Store.Address,
+            queryable: :address,
             cardinality: :one
+          }
+        }
+      },
+      schemas: %{
+        rental: %{
+          source_table: "rental",
+          primary_key: :rental_id,
+          fields: [:rental_id, :customer_id],
+          columns: %{
+            rental_id: %{type: :integer},
+            customer_id: %{type: :integer}
+          }
+        },
+        address: %{
+          source_table: "address",
+          primary_key: :address_id,
+          fields: [:address_id, :address],
+          columns: %{
+            address_id: %{type: :integer},
+            address: %{type: :string}
           }
         }
       }
@@ -337,14 +359,28 @@ defmodule SelectoCone.FormTest do
   defp create_cone_with_constrained_associations do
     domain = %{
       source: %{
-        source_table: "order",
-        fields: [:order_id],
+        source_table: "inventory",
+        fields: [:inventory_id],
+        columns: %{
+          inventory_id: %{type: :integer}
+        },
         associations: %{
-          items: %{
-            queryable: SelectoTest.Store.Item,
+          rentals: %{
+            queryable: :rental,
             cardinality: :many,
             min_items: 1,
             max_items: 10
+          }
+        }
+      },
+      schemas: %{
+        rental: %{
+          source_table: "rental",
+          primary_key: :rental_id,
+          fields: [:rental_id, :inventory_id],
+          columns: %{
+            rental_id: %{type: :integer},
+            inventory_id: %{type: :integer}
           }
         }
       }
@@ -363,7 +399,8 @@ defmodule SelectoCone.FormTest do
           rental_id: %{type: :integer},
           inventory_id: %{type: :integer, required: true}
         }
-      }
+      },
+      schemas: %{}
     }
     
     provider = Provider.init(domain, SelectoTest.Repo, %{}, :public)
@@ -378,7 +415,7 @@ defmodule SelectoCone.FormTest do
   end
   
   defp create_provider_with_options do
-    domain = %{source: %{source_table: "test"}}
+    domain = %{source: %{source_table: "test"}, schemas: %{}}
     provider = Provider.init(domain, SelectoTest.Repo, %{}, :public)
     
     %{provider |
@@ -395,20 +432,21 @@ defmodule SelectoCone.FormTest do
   defp create_cone_with_provider(provider) do
     domain = %{
       source: %{
-        source_table: "order",
-        fields: [:order_id, :package_id],
+        source_table: "inventory",
+        fields: [:inventory_id, :film_id],
         columns: %{
-          order_id: %{type: :integer},
-          package_id: %{type: :integer}
+          inventory_id: %{type: :integer},
+          film_id: %{type: :integer}
         }
-      }
+      },
+      schemas: %{}
     }
     
     Cone.init(domain, SelectoTest.Repo, provider)
   end
   
   defp create_provider_with_data do
-    domain = %{source: %{source_table: "test"}}
+    domain = %{source: %{source_table: "test"}, schemas: %{}}
     provider = Provider.init(domain, SelectoTest.Repo, %{}, :public)
     
     %{provider |

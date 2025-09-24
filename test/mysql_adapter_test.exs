@@ -15,24 +15,34 @@ defmodule Selecto.DB.MySQLTest do
   ]
   
   setup_all do
-    # Check if MySQL is available for testing
-    case MySQL.connect(@mysql_config) do
-      {:ok, conn} ->
-        MySQL.disconnect(conn)
-        :ok
-      {:error, reason} ->
-        IO.puts("MySQL not available for testing: #{inspect(reason)}. All tests will be skipped.")
-        :ok
+    # Skip setup if MySQL tests are not enabled
+    unless System.get_env("TEST_MYSQL") do
+      :ok
+    else
+      # Check if MySQL is available for testing
+      case MySQL.connect(@mysql_config) do
+        {:ok, conn} ->
+          MySQL.disconnect(conn)
+          :ok
+        {:error, reason} ->
+          IO.puts("MySQL not available for testing: #{inspect(reason)}. All tests will be skipped.")
+          :ok
+      end
     end
   end
   
-  setup do
-    # Try to connect before each test
-    case MySQL.connect(@mysql_config) do
-      {:ok, _conn} ->
-        :ok
-      {:error, _} ->
-        {:skip, "MySQL not available"}
+  setup context do
+    # Skip if tests are excluded via tag
+    if Map.get(context, :skip, false) do
+      :ok
+    else
+      # Try to connect before each test
+      case MySQL.connect(@mysql_config) do
+        {:ok, _conn} ->
+          :ok
+        {:error, _} ->
+          {:skip, "MySQL not available"}
+      end
     end
   end
   
@@ -75,33 +85,36 @@ defmodule Selecto.DB.MySQLTest do
   
   describe "query execution" do
     setup do
-      {:ok, conn} = MySQL.connect(@mysql_config)
-      
-      # Create test table
-      MySQL.execute(conn, """
-        CREATE TEMPORARY TABLE test_users (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          name VARCHAR(100) NOT NULL,
-          age INT,
-          email VARCHAR(255) UNIQUE,
-          active BOOLEAN DEFAULT TRUE,
-          score DECIMAL(5,2),
-          metadata JSON,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-      """, [], [])
-      
-      # Insert test data
-      MySQL.execute(conn, """
-        INSERT INTO test_users (name, age, email, score, metadata) VALUES
-        ('Alice Johnson', 30, 'alice@example.com', 85.50, '{"role": "admin", "tags": ["vip"]}'),
-        ('Bob Smith', 25, 'bob@example.com', 72.25, '{"role": "user", "preferences": {"theme": "dark"}}'),
-        ('Carol Davis', 35, 'carol@example.com', 91.75, '{"role": "moderator", "verified": true}')
-      """, [], [])
-      
-      on_exit(fn -> MySQL.disconnect(conn) end)
-      
-      {:ok, conn: conn}
+      case MySQL.connect(@mysql_config) do
+        {:ok, conn} ->
+          # Create test table
+          MySQL.execute(conn, """
+            CREATE TEMPORARY TABLE test_users (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              name VARCHAR(100) NOT NULL,
+              age INT,
+              email VARCHAR(255) UNIQUE,
+              active BOOLEAN DEFAULT TRUE,
+              score DECIMAL(5,2),
+              metadata JSON,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+          """, [], [])
+          
+          # Insert test data
+          MySQL.execute(conn, """
+            INSERT INTO test_users (name, age, email, score, metadata) VALUES
+            ('Alice Johnson', 30, 'alice@example.com', 85.50, '{"role": "admin", "tags": ["vip"]}'),
+            ('Bob Smith', 25, 'bob@example.com', 72.25, '{"role": "user", "preferences": {"theme": "dark"}}'),
+            ('Carol Davis', 35, 'carol@example.com', 91.75, '{"role": "moderator", "verified": true}')
+          """, [], [])
+          
+          on_exit(fn -> MySQL.disconnect(conn) end)
+          
+          {:ok, conn: conn}
+        {:error, _} ->
+          :skip
+      end
     end
     
     test "execute/4 runs SELECT queries", %{conn: conn} do
@@ -194,18 +207,21 @@ defmodule Selecto.DB.MySQLTest do
   
   describe "transaction management" do
     setup do
-      {:ok, conn} = MySQL.connect(@mysql_config)
-      
-      MySQL.execute(conn, """
-        CREATE TEMPORARY TABLE test_transactions (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          value VARCHAR(50)
-        )
-      """, [], [])
-      
-      on_exit(fn -> MySQL.disconnect(conn) end)
-      
-      {:ok, conn: conn}
+      case MySQL.connect(@mysql_config) do
+        {:ok, conn} ->
+          MySQL.execute(conn, """
+            CREATE TEMPORARY TABLE test_transactions (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              value VARCHAR(50)
+            )
+          """, [], [])
+          
+          on_exit(fn -> MySQL.disconnect(conn) end)
+          
+          {:ok, conn: conn}
+        {:error, _} ->
+          :skip
+      end
     end
     
     test "transaction/3 commits successful transactions", %{conn: conn} do
@@ -386,9 +402,13 @@ defmodule Selecto.DB.MySQLTest do
   
   describe "type system" do
     setup do
-      {:ok, conn} = MySQL.connect(@mysql_config)
-      on_exit(fn -> MySQL.disconnect(conn) end)
-      {:ok, conn: conn}
+      case MySQL.connect(@mysql_config) do
+        {:ok, conn} ->
+          on_exit(fn -> MySQL.disconnect(conn) end)
+          {:ok, conn: conn}
+        {:error, _} ->
+          :skip
+      end
     end
     
     test "encode_type/2 converts Elixir types to MySQL format" do
@@ -472,31 +492,34 @@ defmodule Selecto.DB.MySQLTest do
   
   describe "introspection" do
     setup do
-      {:ok, conn} = MySQL.connect(@mysql_config)
-      
-      # Create test tables
-      MySQL.execute(conn, """
-        CREATE TEMPORARY TABLE introspect_users (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          name VARCHAR(100) NOT NULL,
-          email VARCHAR(255) UNIQUE,
-          active BOOLEAN DEFAULT TRUE
-        )
-      """, [], [])
-      
-      MySQL.execute(conn, """
-        CREATE TEMPORARY TABLE introspect_posts (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          title VARCHAR(255) NOT NULL,
-          content TEXT,
-          user_id INT,
-          FOREIGN KEY (user_id) REFERENCES introspect_users(id)
-        )
-      """, [], [])
-      
-      on_exit(fn -> MySQL.disconnect(conn) end)
-      
-      {:ok, conn: conn}
+      case MySQL.connect(@mysql_config) do
+        {:ok, conn} ->
+          # Create test tables
+          MySQL.execute(conn, """
+            CREATE TEMPORARY TABLE introspect_users (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              name VARCHAR(100) NOT NULL,
+              email VARCHAR(255) UNIQUE,
+              active BOOLEAN DEFAULT TRUE
+            )
+          """, [], [])
+          
+          MySQL.execute(conn, """
+            CREATE TEMPORARY TABLE introspect_posts (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              title VARCHAR(255) NOT NULL,
+              content TEXT,
+              user_id INT,
+              FOREIGN KEY (user_id) REFERENCES introspect_users(id)
+            )
+          """, [], [])
+          
+          on_exit(fn -> MySQL.disconnect(conn) end)
+          
+          {:ok, conn: conn}
+        {:error, _} ->
+          :skip
+      end
     end
     
     test "list_tables/2 returns user tables", %{conn: conn} do
@@ -532,31 +555,34 @@ defmodule Selecto.DB.MySQLTest do
   
   describe "performance and optimization" do
     setup do
-      {:ok, conn} = MySQL.connect(@mysql_config)
-      
-      MySQL.execute(conn, """
-        CREATE TEMPORARY TABLE perf_test (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          name VARCHAR(100),
-          category VARCHAR(50),
-          score INT,
-          INDEX idx_category (category),
-          INDEX idx_score (score)
-        )
-      """, [], [])
-      
-      # Insert test data
-      for i <- 1..20 do
-        MySQL.execute(conn, 
-          "INSERT INTO perf_test (name, category, score) VALUES (?, ?, ?)",
-          ["Item #{i}", "Category #{rem(i, 5) + 1}", i * 10],
-          []
-        )
+      case MySQL.connect(@mysql_config) do
+        {:ok, conn} ->
+          MySQL.execute(conn, """
+            CREATE TEMPORARY TABLE perf_test (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              name VARCHAR(100),
+              category VARCHAR(50),
+              score INT,
+              INDEX idx_category (category),
+              INDEX idx_score (score)
+            )
+          """, [], [])
+          
+          # Insert test data
+          for i <- 1..20 do
+            MySQL.execute(conn, 
+              "INSERT INTO perf_test (name, category, score) VALUES (?, ?, ?)",
+              ["Item #{i}", "Category #{rem(i, 5) + 1}", i * 10],
+              []
+            )
+          end
+          
+          on_exit(fn -> MySQL.disconnect(conn) end)
+          
+          {:ok, conn: conn}
+        {:error, _} ->
+          :skip
       end
-      
-      on_exit(fn -> MySQL.disconnect(conn) end)
-      
-      {:ok, conn: conn}
     end
     
     test "explain/3 returns query execution plan", %{conn: conn} do

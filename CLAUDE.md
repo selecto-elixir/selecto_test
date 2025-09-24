@@ -2,6 +2,24 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Available Tools
+
+**AST-Grep**: This project has ast-grep configured for advanced code searching and refactoring.
+```bash
+# Search for patterns
+ast-grep --pattern 'Selecto.execute($$$)' --lang elixir
+ast-grep --pattern 'Mix.env()' --lang elixir
+ast-grep --pattern '{:error, $ERROR}' --lang elixir
+
+# Run configured rules
+ast-grep scan                    # Scan with all rules
+ast-grep scan --rule no-mix-env-in-runtime  # Run specific rule
+
+# Configuration files:
+# - .ast-grep/rules.yml - Project-specific rules and patterns
+# - .ast-grep/sgconfig.yml - AST-grep configuration
+```
+
 ## Development Commands
 
 **Setup and Dependencies:**
@@ -55,6 +73,39 @@ mix test
 # Run specific test files with timeout
 timeout 30 mix test test/specific_test.exs --max-cases 1
 ```
+
+## Production Debug Panel
+
+The debug panel can be enabled in production with proper security measures:
+
+**Security Requirements:**
+1. Two environment variables must be set
+2. A secure token must be provided via query parameter or session
+3. Debug panel is completely disabled without both requirements
+
+**To Enable Debug Panel in Production:**
+```bash
+# Generate secure configuration (creates a random token)
+./scripts/enable_production_debug.sh
+
+# Set Fly.io secrets (use the token from the script output)
+fly secrets set SELECTO_DEBUG_ENABLED=true
+fly secrets set SELECTO_DEBUG_TOKEN="<your-secure-token>"
+
+# Access with token in URL
+https://your-app.fly.dev/pagila?debug_token=<your-secure-token>
+```
+
+**To Disable Debug Panel:**
+```bash
+fly secrets unset SELECTO_DEBUG_ENABLED SELECTO_DEBUG_TOKEN
+```
+
+**Security Features:**
+- Requires BOTH `SELECTO_DEBUG_ENABLED=true` AND a valid `SELECTO_DEBUG_TOKEN`
+- Token comparison uses constant-time algorithm to prevent timing attacks
+- Debug panel completely hidden without valid authentication
+- Automatically enabled in dev/test environments without token
 
 ## Architecture Overview
 
@@ -141,3 +192,4 @@ When making changes, you may need to modify code across multiple projects to mai
 - **Multi-Environment**: Development, test, and production configurations with Docker support
 - remember to always use case insensitive tests for SQL keywords
 - remember that selecto and all the other items in vendor/ are in scope
+- when adding code, make sure it does not create warnings

@@ -20,7 +20,13 @@ Saved Views:
     views={@views}
     saved_view_module={@saved_view_module}
     saved_view_context={@saved_view_context}
-
+    saved_view_config_module={@saved_view_config_module}
+    current_user_id={@current_user_id}
+    domain_module={@saved_view_module}
+    filter_sets_adapter={@filter_sets_adapter}
+    user_id={@user_id}
+    domain={@domain}
+    path={@path}
   />
 </div>
 
@@ -30,7 +36,30 @@ Saved Views:
   query_results={@query_results}
   applied_view={@applied_view}
   executed={@executed}
+  execution_error={Map.get(assigns, :execution_error)}
   views={@views}
   view_meta={@view_meta}
+  domain_module={@saved_view_module}
+  last_query_info={Map.get(assigns, :last_query_info, %{})}
   id="results"
 />
+
+<%!-- Modal Detail View (optional feature) --%>
+<%= if Map.get(assigns, :show_detail_modal, false) && Map.get(assigns, :modal_detail_data) do %>
+  <.live_component
+    module={SelectoComponents.Modal.DetailModal}
+    id="detail-modal"
+    record={@modal_detail_data.record}
+    current_index={@modal_detail_data.current_index}
+    total_records={@modal_detail_data.total_records}
+    records={@modal_detail_data.records}
+    fields={@modal_detail_data.fields}
+    related_data={Map.get(@modal_detail_data, :related_data, %{})}
+    title="Record Details"
+    size={:lg}
+    navigation_enabled={true}
+    edit_enabled={false}
+    icon={nil}
+    subtitle_field={nil}
+  />
+<% end %>
