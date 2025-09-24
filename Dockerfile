@@ -44,7 +44,6 @@ ENV MIX_ENV="prod"
 
 # install mix dependencies
 COPY mix.exs mix.lock ./
-RUN mix deps.get --only $MIX_ENV
 RUN mkdir config
 
 # copy compile-time config files before we compile dependencies
@@ -52,7 +51,11 @@ RUN mkdir config
 # to be re-compiled.
 COPY config/config.exs config/${MIX_ENV}.exs config/
 
+# Copy vendor directory before getting deps so path dependencies are available
 COPY vendor vendor
+
+# Get all dependencies including vendor dependencies
+RUN mix deps.get --only $MIX_ENV
 
 RUN mix deps.compile
 
@@ -65,8 +68,9 @@ COPY assets assets
 # install npm dependencies
 RUN cd assets && npm install
 
-# Compile Elixir code first to generate colocated hooks
-RUN mix compile
+# Compile Elixir code AND vendor packages to generate colocated hooks
+# Updated: 2025-09-10 - Force recompile to extract colocated hooks
+RUN mix compile --force
 
 # compile assets (colocated hooks are now available)
 RUN mix assets.deploy

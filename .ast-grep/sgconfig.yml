@@ -1,0 +1,45 @@
+# AST-Grep Configuration
+# Project-specific settings for ast-grep
+
+ruleDirs:
+  - .
+
+# Language mappings for file extensions
+languageMappings:
+  elixir:
+    - "*.ex"
+    - "*.exs"
+  javascript:
+    - "*.js"
+    - "*.jsx"
+  typescript:
+    - "*.ts"
+    - "*.tsx"
+  heex:
+    - "*.heex"
+    - "*.leex"
+
+# Paths to scan
+paths:
+  include:
+    - lib
+    - vendor/selecto
+    - vendor/selecto_components
+    - vendor/selecto_dome
+    - vendor/selecto_mix
+    - assets/js
+    - test
+  exclude:
+    - _build
+    - deps
+    - node_modules
+    - .elixir_ls
+    - cover
+    - priv/static
+
+# Custom rule severity levels
+severity:
+  error: 2
+  warning: 1
+  info: 0
+  hint: -1
