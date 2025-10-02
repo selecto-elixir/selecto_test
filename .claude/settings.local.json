@@ -183,7 +183,11 @@
       "Bash(MIX_ENV=prod mix compile)",
       "Bash(MIX_ENV=prod mix assets.deploy)",
       "Bash(PORT=4091 timeout 10 mix phx.server --no-halt)",
-      "Bash(PORT=4092 timeout 15 mix phx.server --no-halt)"
+      "Bash(PORT=4092 timeout 15 mix phx.server --no-halt)",
+      "Bash(for file in test/**/*_test.exs)",
+      "Bash(sort:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
