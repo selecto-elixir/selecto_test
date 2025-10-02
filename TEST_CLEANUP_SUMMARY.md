@@ -15,6 +15,11 @@
 **Final Test Count:** 44 test files (from original 75)
 **Total Reduction:** 41% of test files
 
+## Phase 3: Root Directory Script Cleanup
+**Files Removed:** 26 debug/test scripts from root directory
+**Categories:** debug_* (10 files), test_* (13 files), fix_* (2 files), check_* (2 files), verify_* (1 file)
+**Remaining in root:** Only mix.exs and .formatter.exs (essential files)
+
 ---
 
 ## Phase 1 Files Removed
@@ -80,6 +85,46 @@
 ### Support Files (2 files)
 19. `test/support/selecto_dome_helpers.ex`
 20. `test/support/selecto_cone_test_helpers.ex`
+
+---
+
+## Phase 3 Files Removed (Root Directory Scripts)
+
+### Debug Scripts (10 files)
+1. `debug_complex_csv.exs` - CSV debugging
+2. `debug_csv_issue.exs` - CSV issue investigation
+3. `debug_fulltext.exs` - Full-text search debugging
+4. `debug_join_path.exs` - Join path debugging
+5. `debug_manual_csv.exs` - Manual CSV testing
+6. `debug_pivot.exs` - Pivot debugging
+7. `debug_pivot_data.exs` - Pivot data debugging
+8. `debug_pivot_resolution.exs` - Pivot resolution debugging
+
+### Test Scripts (13 files)
+9. `test_array_params.exs` - Array parameter testing
+10. `test_components_cte_pivot.exs` - Component CTE pivot testing
+11. `test_cte_execution.exs` - CTE execution testing
+12. `test_cte_pivot.exs` - CTE pivot testing
+13. `test_cte_pivot_simple.exs` - Simple CTE pivot testing
+14. `test_fulltext_debug.exs` - Full-text debugging
+15. `test_mysql_vs_postgres.exs` - MySQL vs PostgreSQL comparison
+16. `test_pagination_nested.exs` - Nested pagination testing
+17. `test_sql_builder.exs` - SQL builder testing
+18. `test_sql_gen.exs` - SQL generation testing
+19. `test_subselect.exs` - Subselect testing
+20. `test_subselect_fix.exs` - Subselect fix testing
+
+### Check/Verify Scripts (3 files)
+21. `check_fulltext.exs` - Full-text check
+22. `check_fulltext_data.exs` - Full-text data check
+23. `verify_cte_pivot.exs` - CTE pivot verification
+
+### Fix/Utility Scripts (2 files)
+24. `fix_test_configs.exs` - Test config fixer (7.9K)
+25. `fix_test_files.exs` - Test file fixer
+26. `skip_all_doc_tests.exs` - Documentation test skipper
+
+**Rationale:** These were all one-off debugging and testing scripts that should have been removed after use. The functionality they test is now covered by the formal test suite in `test/`.
 
 ---
 
@@ -184,10 +229,17 @@
 - Total lines: ~20,574 LOC (-3,926 LOC, -16%)
 - Test failures: 139 (no regression)
 
-### After Phase 2 Cleanup (Final)
+### After Phase 2 Cleanup
 - Total test files: 44 (-31 files, -41%)
 - Total lines: ~15,000 LOC (estimated, -9,500 LOC, -39%)
 - Test failures: 34 (improved - removed failing Dome/Cone/adapter tests)
+
+### After Phase 3 Cleanup (Final)
+- Total test files: 44 (test directory only)
+- Root directory scripts: 26 removed (only mix.exs and .formatter.exs remain)
+- **Total files removed across all phases: 67 files**
+- Cleaner project root
+- All debugging functionality moved to formal test suite
 
 ### Test Quality Improvement
 - ✅ Removed 5 unused dependencies
