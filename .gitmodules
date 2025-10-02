@@ -8,31 +8,6 @@
 	url = git@github.com:seeken/selecto_components.git
 	branch = main
 
-[submodule "vendor/selecto_cone"]
-	path = vendor/selecto_cone
-	url = git@github.com:seeken/selecto_cone.git
-	branch = main
-
-[submodule "vendor/selecto_db_mysql"]
-	path = vendor/selecto_db_mysql
-	url = git@github.com:seeken/selecto_db_mysql.git
-	branch = main
-
-[submodule "vendor/selecto_db_sqlite"]
-	path = vendor/selecto_db_sqlite
-	url = git@github.com:seeken/selecto_db_sqlite.git
-	branch = main
-
-[submodule "vendor/selecto_dev"]
-	path = vendor/selecto_dev
-	url = git@github.com:seeken/selecto_dev.git
-	branch = main
-
-[submodule "vendor/selecto_dome"]
-	path = vendor/selecto_dome
-	url = git@github.com:seeken/selecto_dome.git
-	branch = main
-
 [submodule "vendor/selecto_kino"]
 	path = vendor/selecto_kino
 	url = git@github.com:seeken/selecto_kino.git
