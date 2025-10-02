@@ -40,21 +40,8 @@ domain = %{
   schemas: %{}
 }
 
-# Get database connection options from the repo configuration
-repo_config = SelectoTest.Repo.config()
-postgrex_opts = [
-  username: repo_config[:username],
-  password: repo_config[:password],
-  hostname: repo_config[:hostname], 
-  database: repo_config[:database],
-  port: repo_config[:port] || 5432
-]
-
-# Start a Postgrex connection process
-{:ok, db_conn} = Postgrex.start_link(postgrex_opts)
-
 # Create a configured Selecto struct with the connection process
-selecto = Selecto.configure(domain, db_conn)
+selecto = Selecto.configure(domain, SelectoTest.Repo)
 ```
 
 Now you can use `selecto` in all the examples below. The domain defines the Actor table structure (without complex joins for simplicity), and we've established a direct Postgrex database connection.
