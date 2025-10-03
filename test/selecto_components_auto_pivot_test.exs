@@ -7,6 +7,8 @@ defmodule SelectoComponentsAutoPivotTest do
       # Create a domain with actors as source and films as a joined table
       domain = %{
         source: %{
+          source_table: "actors",
+          primary_key: :actor_id,
           columns: %{
             actor_id: %{name: "Actor ID", type: :integer},
             first_name: %{name: "First Name", type: :string},
@@ -15,12 +17,16 @@ defmodule SelectoComponentsAutoPivotTest do
           associations: %{
             films: %{
               queryable: :films,
-              join_keys: [actor_id: :actor_id]
+              join_keys: [actor_id: :actor_id],
+              owner_key: :actor_id,
+              related_key: :actor_id
             }
           }
         },
         schemas: %{
           films: %{
+            source_table: "films",
+            primary_key: :film_id,
             columns: %{
               film_id: %{name: "Film ID", type: :integer},
               title: %{name: "Title", type: :string},
@@ -31,9 +37,19 @@ defmodule SelectoComponentsAutoPivotTest do
         }
       }
 
-      selecto = %{
+      selecto = %Selecto{
+        postgrex_opts: nil,
+        adapter: nil,
+        connection: nil,
         domain: domain,
-        set: %{}
+        config: %{},
+        set: %{
+          selected: [],
+          filtered: [],
+          post_pivot_filters: [],
+          order_by: [],
+          group_by: []
+        }
       }
 
       # Create state with selecto and view config selecting film columns
@@ -79,9 +95,19 @@ defmodule SelectoComponentsAutoPivotTest do
         schemas: %{}
       }
 
-      selecto = %{
+      selecto = %Selecto{
+        postgrex_opts: nil,
+        adapter: nil,
+        connection: nil,
         domain: domain,
-        set: %{}
+        config: %{},
+        set: %{
+          selected: [],
+          filtered: [],
+          post_pivot_filters: [],
+          order_by: [],
+          group_by: []
+        }
       }
 
       # Create state selecting only actor columns
@@ -139,9 +165,19 @@ defmodule SelectoComponentsAutoPivotTest do
         }
       }
 
-      selecto = %{
+      selecto = %Selecto{
+        postgrex_opts: nil,
+        adapter: nil,
+        connection: nil,
         domain: domain,
-        set: %{}
+        config: %{},
+        set: %{
+          selected: [],
+          filtered: [],
+          post_pivot_filters: [],
+          order_by: [],
+          group_by: []
+        }
       }
 
       # Create aggregate view selecting rental columns
@@ -202,9 +238,19 @@ defmodule SelectoComponentsAutoPivotTest do
         }
       }
 
-      selecto = %{
+      selecto = %Selecto{
+        postgrex_opts: nil,
+        adapter: nil,
+        connection: nil,
         domain: domain,
-        set: %{}
+        config: %{},
+        set: %{
+          selected: [],
+          filtered: [],
+          post_pivot_filters: [],
+          order_by: [],
+          group_by: []
+        }
       }
 
       # Create state with qualified column names in selected map (as would come from UI)
@@ -262,9 +308,19 @@ defmodule SelectoComponentsAutoPivotTest do
         }
       }
 
-      selecto = %{
+      selecto = %Selecto{
+        postgrex_opts: nil,
+        adapter: nil,
+        connection: nil,
         domain: domain,
-        set: %{}
+        config: %{},
+        set: %{
+          selected: [],
+          filtered: [],
+          post_pivot_filters: [],
+          order_by: [],
+          group_by: []
+        }
       }
 
       # Mix of qualified and simple column names
