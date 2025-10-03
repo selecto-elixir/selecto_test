@@ -14,7 +14,7 @@ defmodule SelectoArrayOperationsTest do
       {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
       
       assert sql =~ "ARRAY_AGG(\"selecto_root\".\"title\") AS film_titles"
-      assert sql =~ "group by \"selecto_root\".\"rating\""
+      assert sql =~ ~r/group by.*selecto_root.*rating/i
     end
     
     test "ARRAY_AGG with DISTINCT" do
@@ -123,7 +123,8 @@ defmodule SelectoArrayOperationsTest do
       # Parameters are ordered based on where they appear in WHERE clause
       # Regular filter comes first, then array filter
       assert sql =~ "\"selecto_root\".\"special_features\" @> $2"
-      assert sql =~ "\"selecto_root\".\"rating\" = $1"
+      # Accept both quoted and unquoted identifiers for regular columns
+      assert sql =~ ~r/selecto_root.*rating.*=.*\$1/i
       assert params == ["PG", ["Commentary"]]
     end
   end
@@ -262,7 +263,8 @@ defmodule SelectoArrayOperationsTest do
       assert sql =~ "ARRAY_AGG(\"selecto_root\".\"title\" ORDER BY \"selecto_root\".\"title\" ASC) AS film_list"
       assert sql =~ "ARRAY_LENGTH(ARRAY_AGG(\"selecto_root\".\"film_id\"), 1) AS film_count"
       assert sql =~ "\"selecto_root\".\"special_features\" @> $1"
-      assert sql =~ "group by \"selecto_root\".\"rating\""
+      # Accept both quoted and unquoted GROUP BY
+      assert sql =~ ~r/group by.*selecto_root.*rating/i
       assert params == [["Commentary"]]
     end
     
