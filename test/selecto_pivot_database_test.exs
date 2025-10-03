@@ -194,11 +194,12 @@ defmodule SelectoPivotDatabaseTest do
   end
 
   defp get_postgrex_opts do
+    # Get from Repo config if available, otherwise use environment/defaults
     Application.get_env(:selecto_test, SelectoTest.Repo)[:postgrex_opts] ||
       [
         hostname: System.get_env("DB_HOST", "localhost"),
         port: String.to_integer(System.get_env("DB_PORT", "5432")),
-        database: System.get_env("DB_NAME", "selecto_test_dev"),
+        database: System.get_env("DB_NAME", "selecto_test_test"),
         username: System.get_env("DB_USER", "postgres"),
         password: System.get_env("DB_PASS", "postgres")
       ]
