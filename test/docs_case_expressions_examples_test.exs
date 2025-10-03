@@ -237,8 +237,11 @@ defmodule DocsCaseExpressionsExamplesTest do
       assert sql =~ ~r/count.*film_id/i or sql =~ ~r/count\(/i
       assert sql =~ ~r/sum.*rental_rate/i or sql =~ ~r/sum\(/i
       assert sql =~ ~r/group by.*rating/i
-      # Check params
-      assert 0 in params
+      # Check SQL contains literal 0 (not parameterized)
+      assert sql =~ ~r/else\s+0/i
+      # Check params contain the IN clause arrays
+      assert ["G", "PG"] in params
+      assert ["R", "NC-17"] in params
     end
   end
 
