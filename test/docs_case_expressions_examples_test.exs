@@ -26,7 +26,7 @@ defmodule DocsCaseExpressionsExamplesTest do
             ], {:literal, "Not Rated"}}
           ])
 
-      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
+      {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
 
       assert sql =~ ~r/case/i
       assert sql =~ ~r/when.*rating.*=/i
@@ -82,7 +82,7 @@ defmodule DocsCaseExpressionsExamplesTest do
             ]}
           ])
 
-      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
+      {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
 
       assert sql =~ ~r/case/i
       assert sql =~ ~r/when.*rating.*=/i
@@ -148,7 +148,7 @@ defmodule DocsCaseExpressionsExamplesTest do
             ], {:literal, "Very Short"}}
           ])
 
-      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
+      {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
 
       # Should have two case statements
       case_matches = Regex.scan(~r/\bcase\b/i, sql)
@@ -179,7 +179,7 @@ defmodule DocsCaseExpressionsExamplesTest do
           ])
         |> Selecto.group_by(["rating"])
 
-      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
+      {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
 
       assert sql =~ ~r/case/i
       assert sql =~ ~r/count/i
@@ -206,7 +206,7 @@ defmodule DocsCaseExpressionsExamplesTest do
             ]}
           ])
 
-      {sql, _aliases, params} = Selecto.Builder.Sql.build(result, [])
+      {sql, _aliases, _params} = Selecto.Builder.Sql.build(result, [])
 
       assert sql =~ ~r/case/i
       assert sql =~ ~r/special_features.*is/i
