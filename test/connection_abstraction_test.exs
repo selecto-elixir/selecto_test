@@ -1,7 +1,7 @@
 defmodule ConnectionAbstractionTest do
   use ExUnit.Case
   alias Selecto.Connection
-  alias Selecto.Database.{Registry, Features}
+  alias Selecto.Database.Features
   
   describe "backward compatibility" do
     test "Selecto.configure works without adapter option (defaults to PostgreSQL)" do

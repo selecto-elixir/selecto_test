@@ -21,14 +21,16 @@ defmodule SelectoTest.Ecommerce.Warehouse do
     has_many :child_warehouses, __MODULE__, foreign_key: :parent_id
     
     # Relationships
-    has_many :inventory_items, SelectoTest.Ecommerce.InventoryItem
-    has_many :transfers_from, SelectoTest.Ecommerce.Transfer, foreign_key: :from_warehouse_id
-    has_many :transfers_to, SelectoTest.Ecommerce.Transfer, foreign_key: :to_warehouse_id
-    has_many :shipments, SelectoTest.Ecommerce.Shipment
-    
+    # TODO: Uncomment when schemas are created
+    # has_many :inventory_items, SelectoTest.Ecommerce.InventoryItem
+    # has_many :transfers_from, SelectoTest.Ecommerce.Transfer, foreign_key: :from_warehouse_id
+    # has_many :transfers_to, SelectoTest.Ecommerce.Transfer, foreign_key: :to_warehouse_id
+    # has_many :shipments, SelectoTest.Ecommerce.Shipment
+
     # Many-to-many zone coverage
-    many_to_many :delivery_zones, SelectoTest.Ecommerce.DeliveryZone,
-      join_through: SelectoTest.Ecommerce.WarehouseZone
+    # TODO: Uncomment when schemas are created
+    # many_to_many :delivery_zones, SelectoTest.Ecommerce.DeliveryZone,
+    #   join_through: SelectoTest.Ecommerce.WarehouseZone
     
     timestamps()
   end

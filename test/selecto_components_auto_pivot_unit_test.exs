@@ -7,7 +7,7 @@ defmodule SelectoComponentsAutoPivotUnitTest do
   describe "auto pivot detection logic" do
     test "detects when columns are missing from source table" do
       # Create mock selecto with domain
-      selecto = %{
+      _selecto = %{
         domain: %{
           source: %{
             columns: %{
