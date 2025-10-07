@@ -135,10 +135,11 @@ defmodule SelectoMixImprovementsTest do
       assert hierarchy.type == :adjacency_list
       assert hierarchy.parent_field == :referrer_id
       
-      # Should detect basic relationships
-      assert Map.has_key?(analysis.joins, :addresses)
+      # Should detect basic relationships (addresses, reviews are commented out)
+      # assert Map.has_key?(analysis.joins, :addresses)
       assert Map.has_key?(analysis.joins, :orders)
-      assert Map.has_key?(analysis.joins, :reviews)
+      assert Map.has_key?(analysis.joins, :groups)
+      # assert Map.has_key?(analysis.joins, :reviews)
     end
     
     test "detects many-to-many relationships" do
