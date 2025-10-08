@@ -26,18 +26,20 @@ defmodule SelectoTest.Ecommerce.Order do
     
     # Relationships
     belongs_to :user, SelectoTest.Ecommerce.User
-    belongs_to :shipping_address, SelectoTest.Ecommerce.Address
-    belongs_to :billing_address, SelectoTest.Ecommerce.Address
-    belongs_to :coupon, SelectoTest.Ecommerce.Coupon
-    
-    has_many :order_items, SelectoTest.Ecommerce.OrderItem
-    has_many :shipments, SelectoTest.Ecommerce.Shipment
-    has_many :payments, SelectoTest.Ecommerce.Payment
-    has_many :refunds, SelectoTest.Ecommerce.Refund
-    has_many :order_events, SelectoTest.Ecommerce.OrderEvent
-    
+    # TODO: Uncomment when schemas are created
+    # belongs_to :shipping_address, SelectoTest.Ecommerce.Address
+    # belongs_to :billing_address, SelectoTest.Ecommerce.Address
+    # belongs_to :coupon, SelectoTest.Ecommerce.Coupon
+
+    # has_many :order_items, SelectoTest.Ecommerce.OrderItem
+    # has_many :shipments, SelectoTest.Ecommerce.Shipment
+    # has_many :payments, SelectoTest.Ecommerce.Payment
+    # has_many :refunds, SelectoTest.Ecommerce.Refund
+    # has_many :order_events, SelectoTest.Ecommerce.OrderEvent
+
     # Complex join - products through order items
-    has_many :products, through: [:order_items, :product]
+    # TODO: Uncomment when OrderItem schema is created
+    # has_many :products, through: [:order_items, :product]
     
     timestamps()
   end
@@ -48,7 +50,7 @@ defmodule SelectoTest.Ecommerce.Order do
     |> cast(attrs, [:order_number, :status, :payment_status, :fulfillment_status,
                     :subtotal, :tax_amount, :shipping_amount, :discount_amount,
                     :total_amount, :currency, :notes, :metadata,
-                    :user_id, :shipping_address_id, :billing_address_id, :coupon_id])
+                    :user_id]) # address and coupon IDs removed until schemas exist
     |> validate_required([:order_number, :status, :payment_status, :total_amount])
     |> unique_constraint(:order_number)
     |> validate_number(:total_amount, greater_than_or_equal_to: 0)

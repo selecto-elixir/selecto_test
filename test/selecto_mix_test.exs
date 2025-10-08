@@ -69,14 +69,15 @@ defmodule SelectoMixTest do
   describe "Join Analyzer" do
     test "analyzes basic schema relationships" do
       alias SelectoMix.JoinAnalyzer
-      
+
       # Analyze the User schema we created
       analysis = JoinAnalyzer.analyze(SelectoTest.Ecommerce.User)
-      
-      # Check that basic joins were detected
-      assert Map.has_key?(analysis.joins, :addresses)
+
+      # Check that basic joins were detected (addresses is commented out)
+      # assert Map.has_key?(analysis.joins, :addresses)
       assert Map.has_key?(analysis.joins, :orders)
-      
+      assert Map.has_key?(analysis.joins, :groups)
+
       # Check for hierarchical detection
       assert length(analysis.hierarchies) > 0
     end
@@ -118,9 +119,11 @@ defmodule SelectoMixTest do
       assert features[:arrays] == false
       
       # Analyze joins
-      analysis = JoinAnalyzer.analyze(SelectoTest.Ecommerce.User, 
+      analysis = JoinAnalyzer.analyze(SelectoTest.Ecommerce.User,
         adapter: args[:adapter])
-      assert Map.has_key?(analysis.joins, :addresses)
+      # addresses is commented out, check for associations that exist
+      assert Map.has_key?(analysis.joins, :orders)
+      assert Map.has_key?(analysis.joins, :groups)
     end
   end
 end

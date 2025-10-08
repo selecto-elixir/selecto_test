@@ -87,7 +87,8 @@ defmodule DocsArrayOperationsExamplesTest do
       assert sql =~ ~r/string_agg/i
       assert sql =~ "film_list"
       assert sql =~ "actor_names"
-      assert sql =~ ~r/order by.*actor\.last_name.*asc/i
+      # Match ORDER BY with quoted or unquoted identifiers
+      assert sql =~ ~r/order by.*actor.*last_name.*asc/i
       assert ", " in params
       assert " | " in params
     end
