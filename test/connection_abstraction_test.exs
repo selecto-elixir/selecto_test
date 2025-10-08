@@ -210,8 +210,10 @@ defmodule ConnectionAbstractionTest do
   
   describe "feature detection through adapters" do
     test "PostgreSQL adapter supports all features" do
+      # Ensure module is loaded and compiled
+      Code.ensure_loaded!(Selecto.DB.PostgreSQL)
       adapter = Selecto.DB.PostgreSQL
-      
+
       # Should support advanced features
       assert Features.supports?(adapter, :cte)
       assert Features.supports?(adapter, :window_functions)
