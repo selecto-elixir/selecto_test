@@ -7,7 +7,22 @@ defmodule SelectoTest.PagilaDomain do
   use SelectoTest.SavedViewConfigContext
   # Film rating aggregation filters have been tested and are working correctly as per test results
 
+  alias Selecto.Config.Overlay
+
   def actors_domain() do
+    base_actors_domain()
+    |> Overlay.merge(overlay())
+  end
+
+  defp overlay do
+    if Code.ensure_loaded?(SelectoTest.Overlays.PagilaDomainOverlay) do
+      SelectoTest.Overlays.PagilaDomainOverlay.overlay()
+    else
+      %{}
+    end
+  end
+
+  defp base_actors_domain() do
     %{
       source: %{
         source_table: "actor",
@@ -203,6 +218,14 @@ defmodule SelectoTest.PagilaDomain do
         }
       }
     }
+  end
+
+  @doc """
+  Returns the base actors domain configuration without overlay merging.
+  Useful for testing and debugging the raw configuration.
+  """
+  def base_domain do
+    base_actors_domain()
   end
 
   def actor_ratings_apply(_selecto, f) do
