@@ -3,6 +3,8 @@ defmodule SelectoTest.PagilaDomainFilms do
   use SelectoTest.SavedViewContext
   use SelectoTest.SavedViewConfigContext
 
+  alias Selecto.Config.Overlay
+
   # Fixed: rating filter configured in filters section for dropdown UI
 
   def films_domain() do
@@ -10,6 +12,19 @@ defmodule SelectoTest.PagilaDomainFilms do
   end
 
   def domain() do
+    base_films_domain()
+    |> Overlay.merge(overlay())
+  end
+
+  defp overlay do
+    if Code.ensure_loaded?(SelectoTest.Overlays.PagilaDomainFilmsOverlay) do
+      SelectoTest.Overlays.PagilaDomainFilmsOverlay.overlay()
+    else
+      %{}
+    end
+  end
+
+  defp base_films_domain() do
     ### customer info, payments and rentals
     %{
       source: %{
@@ -160,6 +175,14 @@ defmodule SelectoTest.PagilaDomainFilms do
         }
       }
     }
+  end
+
+  @doc """
+  Returns the base films domain configuration without overlay merging.
+  Useful for testing and debugging the raw configuration.
+  """
+  def base_domain do
+    base_films_domain()
   end
 
   @doc """
