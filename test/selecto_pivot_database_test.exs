@@ -55,7 +55,7 @@ defmodule SelectoPivotDatabaseTest do
 
     test "pivot with EXISTS strategy" do
       selecto = create_selecto()
-      |> Selecto.filter([{"first_name", "NICK"}])
+      |> Selecto.filter([{"first_name", "PENELOPE"}])
       |> Selecto.pivot(:film, subquery_strategy: :exists)
       |> Selecto.select(["film.title", "film.length"])
 
@@ -91,7 +91,7 @@ defmodule SelectoPivotDatabaseTest do
   describe "Pivot with Film domain - Film to Actor pivot" do
     test "pivot from film to actor with rating filter" do
       selecto = create_film_selecto()
-      |> Selecto.filter([{"rating", "PG-13"}])
+      |> Selecto.filter([{"rating", "PG"}])
       |> Selecto.pivot(:film_actors)  # Pivot to film_actors junction table
       |> Selecto.pivot(:actor)        # Then pivot to actor table
       |> Selecto.select(["actor.actor_id"])
@@ -114,7 +114,7 @@ defmodule SelectoPivotDatabaseTest do
     test "complex pivot through multiple tables" do
       # This tests pivoting from film -> film_actor -> actor (if we had that path)
       selecto = create_film_selecto()
-      |> Selecto.filter([{"rating", "R"}])
+      |> Selecto.filter([{"rating", "NC-17"}])
       |> Selecto.pivot(:film_actors)
       |> Selecto.pivot(:actor)
       |> Selecto.select(["actor.actor_id"])

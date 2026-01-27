@@ -217,7 +217,12 @@
       "Bash(PORT=4000 timeout 10 mix phx.server --no-halt)",
       "Bash(PORT=4087 mix phx.server)",
       "Bash(do if [ -f \"$file\" ])",
-      "Bash(PORT=4096 timeout 20 mix phx.server --no-halt)"
+      "Bash(PORT=4096 timeout 20 mix phx.server --no-halt)",
+      "Bash(vendor/selecto_mix/lib/mix/tasks/selecto.docs.generate.ex )",
+      "Bash(vendor/selecto_mix/lib/mix/tasks/selecto.docs.guide.ex )",
+      "Bash(vendor/selecto_mix/lib/mix/tasks/selecto.gen.domain.postgrex.ex)",
+      "Bash(git submodule:*)",
+      "Bash(MIX_ENV=test mix run:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
