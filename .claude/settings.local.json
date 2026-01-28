@@ -222,7 +222,11 @@
       "Bash(vendor/selecto_mix/lib/mix/tasks/selecto.docs.guide.ex )",
       "Bash(vendor/selecto_mix/lib/mix/tasks/selecto.gen.domain.postgrex.ex)",
       "Bash(git submodule:*)",
-      "Bash(MIX_ENV=test mix run:*)"
+      "Bash(MIX_ENV=test mix run:*)",
+      "Bash(MIX_ENV=test mix coveralls:*)",
+      "Bash(MIX_ENV=test mix deps.get:*)",
+      "Bash(MIX_ENV=test mix test:*)",
+      "Bash(MIX_ENV=test mix compile:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
