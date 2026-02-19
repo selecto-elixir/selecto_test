@@ -236,38 +236,28 @@ defmodule SelectoTest.Seed do
       name: "Revenue by Rating",
       context: "/pagila_films",
       params: %{
-        "view_mode" => "aggregate",
-        "group_by" => %{
+        "view_mode" => "graph",
+        "x_axis" => %{
           "0" => %{"field" => "rating", "index" => "0", "alias" => "rating"}
         },
-        "aggregates" => %{
+        "y_axis" => %{
           "0" => %{
             "field" => "film_id",
-            "function" => "count",
+            "function" => "sum",
             "index" => "0",
-            "alias" => "total_films"
+            "alias" => "films"
           },
           "1" => %{
             "field" => "rental_rate",
             "function" => "sum",
             "index" => "1",
-            "alias" => "total_revenue"
-          },
-          "2" => %{
-            "field" => "rental_rate",
-            "function" => "avg",
-            "index" => "2",
-            "alias" => "avg_rental_rate"
-          },
-          "3" => %{
-            "field" => "replacement_cost",
-            "function" => "avg",
-            "index" => "3",
-            "alias" => "avg_replacement"
+            "alias" => "revenue"
           }
         },
-        "order_by" => %{
-          "0" => %{"field" => "total_revenue", "dir" => "desc", "index" => "0"}
+        "chart_type" => "bar",
+        "options" => %{
+          "title" => "Revenue and Film Count by Rating",
+          "responsive" => true
         }
       }
     })
@@ -310,13 +300,37 @@ defmodule SelectoTest.Seed do
           "0" => %{"field" => "title", "index" => "0", "alias" => "title"},
           "1" => %{"field" => "release_year", "index" => "1", "alias" => "year"},
           "2" => %{"field" => "rating", "index" => "2", "alias" => "rating"},
-          "3" => %{"field" => "actor", "index" => "3", "alias" => "actors"}
+          "3" => %{"field" => "language_id", "index" => "3", "alias" => "language_id"},
+          "4" => %{"field" => "rental_rate", "index" => "4", "alias" => "rate"}
         },
         "order_by" => %{
-          "0" => %{"field" => "last_update", "dir" => "desc", "index" => "0"}
+          "0" => %{"field" => "release_year", "dir" => "desc", "index" => "0"},
+          "1" => %{"field" => "title", "dir" => "asc", "index" => "1"}
         },
         "per_page" => "25",
         "prevent_denormalization" => true
+      }
+    })
+
+    # Detail View: Rating and Cast Explorer (stable field set for saved-view URL loading)
+    insert_or_update_view(%{
+      name: "Rating and Cast Explorer",
+      context: "/pagila_films",
+      params: %{
+        "view_mode" => "detail",
+        "selected" => %{
+          "0" => %{"field" => "title", "index" => "0", "alias" => "film_title"},
+          "1" => %{"field" => "rating", "index" => "1", "alias" => "mpaa_rating"},
+          "2" => %{"field" => "release_year", "index" => "2", "alias" => "year"},
+          "3" => %{"field" => "language_id", "index" => "3", "alias" => "language_id"},
+          "4" => %{"field" => "rental_duration", "index" => "4", "alias" => "rental_days"}
+        },
+        "order_by" => %{
+          "0" => %{"field" => "rating", "dir" => "asc", "index" => "0"},
+          "1" => %{"field" => "title", "dir" => "asc", "index" => "1"}
+        },
+        "per_page" => "60",
+        "prevent_denormalization" => false
       }
     })
 
