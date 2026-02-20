@@ -175,15 +175,24 @@ defmodule SelectoTest.Seed do
             "field" => "length",
             "function" => "avg",
             "index" => "0",
-            "alias" => "avg_length"
+            "alias" => "avg_length",
+            "series_type" => "line",
+            "axis" => "right"
+          },
+          "1" => %{
+            "field" => "film_id",
+            "function" => "count",
+            "index" => "1",
+            "alias" => "film_count",
+            "series_type" => "bar",
+            "axis" => "left"
           }
-        },
-        "series" => %{
-          "0" => %{"field" => "rental_duration", "index" => "0", "alias" => "rental_days"}
         },
         "chart_type" => "bar",
         "options" => %{
-          "title" => "Average Film Length by Rating and Rental Duration",
+          "title" => "Film Count and Avg Length by Rating",
+          "y_axis_label" => "Film Count",
+          "y2_axis_label" => "Average Length (minutes)",
           "stacked" => false,
           "responsive" => true
         }
