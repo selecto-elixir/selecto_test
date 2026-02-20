@@ -100,10 +100,9 @@ defmodule SelectoTest.Seed do
         "view_mode" => "graph",
         "x_axis" => %{
           "0" => %{
-            "field" => "last_update",
-            "format" => "YYYY-MM",
+            "field" => "release_year",
             "index" => "0",
-            "alias" => "month"
+            "alias" => "release_year"
           }
         },
         "y_axis" => %{
@@ -116,7 +115,47 @@ defmodule SelectoTest.Seed do
         },
         "chart_type" => "line",
         "options" => %{
-          "title" => "Monthly Rental Revenue Trend",
+          "title" => "Rental Revenue by Release Year",
+          "responsive" => true
+        }
+      }
+    })
+
+    insert_or_update_view(%{
+      name: "Monty Rental Revenue",
+      context: "/pagila_films",
+      params: %{
+        "view_mode" => "graph",
+        "x_axis" => %{
+          "0" => %{
+            "field" => "rating",
+            "index" => "0",
+            "alias" => "rating"
+          }
+        },
+        "y_axis" => %{
+          "0" => %{
+            "field" => "film_id",
+            "function" => "count",
+            "index" => "0",
+            "alias" => "film_count"
+          },
+          "1" => %{
+            "field" => "length",
+            "function" => "avg",
+            "index" => "1",
+            "alias" => "avg_length"
+          },
+          "2" => %{
+            "field" => "replacement_cost",
+            "function" => "avg",
+            "index" => "2",
+            "alias" => "avg_replacement_cost"
+          }
+        },
+        "chart_type" => "bar",
+        "options" => %{
+          "title" => "Film Portfolio by Rating",
           "responsive" => true
         }
       }
@@ -269,7 +308,7 @@ defmodule SelectoTest.Seed do
       params: %{
         "view_mode" => "graph",
         "x_axis" => %{
-          "0" => %{"field" => "language_id", "index" => "0", "alias" => "language"}
+          "0" => %{"field" => "language.name", "index" => "0", "alias" => "language"}
         },
         "y_axis" => %{
           "0" => %{
@@ -279,13 +318,10 @@ defmodule SelectoTest.Seed do
             "alias" => "film_count"
           }
         },
-        "chart_type" => "horizontalBar",
+        "chart_type" => "bar",
         "options" => %{
           "title" => "Number of Films by Language",
-          "responsive" => true,
-          "scales" => %{
-            "xAxes" => [%{"ticks" => %{"beginAtZero" => true}}]
-          }
+          "responsive" => true
         }
       }
     })
