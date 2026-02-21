@@ -576,7 +576,7 @@ end
 ### Unified Connection Interface
 
 ```elixir
-defmodule Selecto.Connection do
+defmodule ConnectionEnvelope do
   @moduledoc """
   Unified connection management for different database adapters.
   """
@@ -624,11 +624,11 @@ defmodule Selecto do
     adapter = get_ecto_adapter(repo)
     dialect = adapter_to_dialect(adapter)
     
-    Selecto.Connection.new(dialect, repo)
+    ConnectionEnvelope.new(dialect, repo)
   end
   
   defp normalize_connection({dialect, connection_opts}) do
-    Selecto.Connection.new(dialect, connection_opts)
+    ConnectionEnvelope.new(dialect, connection_opts)
   end
 end
 ```
