@@ -2,6 +2,11 @@
 
 This project is a test/development project for the Selecto ecosystem modules.
 
+> ⚠️ **Alpha Software Notice**
+>
+> The Selecto ecosystem modules in this workspace are under active development.
+> Expect breaking changes, API churn, and potentially major bugs.
+
 ## Sample Data
 
 This project uses the **[Pagila](https://github.com/devrimgunduz/pagila)** sample database, a PostgreSQL port of the MySQL Sakila sample database. Pagila provides a rich dataset of films, actors, customers, and rental transactions that serves as an excellent testbed for Selecto's advanced query capabilities. 
