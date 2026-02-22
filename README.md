@@ -18,6 +18,12 @@ This project includes the complete Selecto ecosystem in the vendor directory:
 - [selecto_mix](https://github.com/selecto-elixir/selecto_mix) - Mix tasks and code generation
 - **selecto_dev** - Development tools and dashboard (new!)
 
+## Livebooks, Tutorials, and Hosted Demo
+
+- [selecto-elixir/selecto_livebooks](https://github.com/selecto-elixir/selecto_livebooks) - Livebook with many Selecto query features
+- [seeken/selecto_northwind](https://github.com/seeken/selecto_northwind) - Tutorials for building Selecto queries and workflows
+- [testselecto.fly.dev](https://testselecto.fly.dev) - Hosted `selecto_test` demo app
+
 ## Live Views
 
 - `/` and `/pagila` - Actor-focused interface for [Pagila database](https://github.com/devrimgunduz/pagila)
