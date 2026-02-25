@@ -244,21 +244,28 @@ defmodule SelectoTest.PagilaDomain do
   end
 
   def actor_ratings_apply(_selecto, f) do
-    ratings = f["ratings"]
+    ratings = normalize_multi_value(Map.get(f, "ratings"))
 
-    {"actor_id",
-     {
-       :subquery,
-       :in,
-       [
-         "(select actor_id from film_actor fa join film f on fa.film_id = f.film_id where f.rating = ANY(",
-         {:param, ratings},
-         "))"
-       ]
-     }}
+    if ratings == [] do
+      {"actor_id", :not_null}
+    else
+      {"actor_id",
+       {
+         :subquery,
+         :in,
+         [
+           "(select actor_id from film_actor fa join film f on fa.film_id = f.film_id where f.rating = ANY(",
+           {:param, ratings},
+           "))"
+         ]
+       }}
+    end
   end
 
   def actor_ratings(assigns) do
+    ratings = normalize_multi_value(get_in(assigns, [:valmap, "ratings"]))
+    assigns = assign(assigns, :ratings, ratings)
+
     ~H"""
     <div>
       Actor Ratings!
@@ -267,13 +274,48 @@ defmodule SelectoTest.PagilaDomain do
           type="checkbox"
           name={"filters[#{@uuid}][ratings][]"}
           value={v}
-          checked={Enum.member?(Map.get(@valmap, "ratings", []), v)}
+          checked={Enum.member?(@ratings, v)}
         />
         {v}
       </label>
     </div>
     """
   end
+
+  defp normalize_multi_value(nil), do: []
+
+  defp normalize_multi_value(value) when is_binary(value) do
+    value = String.trim(value)
+    if value == "", do: [], else: [value]
+  end
+
+  defp normalize_multi_value(value) when is_list(value) do
+    value
+    |> Enum.flat_map(fn
+      nil -> []
+      "" -> []
+      item when is_binary(item) -> [String.trim(item)]
+      item -> [to_string(item)]
+    end)
+    |> Enum.reject(&(&1 == ""))
+    |> Enum.uniq()
+  end
+
+  defp normalize_multi_value(value) when is_map(value) do
+    value
+    |> Enum.sort_by(fn {key, _} ->
+      key_str = to_string(key)
+
+      case Integer.parse(key_str) do
+        {idx, ""} -> {0, idx}
+        _ -> {1, key_str}
+      end
+    end)
+    |> Enum.map(fn {_key, item} -> item end)
+    |> normalize_multi_value()
+  end
+
+  defp normalize_multi_value(value), do: normalize_multi_value(to_string(value))
 
   defp actor_card_config(assigns) do
     ~H"""
