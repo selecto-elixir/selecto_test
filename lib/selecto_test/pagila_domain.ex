@@ -143,7 +143,7 @@ defmodule SelectoTest.PagilaDomain do
           multiple: true,
           searchable: false,
           apply: fn _selecto, filter ->
-            {"film[rating]", filter["value"]}
+            {"film.rating", filter["value"]}
           end
         }
       },
@@ -214,7 +214,7 @@ defmodule SelectoTest.PagilaDomain do
                   name: "Film Language",
                   # Dimension type: local table has ID to dimension table that provides enriched data
                   type: :dimension,
-                  # the interesting data. So in this case, film has language[name], we will never care about language_id
+                  # the interesting data. So in this case, film has language.name, we will never care about language_id
                   # We do not want to give 2 language ID columns to pick from, so will skip the remote, and skip date/update
                   # info from the remote table. Lookup_value is the only col we will add from remote table (can be List to add more than one)
                   dimension: :name
@@ -223,7 +223,7 @@ defmodule SelectoTest.PagilaDomain do
               custom_columns: %{
                 "film_link" => %{
                   name: "Film Link",
-                  requires_select: ["film[film_id]", "film[title]"],
+                  requires_select: ["film.film_id", "film.title"],
                   format: :link,
                   link_parts: fn {id, title} -> {~p[/pagila/film/#{id}], title} end
                 }
