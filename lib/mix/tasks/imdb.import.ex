@@ -37,6 +37,7 @@ defmodule Mix.Tasks.Imdb.Import do
   ]
 
   @imdb_base_url "https://datasets.imdbws.com"
+  @query_timeout :infinity
 
   @impl Mix.Task
   def run(args) do
@@ -241,12 +242,12 @@ defmodule Mix.Tasks.Imdb.Import do
     )
     """
 
-    %{rows: [[exists?]]} = Repo.query!(query, [table_name, column_name])
+    %{rows: [[exists?]]} = db_query!(query, [table_name, column_name])
     exists?
   end
 
   defp ensure_stage_tables! do
-    Repo.query!("""
+    db_query!("""
     CREATE TABLE IF NOT EXISTS imdb_stage_movies (
       tconst text,
       title_type text,
@@ -260,39 +261,35 @@ defmodule Mix.Tasks.Imdb.Import do
     )
     """)
 
-    Repo.query!("""
+    db_query!("""
     CREATE TABLE IF NOT EXISTS imdb_stage_cast (
       tconst text,
       nconst text
     )
     """)
 
-    Repo.query!("""
+    db_query!("""
     CREATE TABLE IF NOT EXISTS imdb_stage_names (
       nconst text,
       primary_name text
     )
     """)
 
-    Repo.query!(
+    db_query!(
       "CREATE INDEX IF NOT EXISTS imdb_stage_movies_tconst_idx ON imdb_stage_movies (tconst)"
     )
 
-    Repo.query!(
-      "CREATE INDEX IF NOT EXISTS imdb_stage_cast_tconst_idx ON imdb_stage_cast (tconst)"
-    )
+    db_query!("CREATE INDEX IF NOT EXISTS imdb_stage_cast_tconst_idx ON imdb_stage_cast (tconst)")
 
-    Repo.query!(
-      "CREATE INDEX IF NOT EXISTS imdb_stage_cast_nconst_idx ON imdb_stage_cast (nconst)"
-    )
+    db_query!("CREATE INDEX IF NOT EXISTS imdb_stage_cast_nconst_idx ON imdb_stage_cast (nconst)")
 
-    Repo.query!(
+    db_query!(
       "CREATE INDEX IF NOT EXISTS imdb_stage_names_nconst_idx ON imdb_stage_names (nconst)"
     )
   end
 
   defp load_stage_tables!(derived_paths) do
-    Repo.query!("TRUNCATE TABLE imdb_stage_movies, imdb_stage_cast, imdb_stage_names")
+    db_query!("TRUNCATE TABLE imdb_stage_movies, imdb_stage_cast, imdb_stage_names")
 
     copy_into_stage!(
       "imdb_stage_movies",
@@ -313,9 +310,9 @@ defmodule Mix.Tasks.Imdb.Import do
     copy_into_stage!("imdb_stage_cast", ["tconst", "nconst"], derived_paths.cast)
     copy_into_stage!("imdb_stage_names", ["nconst", "primary_name"], derived_paths.names)
 
-    Repo.query!("ANALYZE imdb_stage_movies")
-    Repo.query!("ANALYZE imdb_stage_cast")
-    Repo.query!("ANALYZE imdb_stage_names")
+    db_query!("ANALYZE imdb_stage_movies")
+    db_query!("ANALYZE imdb_stage_cast")
+    db_query!("ANALYZE imdb_stage_names")
   end
 
   defp copy_into_stage!(table_name, columns, file_path) do
@@ -331,7 +328,7 @@ defmodule Mix.Tasks.Imdb.Import do
 
   defp ensure_english_language_id! do
     existing =
-      Repo.query!(
+      db_query!(
         "SELECT language_id FROM language WHERE lower(trim(name)) = 'english' ORDER BY language_id LIMIT 1"
       )
 
@@ -341,28 +338,28 @@ defmodule Mix.Tasks.Imdb.Import do
 
       [] ->
         %{rows: [[language_id]]} =
-          Repo.query!("INSERT INTO language (name) VALUES ('English') RETURNING language_id")
+          db_query!("INSERT INTO language (name) VALUES ('English') RETURNING language_id")
 
         language_id
     end
   end
 
   defp import_imdb_rows!(language_id, prune?) do
-    Repo.query!(upsert_films_sql(), [language_id])
-    Repo.query!(upsert_actors_sql())
-    Repo.query!(insert_new_categories_sql())
+    db_query!(upsert_films_sql(), [language_id])
+    db_query!(upsert_actors_sql())
+    db_query!(insert_new_categories_sql())
 
-    Repo.query!(delete_current_film_actor_links_sql())
-    Repo.query!(insert_film_actor_links_sql())
+    db_query!(delete_current_film_actor_links_sql())
+    db_query!(insert_film_actor_links_sql())
 
-    Repo.query!(delete_current_film_category_links_sql())
-    Repo.query!(insert_film_category_links_sql())
+    db_query!(delete_current_film_category_links_sql())
+    db_query!(insert_film_category_links_sql())
 
     if prune? do
-      Repo.query!(delete_stale_film_actor_links_sql())
-      Repo.query!(delete_stale_film_category_links_sql())
-      Repo.query!(prune_stale_films_sql())
-      Repo.query!(prune_stale_actors_sql())
+      db_query!(delete_stale_film_actor_links_sql())
+      db_query!(delete_stale_film_category_links_sql())
+      db_query!(prune_stale_films_sql())
+      db_query!(prune_stale_actors_sql())
     end
   end
 
@@ -617,8 +614,12 @@ defmodule Mix.Tasks.Imdb.Import do
   end
 
   defp scalar_count(sql) do
-    %{rows: [[count]]} = Repo.query!(sql)
+    %{rows: [[count]]} = db_query!(sql)
     count
+  end
+
+  defp db_query!(sql, params \\ [], opts \\ []) do
+    Repo.query!(sql, params, Keyword.merge([timeout: @query_timeout], opts))
   end
 
   defp maybe_cleanup_derived_files!(derived_paths, keep_derived?) do
