@@ -114,7 +114,7 @@ defmodule SelectoTest.MixProject do
     if use_local_ecosystem?() do
       {:selecto_components, path: "./vendor/selecto_components", override: true}
     else
-      {:selecto_components, ">= 0.3.6 and < 0.4.0", override: true}
+      {:selecto_components, ">= 0.3.4 and < 0.4.0", override: true}
     end
   end
 

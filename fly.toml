@@ -9,7 +9,7 @@ kill_timeout = "5s"
 
 [build]
   [build.args]
-    SELECTO_ECOSYSTEM_USE_LOCAL = "true"
+    SELECTO_ECOSYSTEM_USE_LOCAL = "false"
 
 [deploy]
   release_command = "/app/bin/migrate"
