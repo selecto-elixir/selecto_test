@@ -69,9 +69,10 @@ defmodule SelectoTest.MixProject do
       {:gettext, "~> 0.20"},
       {:jason, "~> 1.2"},
       {:bandit, "~> 1.5"},
-      {:selecto, path: "./vendor/selecto", override: true},
-      {:selecto_components, path: "./vendor/selecto_components", override: true},
-      {:selecto_mix, path: "./vendor/selecto_mix", only: [:dev, :test]},
+      selecto_dep(),
+      selecto_postgis_dep(),
+      selecto_components_dep(),
+      selecto_mix_dep(),
       {:timex, "~> 3.7.9"},
       {:uuid, "~> 1.1"},
       {:kino, "~> 0.7.0"},
@@ -79,6 +80,45 @@ defmodule SelectoTest.MixProject do
       {:excoveralls, "~> 0.18", only: :test},
       {:earmark, "~> 1.4"}
     ]
+  end
+
+  defp selecto_dep do
+    if use_local_ecosystem?() do
+      {:selecto, path: "./vendor/selecto", override: true}
+    else
+      {:selecto, ">= 0.3.3 and < 0.4.0", override: true}
+    end
+  end
+
+  defp selecto_postgis_dep do
+    if use_local_ecosystem?() do
+      {:selecto_postgis, path: "./vendor/selecto_postgis", override: true}
+    else
+      {:selecto_postgis, "~> 0.1", override: true}
+    end
+  end
+
+  defp selecto_components_dep do
+    if use_local_ecosystem?() do
+      {:selecto_components, path: "./vendor/selecto_components", override: true}
+    else
+      {:selecto_components, ">= 0.3.5 and < 0.4.0", override: true}
+    end
+  end
+
+  defp selecto_mix_dep do
+    if use_local_ecosystem?() do
+      {:selecto_mix, path: "./vendor/selecto_mix", only: [:dev, :test]}
+    else
+      {:selecto_mix, "~> 0.3.2", only: [:dev, :test]}
+    end
+  end
+
+  defp use_local_ecosystem? do
+    case System.get_env("SELECTO_ECOSYSTEM_USE_LOCAL") do
+      value when value in ["1", "true", "TRUE", "yes", "YES", "on", "ON"] -> true
+      _ -> false
+    end
   end
 
   # Aliases are shortcuts or tasks specific to the current project.
