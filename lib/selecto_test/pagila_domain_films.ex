@@ -127,9 +127,9 @@ defmodule SelectoTest.PagilaDomainFilms do
         }
       },
       name: "Film",
-      default_selected: ["title"],
-      default_order_by: ["title"],
-      default_group_by: ["title"],
+      default_selected: ["title", "release_year", "length"],
+      default_order_by: ["title", "release_year"],
+      default_group_by: [{"release_year", %{"format" => "buckets", "bucket_ranges" => "*/20"}}],
       default_aggregate: [{"film_id", %{"format" => "count"}}],
       filters: %{
         "film_rating" => %{
