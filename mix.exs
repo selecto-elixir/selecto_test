@@ -70,7 +70,6 @@ defmodule SelectoTest.MixProject do
       {:jason, "~> 1.2"},
       {:bandit, "~> 1.5"},
       selecto_dep(),
-      selecto_postgis_dep(),
       selecto_components_dep(),
       selecto_mix_dep(),
       {:timex, "~> 3.7.9"},
@@ -80,6 +79,7 @@ defmodule SelectoTest.MixProject do
       {:excoveralls, "~> 0.18", only: :test},
       {:earmark, "~> 1.4"}
     ]
+    |> Kernel.++(selecto_postgis_deps())
   end
 
   defp selecto_dep do
@@ -90,12 +90,24 @@ defmodule SelectoTest.MixProject do
     end
   end
 
+  defp selecto_postgis_deps do
+    if enable_postgis?() do
+      [selecto_postgis_dep()]
+    else
+      []
+    end
+  end
+
   defp selecto_postgis_dep do
     if use_local_ecosystem?() do
       {:selecto_postgis, path: "./vendor/selecto_postgis", override: true}
     else
       {:selecto_postgis, "~> 0.1", override: true}
     end
+  end
+
+  defp enable_postgis? do
+    use_local_ecosystem?() || truthy_env?(System.get_env("SELECTO_ENABLE_POSTGIS"))
   end
 
   defp selecto_components_dep do
@@ -115,11 +127,13 @@ defmodule SelectoTest.MixProject do
   end
 
   defp use_local_ecosystem? do
-    case System.get_env("SELECTO_ECOSYSTEM_USE_LOCAL") do
-      value when value in ["1", "true", "TRUE", "yes", "YES", "on", "ON"] -> true
-      _ -> false
-    end
+    truthy_env?(System.get_env("SELECTO_ECOSYSTEM_USE_LOCAL"))
   end
+
+  defp truthy_env?(value) when value in ["1", "true", "TRUE", "yes", "YES", "on", "ON"],
+    do: true
+
+  defp truthy_env?(_), do: false
 
   # Aliases are shortcuts or tasks specific to the current project.
   # For example, to install project dependencies and perform other setup tasks, run:
