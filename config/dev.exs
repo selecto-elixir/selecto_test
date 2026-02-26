@@ -53,6 +53,12 @@ config :selecto_test, SelectoTestWeb.Endpoint,
   ],
   check_origin: false,
   code_reloader: true,
+  reloadable_apps: [
+    :selecto_test,
+    :selecto,
+    :selecto_components,
+    :selecto_mix
+  ],
   debug_errors: true,
   secret_key_base: "4xyQrAJRsWJmArSEYwo+PwmHnw5QY4Eql4hZJY0afyaQJJO/u18C700d4nR/U7uZ",
   watchers: [
@@ -90,15 +96,7 @@ config :selecto_test, SelectoTestWeb.Endpoint,
       ~r"priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$",
       ~r"priv/gettext/.*(po)$",
       ~r"lib/selecto_test_web/(controllers|live|components)/.*(ex|heex)$",
-      # Watch vendor directory for changes
-      ~r"vendor/selecto/lib/.*(ex|heex)$",
-      ~r"vendor/selecto_components/lib/.*(ex|heex)$",
-      ~r"vendor/selecto_dome/lib/.*(ex|heex)$",
-      ~r"vendor/selecto_mix/lib/.*(ex|heex)$",
-      ~r"vendor/selecto_kino/lib/.*(ex|heex)$",
-      ~r"vendor/selecto_cone/lib/.*(ex|heex)$",
-      ~r"vendor/selecto_db_sqlite/lib/.*(ex|heex)$",
-      ~r"vendor/selecto_db_mysql/lib/.*(ex|heex)$"
+      ~r"vendor/.*/lib/.*(ex|heex)$"
     ]
   ]
 
