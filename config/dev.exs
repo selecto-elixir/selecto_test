@@ -1,5 +1,18 @@
 import Config
 
+defmodule DevConfig do
+  def parse_ip("0.0.0.0"), do: {0, 0, 0, 0}
+  def parse_ip("127.0.0.1"), do: {127, 0, 0, 1}
+  def parse_ip("localhost"), do: {127, 0, 0, 1}
+
+  def parse_ip(other) do
+    case :inet.parse_address(String.to_charlist(other)) do
+      {:ok, addr} -> addr
+      _other -> {127, 0, 0, 1}
+    end
+  end
+end
+
 # Configure your database
 config :selecto_test, SelectoTest.Repo,
   username: "postgres",
@@ -11,21 +24,31 @@ config :selecto_test, SelectoTest.Repo,
   pool_size: 10
 
 # For development, we disable any cache and enable
-# debugging and code reloading.
 #
 # The watchers configuration can be used to run external
 # watchers to your application. For example, we use it
 # with esbuild to bundle .js and .css sources.
+
 config :selecto_test, SelectoTestWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
-  # Use BIND_ALL_INTERFACES=true to bind to all interfaces (0.0.0.0)
+  # Use BIND_ALL_INTERFACES=true or PHX_DEV_HOSTNAME=0.0.0.0 to bind to all interfaces
   http: [
     ip:
-      if(System.get_env("BIND_ALL_INTERFACES") in ~w(true 1),
-        do: {0, 0, 0, 0},
-        else: {127, 0, 0, 1}
-      ),
+      cond do
+        System.get_env("BIND_ALL_INTERFACES") in ~w(true 1) ->
+          {0, 0, 0, 0}
+
+        System.get_env("PHX_DEV_HOSTNAME") ->
+          DevConfig.parse_ip(System.get_env("PHX_DEV_HOSTNAME"))
+
+        true ->
+          {127, 0, 0, 1}
+      end,
+    port: String.to_integer(System.get_env("PORT") || "4080")
+  ],
+  url: [
+    host: System.get_env("PHX_DEV_HOSTNAME") || "localhost",
     port: String.to_integer(System.get_env("PORT") || "4080")
   ],
   check_origin: false,

@@ -75,6 +75,34 @@ Projects using selecto_components should include Tailwind and Alpine.js as is do
    - Download the [Pagila database](https://github.com/devrimgunduz/pagila)
    - Import tables and data into your dev database
 
+## IMDb Movie Import (Optional)
+
+If you want a much larger film/cast dataset, you can import movie-only IMDb data
+into the existing `film`, `actor`, `film_actor`, `category`, and `film_category`
+tables.
+
+```bash
+mix ecto.migrate
+mix imdb.import
+```
+
+Useful options:
+
+```bash
+# Reuse previously downloaded .tsv.gz files
+mix imdb.import --no-download
+
+# Smaller local test run
+mix imdb.import --limit-movies 5000
+
+# Remove stale IMDb rows not present in latest extract
+mix imdb.import --prune
+```
+
+Notes:
+- IMDb files are provided under IMDb's non-commercial dataset license
+- The import expects `curl`, `gzip`, `awk`, and `psql` in your PATH
+
 5. **Start the application**:
    ```bash
    # For regular development
