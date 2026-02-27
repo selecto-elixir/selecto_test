@@ -15,6 +15,7 @@
 ARG ELIXIR_VERSION=1.18.4
 ARG OTP_VERSION=27.3.4.2
 ARG DEBIAN_VERSION=bookworm-20250811-slim
+ARG SELECTO_ECOSYSTEM_USE_LOCAL=false
 
 #docker pull hexpm/elixir:1.18.4-erlang-25.0.4-debian-bullseye-20250811-slim
 #docker pull hexpm/elixir:1.18.4-erlang-27.3.4.2-debian-trixie-20250811-slim
@@ -41,6 +42,7 @@ RUN mix local.hex --force && \
 
 # set build ENV
 ENV MIX_ENV="prod"
+ENV SELECTO_ECOSYSTEM_USE_LOCAL=${SELECTO_ECOSYSTEM_USE_LOCAL}
 
 # install mix dependencies
 COPY mix.exs mix.lock ./

@@ -45,6 +45,55 @@ defmodule SelectoTest.SavedViewContext do
         SelectoTest.Repo.all(q)
       end
 
+      def list_views(context) do
+        q =
+          from v in SelectoTest.SavedView,
+            where: ^context == v.context,
+            order_by: [desc: v.updated_at, asc: v.name]
+
+        SelectoTest.Repo.all(q)
+      end
+
+      def delete_view(name, context) do
+        case get_view(name, context) do
+          nil ->
+            {:error, :not_found}
+
+          view ->
+            SelectoTest.Repo.delete(view)
+        end
+      end
+
+      def rename_view(old_name, new_name, context) do
+        trimmed_name = String.trim(new_name || "")
+
+        cond do
+          trimmed_name == "" ->
+            {:error, :invalid_name}
+
+          old_name == trimmed_name ->
+            case get_view(old_name, context) do
+              nil -> {:error, :not_found}
+              view -> {:ok, view}
+            end
+
+          true ->
+            case get_view(old_name, context) do
+              nil ->
+                {:error, :not_found}
+
+              view ->
+                if get_view(trimmed_name, context) do
+                  {:error, :already_exists}
+                else
+                  view
+                  |> SelectoTest.SavedView.changeset(%{name: trimmed_name})
+                  |> SelectoTest.Repo.update()
+                end
+            end
+        end
+      end
+
       def decode_view(view) do
         ### give params to use for view
         view.params
