@@ -3,6 +3,21 @@ defmodule SelectoTestWeb.SelectoComponentsUITest do
   import Phoenix.LiveViewTest
 
   describe "PagilaLive actors domain (:index)" do
+    test "renders saved view manager controls", %{conn: conn} do
+      SelectoTest.Repo.insert!(%SelectoTest.SavedView{
+        name: "UI Saved View",
+        context: "/pagila",
+        params: %{"view_mode" => "detail"}
+      })
+
+      {:ok, _view, html} = live(conn, "/pagila", on_error: :warn)
+
+      assert html =~ "Saved Views"
+      assert html =~ "UI Saved View"
+      assert html =~ "Rename"
+      assert html =~ "Delete"
+    end
+
     test "renders the actors domain interface", %{conn: conn} do
       {:ok, _index_live, html} = live(conn, "/", on_error: :warn)
 
