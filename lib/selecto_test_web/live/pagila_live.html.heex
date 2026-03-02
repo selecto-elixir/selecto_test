@@ -123,6 +123,21 @@
   />
 </div>
 
+<div
+  id="query-status-indicator"
+  phx-hook=".LongQueryStatus"
+  class="hidden mb-4 rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-blue-900"
+>
+  <div class="flex items-center gap-3">
+    <div class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-blue-300 border-t-blue-700">
+    </div>
+    <div>
+      <div data-status-message class="text-sm font-medium">Running query...</div>
+      <div data-status-elapsed class="text-xs text-blue-700">Elapsed: 0s</div>
+    </div>
+  </div>
+</div>
+
 <%= if Map.get(assigns, :execution_error) && !Map.get(assigns, :applied_view) do %>
   <div
     class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4"
@@ -169,6 +184,89 @@
   params={%{"selecto_debug" => "true"}}
   id="results"
 />
+
+<script :type={Phoenix.LiveView.ColocatedHook} name=".LongQueryStatus">
+  export default {
+    mounted() {
+      this.delayTimer = null;
+      this.elapsedTimer = null;
+      this.startedAt = null;
+      this.visible = false;
+
+      this.messageEl = this.el.querySelector("[data-status-message]");
+      this.elapsedEl = this.el.querySelector("[data-status-elapsed]");
+
+      this.handleLoadingStart = (event) => {
+        const kind = event?.detail?.kind;
+
+        if (kind === "redirect") {
+          return;
+        }
+
+        this.reset();
+        this.startedAt = Date.now();
+
+        this.delayTimer = setTimeout(() => {
+          this.visible = true;
+          this.el.classList.remove("hidden");
+          this.updateStatusText();
+
+          this.elapsedTimer = setInterval(() => {
+            this.updateStatusText();
+          }, 1000);
+        }, 1200);
+      };
+
+      this.handleLoadingStop = () => {
+        this.reset();
+      };
+
+      window.addEventListener("phx:page-loading-start", this.handleLoadingStart);
+      window.addEventListener("phx:page-loading-stop", this.handleLoadingStop);
+    },
+
+    destroyed() {
+      window.removeEventListener("phx:page-loading-start", this.handleLoadingStart);
+      window.removeEventListener("phx:page-loading-stop", this.handleLoadingStop);
+      this.reset();
+    },
+
+    updateStatusText() {
+      if (!this.visible || !this.startedAt) {
+        return;
+      }
+
+      const elapsedSeconds = Math.max(1, Math.floor((Date.now() - this.startedAt) / 1000));
+      const longRunning = elapsedSeconds >= 8;
+
+      if (this.messageEl) {
+        this.messageEl.textContent = longRunning
+          ? "Still running this query..."
+          : "Running query...";
+      }
+
+      if (this.elapsedEl) {
+        this.elapsedEl.textContent = `Elapsed: ${elapsedSeconds}s`;
+      }
+    },
+
+    reset() {
+      if (this.delayTimer) {
+        clearTimeout(this.delayTimer);
+      }
+
+      if (this.elapsedTimer) {
+        clearInterval(this.elapsedTimer);
+      }
+
+      this.delayTimer = null;
+      this.elapsedTimer = null;
+      this.startedAt = null;
+      this.visible = false;
+      this.el.classList.add("hidden");
+    }
+  };
+</script>
 
 <%!-- Modal Detail View (optional feature) --%>
 <%= if Map.get(assigns, :show_detail_modal, false) && Map.get(assigns, :modal_detail_data) do %>
