@@ -46,6 +46,18 @@ View registration:
 - Recommended: `SelectoComponents.Views.spec/4`
 - Compatible legacy form: `{id, module, name, options}` tuple
 
+## SelectoPostGIS (`selecto_postgis`)
+
+Primary integration points:
+
+- `Selecto.Extensions.PostGIS` in domain `:extensions`
+- PostGIS overlay DSL directives via `defmap_view`
+- extension-driven map tab contribution for `selecto_components`
+
+Reference workflow:
+
+- [PostGIS Full Recipe](postgis-recipe.md)
+
 ## Formal Custom View Contract
 
 Use `SelectoComponents.Views.System`.
@@ -92,7 +104,8 @@ Available tasks in this workspace:
 - [Best Practices](best-practices.md)
 - [Troubleshooting](troubleshooting.md)
 - [System Overview](system-overview.md)
+- [PostGIS Full Recipe](postgis-recipe.md)
 
 ---
 
-Last updated: 2026-02-20
+Last updated: 2026-03-02

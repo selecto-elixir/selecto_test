@@ -71,6 +71,38 @@ Projects using selecto_components should include Tailwind and Alpine.js as is do
    mix run priv/repo/seeds.exs
    ```
 
+## PostGIS Quick Start (Optional)
+
+If you want Selecto map workflows powered by PostGIS:
+
+1. Enable PostGIS deps in this workspace:
+
+   ```bash
+   SELECTO_ECOSYSTEM_USE_LOCAL=true mix deps.get
+   ```
+
+   Or use the feature flag path:
+
+   ```bash
+   SELECTO_ENABLE_POSTGIS=true mix deps.get
+   ```
+
+2. Enable PostGIS in your database:
+
+   ```sql
+   CREATE EXTENSION IF NOT EXISTS postgis;
+   ```
+
+3. Add `Selecto.Extensions.PostGIS` to your domain `:extensions` and define at least one spatial column (`:geometry`/`:geography`).
+
+4. For overlay-based defaults, use PostGIS overlay DSL via `defmap_view`.
+
+5. Merge base and extension views in LiveView with `SelectoComponents.Extensions.merge_views/2`.
+
+Full recipe (domain, overlay, SQL probe, and executable test):
+
+- `docs/selecto-system/postgis-recipe.md`
+
 4. **Add Pagila data** (optional):
    - Download the [Pagila database](https://github.com/devrimgunduz/pagila)
    - Import tables and data into your dev database
