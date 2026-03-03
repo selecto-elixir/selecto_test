@@ -120,6 +120,7 @@ These docs exist in this repository:
 - [Getting Started](getting-started.md)
 - [Best Practices](best-practices.md)
 - [Troubleshooting](troubleshooting.md)
+- [PostGIS Full Recipe](postgis-recipe.md)
 - [Index](index.md)
 
 ## Accuracy Notes
@@ -128,4 +129,4 @@ This page is intentionally scoped to what is present in this repository today. A
 
 ---
 
-Last updated: 2026-02-20
+Last updated: 2026-03-02

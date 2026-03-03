@@ -81,6 +81,17 @@ end
 
 Both tuple style and `SelectoComponents.Views.spec/4` are supported; `spec/4` is recommended.
 
+## Enable PostGIS (Optional)
+
+If you want spatial/map workflows, enable `selecto_postgis` in this repo by using one of:
+
+- `SELECTO_ECOSYSTEM_USE_LOCAL=true`
+- `SELECTO_ENABLE_POSTGIS=true`
+
+Then follow the full setup guide:
+
+- [PostGIS Full Recipe](postgis-recipe.md)
+
 ## Add Custom View Systems
 
 `selecto_components` supports pluggable view systems via:
@@ -108,7 +119,8 @@ If your app validates `view_type`, include every enabled view mode in your schem
 2. [API Reference](index.md)
 3. [Troubleshooting](troubleshooting.md)
 4. [System Overview](system-overview.md)
+5. [PostGIS Full Recipe](postgis-recipe.md)
 
 ---
 
-Last updated: 2026-02-20
+Last updated: 2026-03-02
