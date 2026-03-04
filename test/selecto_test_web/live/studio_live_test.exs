@@ -81,8 +81,9 @@ defmodule SelectoTestWeb.StudioLiveTest do
           "public|studio_lv_authors|name",
           "public|studio_lv_comments|body"
         ],
-        "sort_column_ref" => "public|studio_lv_comments|id",
-        "sort_direction" => "asc",
+        "sorts" => %{
+          "s1" => %{"column_ref" => "public|studio_lv_comments|id", "direction" => "asc"}
+        },
         "filters" => %{
           "f1" => %{
             "column_ref" => "public|studio_lv_comments|id",
@@ -124,6 +125,12 @@ defmodule SelectoTestWeb.StudioLiveTest do
            end)
 
     assert saved.query_page_size == 25
+    assert is_map(saved.join_type_by_id)
+    assert saved.join_type_by_id[@posts_author_join_id] == "left"
+
+    assert Enum.any?(saved.sort_rules, fn sort_rule ->
+             sort_rule.column_ref == "public|studio_lv_comments|id"
+           end)
 
     saved_dom_id = dom_id(saved.id)
 
@@ -189,8 +196,9 @@ defmodule SelectoTestWeb.StudioLiveTest do
           "public|studio_lv_authors|name",
           "public|studio_lv_comments|body"
         ],
-        "sort_column_ref" => "public|studio_lv_comments|body",
-        "sort_direction" => "asc",
+        "sorts" => %{
+          "s1" => %{"column_ref" => "public|studio_lv_comments|body", "direction" => "asc"}
+        },
         "filters" => %{
           "f1" => %{
             "column_ref" => "public|studio_lv_comments|body",
@@ -245,8 +253,9 @@ defmodule SelectoTestWeb.StudioLiveTest do
     invalid_params = %{
       "query" => %{
         "selected_columns" => ["public|studio_lv_comments|id"],
-        "sort_column_ref" => "public|studio_lv_comments|id",
-        "sort_direction" => "asc",
+        "sorts" => %{
+          "s1" => %{"column_ref" => "public|studio_lv_comments|id", "direction" => "asc"}
+        },
         "filters" => %{
           "f1" => %{
             "column_ref" => "public|studio_lv_comments|id",
@@ -298,8 +307,9 @@ defmodule SelectoTestWeb.StudioLiveTest do
           "public|studio_lv_comments|id",
           "public|studio_lv_comments|body"
         ],
-        "sort_column_ref" => "public|studio_lv_comments|id",
-        "sort_direction" => "asc",
+        "sorts" => %{
+          "s1" => %{"column_ref" => "public|studio_lv_comments|id", "direction" => "asc"}
+        },
         "filters" => %{}
       }
     }
@@ -344,6 +354,7 @@ defmodule SelectoTestWeb.StudioLiveTest do
         base_table: "public.studio_lv_authors",
         selected_join_ids: [@posts_author_join_id, @comments_post_join_id],
         selected_columns: ["public|studio_lv_authors|name", "public|studio_lv_comments|id"],
+        join_type_by_id: %{@posts_author_join_id => "inner", @comments_post_join_id => "left"},
         filters: [
           %{
             id: "f1",
@@ -351,6 +362,10 @@ defmodule SelectoTestWeb.StudioLiveTest do
             operator: "gt",
             value: "99"
           }
+        ],
+        sorts: [
+          %{id: "s1", column_ref: "public|studio_lv_comments|id", direction: "desc"},
+          %{id: "s2", column_ref: "public|studio_lv_authors|name", direction: "asc"}
         ],
         sort: %{column_ref: "public|studio_lv_comments|id", direction: "desc"},
         page_size: 50
@@ -372,7 +387,9 @@ defmodule SelectoTestWeb.StudioLiveTest do
     assert has_element?(view, "#query-col-public-studio-lv-authors-name[checked]")
     assert has_element?(view, "#query-col-public-studio-lv-comments-id[checked]")
     assert has_element?(view, "#filter-row-f1")
-    assert has_element?(view, "#sort-direction-select option[value=desc][selected]")
+    assert has_element?(view, "#join-type-#{posts_join_dom_id} option[value=inner][selected]")
+    assert has_element?(view, "#sort-direction-s1 option[value=desc][selected]")
+    assert has_element?(view, "#sort-direction-s2 option[value=asc][selected]")
     assert has_element?(view, "#query-page-size option[value='50'][selected]")
   end
 
@@ -397,8 +414,9 @@ defmodule SelectoTestWeb.StudioLiveTest do
     query_params = %{
       "query" => %{
         "selected_columns" => ["public|studio_lv_authors|name", "public|studio_lv_comments|body"],
-        "sort_column_ref" => "public|studio_lv_comments|id",
-        "sort_direction" => "asc",
+        "sorts" => %{
+          "s1" => %{"column_ref" => "public|studio_lv_comments|id", "direction" => "asc"}
+        },
         "page_size" => "25",
         "filters" => %{}
       }
@@ -432,6 +450,114 @@ defmodule SelectoTestWeb.StudioLiveTest do
 
     assert_push_event(view, "download_csv", %{filename: "studio_query_all.csv", content: all_csv})
     assert all_csv =~ "public__studio_lv_comments__body"
+  end
+
+  test "join type selection updates generated SQL", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/studio")
+
+    view
+    |> element("#table-public-studio-lv-authors")
+    |> render_click()
+
+    posts_join_dom_id = dom_id(@posts_author_join_id)
+
+    view
+    |> element("#add-join-#{posts_join_dom_id}")
+    |> render_click()
+
+    view
+    |> form("#join-type-form-#{posts_join_dom_id}", %{
+      "join" => %{"id" => @posts_author_join_id, "type" => "inner"}
+    })
+    |> render_change()
+
+    query_params = %{
+      "query" => %{
+        "selected_columns" => ["public|studio_lv_authors|name", "public|studio_lv_posts|title"],
+        "sorts" => %{
+          "s1" => %{"column_ref" => "public|studio_lv_posts|id", "direction" => "asc"}
+        },
+        "filters" => %{}
+      }
+    }
+
+    view
+    |> form("#query-builder-form", query_params)
+    |> render_change()
+
+    view
+    |> form("#query-builder-form", query_params)
+    |> render_submit()
+
+    render_async(view)
+
+    html = render(view)
+    assert html =~ "inner join"
+  end
+
+  test "runs explain and offers codegen file downloads", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/studio")
+
+    view
+    |> element("#table-public-studio-lv-authors")
+    |> render_click()
+
+    posts_join_dom_id = dom_id(@posts_author_join_id)
+
+    view
+    |> element("#add-join-#{posts_join_dom_id}")
+    |> render_click()
+
+    query_params = %{
+      "query" => %{
+        "selected_columns" => ["public|studio_lv_authors|name", "public|studio_lv_posts|title"],
+        "sorts" => %{
+          "s1" => %{"column_ref" => "public|studio_lv_posts|id", "direction" => "asc"}
+        },
+        "filters" => %{}
+      }
+    }
+
+    view
+    |> form("#query-builder-form", query_params)
+    |> render_change()
+
+    view
+    |> form("#query-builder-form", query_params)
+    |> render_submit()
+
+    render_async(view)
+
+    view
+    |> element("#run-explain-button")
+    |> render_click()
+
+    render_async(view)
+
+    assert has_element?(view, "#joined-query-explain")
+    assert render(view) =~ "cost="
+
+    view
+    |> element("#download-codegen-query")
+    |> render_click()
+
+    assert_push_event(view, "download_file", %{
+      filename: "studio_generated_query.ex",
+      content: query_module
+    })
+
+    assert query_module =~ "defmodule SelectoTest.StudioGeneratedQuery"
+
+    view
+    |> element("#download-codegen-overlay")
+    |> render_click()
+
+    assert_push_event(view, "download_file", %{
+      filename: "studio_overlay_joins.exs",
+      content: overlay_snippet
+    })
+
+    assert overlay_snippet =~ "joins:"
   end
 
   defp clear_saved_configs do
