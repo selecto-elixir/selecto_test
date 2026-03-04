@@ -24,6 +24,7 @@ defmodule SelectoTestWeb.Router do
 
     live "/pagila/film/:film_id", PagilaFilmLive, :index
     live "/studio", StudioLive, :index
+    live "/studio/components", StudioComponentsLive, :index
 
     # Selecto Documentation
     live "/docs/selecto-system/*path", DocsLive

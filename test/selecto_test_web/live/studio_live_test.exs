@@ -560,6 +560,27 @@ defmodule SelectoTestWeb.StudioLiveTest do
     assert overlay_snippet =~ "joins:"
   end
 
+  test "opens selecto components view from current studio config", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/studio")
+
+    view
+    |> element("#table-public-studio-lv-authors")
+    |> render_click()
+
+    posts_join_dom_id = dom_id(@posts_author_join_id)
+
+    view
+    |> element("#add-join-#{posts_join_dom_id}")
+    |> render_click()
+
+    assert {:error, {:live_redirect, %{to: to}}} =
+             view
+             |> element("#open-components-button")
+             |> render_click()
+
+    assert String.starts_with?(to, "/studio/components?payload=")
+  end
+
   defp clear_saved_configs do
     JoinConfigStore.list_configs()
     |> Enum.each(fn config ->

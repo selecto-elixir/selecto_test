@@ -398,6 +398,18 @@ defmodule SelectoTestWeb.StudioLive do
   end
 
   @impl true
+  def handle_event("open_components", _params, socket) do
+    payload = build_components_payload(socket.assigns)
+
+    encoded_payload =
+      payload
+      |> Jason.encode!()
+      |> Base.url_encode64(padding: false)
+
+    {:noreply, push_navigate(socket, to: ~p"/studio/components?payload=#{encoded_payload}")}
+  end
+
+  @impl true
   def handle_event("set_import_config", %{"import" => %{"json" => json}}, socket) do
     {:noreply, assign(socket, :import_config_json, json)}
   end
@@ -925,6 +937,15 @@ defmodule SelectoTestWeb.StudioLive do
                   class="rounded-lg border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
                 >
                   Download Overlay Snippet
+                </button>
+
+                <button
+                  id="open-components-button"
+                  type="button"
+                  phx-click="open_components"
+                  class="col-span-2 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-500"
+                >
+                  Open In SelectoComponents
                 </button>
               </div>
             </div>
@@ -2225,6 +2246,18 @@ defmodule SelectoTestWeb.StudioLive do
       page_size: query_page_size
     }
     |> Jason.encode!(pretty: true)
+  end
+
+  defp build_components_payload(assigns) do
+    %{
+      base_table: full_table_name(assigns.selected_table),
+      selected_joins: assigns.selected_joins,
+      selected_columns: assigns.selected_columns,
+      filters: assigns.filters,
+      sort_rules: assigns.sort_rules,
+      sort: %{column_ref: assigns.sort_column_ref, direction: assigns.sort_direction},
+      page_size: assigns.query_page_size
+    }
   end
 
   defp parse_import_config(json) do
