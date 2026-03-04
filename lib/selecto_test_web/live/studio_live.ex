@@ -8,6 +8,9 @@ defmodule SelectoTestWeb.StudioLive do
 
   @preview_limit 30
   @query_page_size 25
+  @max_query_page_size 200
+  @query_timeout_ms 8_000
+  @max_csv_export_rows 10_000
   @default_column_count 6
 
   @impl true
@@ -38,11 +41,14 @@ defmodule SelectoTestWeb.StudioLive do
       |> assign(:query_error, nil)
       |> assign(:query_builder_error, nil)
       |> assign(:query_page_size, @query_page_size)
+      |> assign(:max_query_page_size, @max_query_page_size)
       |> assign(:query_page, 1)
       |> assign(:query_total_rows, 0)
       |> assign(:query_total_pages, 0)
       |> assign(:sort_column_ref, nil)
       |> assign(:sort_direction, "asc")
+      |> assign(:query_running, false)
+      |> assign(:import_config_json, "")
       |> assign(:save_name, "")
       |> assign(:saved_configs, [])
       |> assign(:load_error, nil)
@@ -106,6 +112,7 @@ defmodule SelectoTestWeb.StudioLive do
     filter_params = Map.get(query_params, "filters", %{})
     sort_column_ref = Map.get(query_params, "sort_column_ref")
     sort_direction = Map.get(query_params, "sort_direction", "asc")
+    page_size = Map.get(query_params, "page_size")
 
     filters =
       socket.assigns.filters
@@ -122,11 +129,14 @@ defmodule SelectoTestWeb.StudioLive do
 
     socket =
       socket
+      |> cancel_async(:studio_query)
       |> assign(:selected_columns, selected_columns)
       |> assign(:filters, filters)
       |> assign(:sort_column_ref, sort_column_ref)
       |> assign(:sort_direction, sort_direction)
+      |> assign(:query_page_size, page_size)
       |> assign(:query_page, 1)
+      |> assign(:query_running, false)
       |> sanitize_query_state()
 
     {:noreply, socket}
@@ -155,9 +165,11 @@ defmodule SelectoTestWeb.StudioLive do
 
         socket =
           socket
+          |> cancel_async(:studio_query)
           |> assign(:filter_seq, next_seq)
           |> assign(:filters, socket.assigns.filters ++ [new_filter])
           |> assign(:query_page, 1)
+          |> assign(:query_running, false)
           |> sanitize_query_state()
 
         {:noreply, socket}
@@ -170,14 +182,16 @@ defmodule SelectoTestWeb.StudioLive do
 
     {:noreply,
      socket
+     |> cancel_async(:studio_query)
      |> assign(:filters, filters)
      |> assign(:query_page, 1)
+     |> assign(:query_running, false)
      |> sanitize_query_state()}
   end
 
   @impl true
   def handle_event("run_query", _params, socket) do
-    {:noreply, run_joined_query(socket)}
+    {:noreply, start_query_run(socket)}
   end
 
   @impl true
@@ -190,7 +204,7 @@ defmodule SelectoTestWeb.StudioLive do
       else
         socket
         |> assign(:query_page, next_page)
-        |> run_joined_query()
+        |> start_query_run()
       end
 
     {:noreply, socket}
@@ -207,7 +221,66 @@ defmodule SelectoTestWeb.StudioLive do
       else
         socket
         |> assign(:query_page, next_page)
-        |> run_joined_query()
+        |> start_query_run()
+      end
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("reset_query", _params, socket) do
+    {:noreply, reset_query_state(socket)}
+  end
+
+  @impl true
+  def handle_event("cancel_query", _params, socket) do
+    socket =
+      socket
+      |> cancel_async(:studio_query)
+      |> assign(:query_running, false)
+      |> put_flash(:info, "Cancelled query")
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("download_csv", %{"scope" => scope}, socket) do
+    socket =
+      case download_csv(socket, scope) do
+        {:ok, socket} -> socket
+        {:error, message, socket} -> put_flash(socket, :error, message)
+      end
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("set_import_config", %{"import" => %{"json" => json}}, socket) do
+    {:noreply, assign(socket, :import_config_json, json)}
+  end
+
+  @impl true
+  def handle_event("set_import_config", _params, socket) do
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("import_config", _params, socket) do
+    socket =
+      case parse_import_config(socket.assigns.import_config_json) do
+        {:ok, imported} ->
+          case apply_imported_config(socket, imported) do
+            {:ok, next_socket} ->
+              next_socket
+              |> put_flash(:info, "Imported studio config")
+
+            {:error, message, next_socket} ->
+              next_socket
+              |> put_flash(:error, message)
+          end
+
+        {:error, message} ->
+          put_flash(socket, :error, message)
       end
 
     {:noreply, socket}
@@ -239,6 +312,7 @@ defmodule SelectoTestWeb.StudioLive do
           filters: socket.assigns.filters,
           sort_column_ref: socket.assigns.sort_column_ref,
           sort_direction: socket.assigns.sort_direction,
+          query_page_size: socket.assigns.query_page_size,
           join_config_json: socket.assigns.join_config_json,
           selecto_join_config: socket.assigns.selecto_join_config
         }
@@ -280,6 +354,7 @@ defmodule SelectoTestWeb.StudioLive do
               filter_seq = next_filter_seq(filters)
               sort_column_ref = Map.get(config, :sort_column_ref)
               sort_direction = normalize_sort_direction(Map.get(config, :sort_direction, "asc"))
+              query_page_size = normalize_query_page_size(Map.get(config, :query_page_size))
 
               socket
               |> load_selected_table(table)
@@ -289,6 +364,7 @@ defmodule SelectoTestWeb.StudioLive do
               |> assign(:filter_seq, filter_seq)
               |> assign(:sort_column_ref, sort_column_ref)
               |> assign(:sort_direction, sort_direction)
+              |> assign(:query_page_size, query_page_size)
               |> sanitize_query_state()
               |> assign(:query_columns, [])
               |> assign(:query_rows, [])
@@ -297,6 +373,7 @@ defmodule SelectoTestWeb.StudioLive do
               |> assign(:query_page, 1)
               |> assign(:query_total_rows, 0)
               |> assign(:query_total_pages, 0)
+              |> assign(:query_running, false)
               |> assign(:save_name, config.name)
               |> assign(:save_error, nil)
               |> put_flash(:info, "Loaded #{config.name}")
@@ -317,6 +394,51 @@ defmodule SelectoTestWeb.StudioLive do
       socket
       |> refresh_saved_configs()
       |> put_flash(:info, "Deleted saved config")
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_async(:studio_query, {:ok, {:ok, result}}, socket) do
+    socket =
+      socket
+      |> assign(:query_columns, result.columns)
+      |> assign(:query_rows, result.rows)
+      |> assign(:query_sql, result.sql)
+      |> assign(:query_error, nil)
+      |> assign(:query_page, result.page)
+      |> assign(:query_total_rows, result.total_rows)
+      |> assign(:query_total_pages, result.total_pages)
+      |> assign(:query_running, false)
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_async(:studio_query, {:ok, {:error, message}}, socket) do
+    socket =
+      socket
+      |> assign(:query_rows, [])
+      |> assign(:query_columns, [])
+      |> assign(:query_total_rows, 0)
+      |> assign(:query_total_pages, 0)
+      |> assign(:query_error, db_error(message))
+      |> assign(:query_running, false)
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_async(:studio_query, {:exit, {:shutdown, :cancel}}, socket) do
+    {:noreply, assign(socket, :query_running, false)}
+  end
+
+  @impl true
+  def handle_async(:studio_query, {:exit, reason}, socket) do
+    socket =
+      socket
+      |> assign(:query_running, false)
+      |> assign(:query_error, "Query failed: #{inspect(reason)}")
 
     {:noreply, socket}
   end
@@ -561,6 +683,24 @@ defmodule SelectoTestWeb.StudioLive do
                 class="h-36 w-full rounded-lg border-gray-300 font-mono text-xs text-gray-700 focus:border-blue-400 focus:ring-blue-200"
                 value={@selecto_join_config}
               ></textarea>
+
+              <p class="mb-1 mt-3 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                Selecto Handoff Snippet
+              </p>
+              <textarea
+                id="selecto-handoff-snippet"
+                readonly
+                class="h-44 w-full rounded-lg border-gray-300 font-mono text-xs text-gray-700 focus:border-blue-400 focus:ring-blue-200"
+                value={
+                  build_selecto_handoff_snippet(
+                    @selected_table,
+                    @selected_columns,
+                    @filters,
+                    @sort_column_ref,
+                    @sort_direction
+                  )
+                }
+              ></textarea>
             </div>
 
             <div class="rounded-xl border border-gray-200 bg-white p-4">
@@ -641,6 +781,26 @@ defmodule SelectoTestWeb.StudioLive do
                       <option value="desc" selected={@sort_direction == "desc"}>desc</option>
                     </select>
                   </div>
+                </div>
+
+                <div>
+                  <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                    Page size
+                  </p>
+                  <select
+                    id="query-page-size"
+                    name="query[page_size]"
+                    class="w-full rounded-md border-gray-300 px-2 py-1 text-xs focus:border-blue-400 focus:ring-blue-200"
+                  >
+                    <option
+                      :for={size <- query_page_size_options()}
+                      value={size}
+                      selected={@query_page_size == size}
+                    >
+                      {size}
+                    </option>
+                  </select>
+                  <p class="mt-1 text-[11px] text-gray-500">Max page size: {@max_query_page_size}</p>
                 </div>
 
                 <div>
@@ -778,13 +938,35 @@ defmodule SelectoTestWeb.StudioLive do
                   </div>
                 </div>
 
-                <button
-                  id="run-query-button"
-                  type="submit"
-                  class="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-500"
-                >
-                  Run joined query
-                </button>
+                <div class="grid grid-cols-3 gap-2">
+                  <button
+                    id="run-query-button"
+                    type="submit"
+                    disabled={@query_running}
+                    class="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {if @query_running, do: "Running...", else: "Run query"}
+                  </button>
+
+                  <button
+                    id="cancel-query-button"
+                    type="button"
+                    phx-click="cancel_query"
+                    disabled={not @query_running}
+                    class="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    id="reset-query-button"
+                    type="button"
+                    phx-click="reset_query"
+                    class="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                  >
+                    Reset
+                  </button>
+                </div>
               </form>
             </div>
 
@@ -858,6 +1040,56 @@ defmodule SelectoTestWeb.StudioLive do
 
                 <p :if={@saved_configs == []} class="text-sm text-gray-600">Nothing saved yet.</p>
               </div>
+
+              <div class="mt-4 border-t border-gray-100 pt-3">
+                <p class="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                  Full Config Export
+                </p>
+                <textarea
+                  id="full-config-json"
+                  readonly
+                  class="h-28 w-full rounded-lg border-gray-300 font-mono text-xs text-gray-700"
+                  value={
+                    build_full_config_json(
+                      @selected_table,
+                      @selected_joins,
+                      @selected_columns,
+                      @filters,
+                      @sort_column_ref,
+                      @sort_direction,
+                      @query_page_size
+                    )
+                  }
+                ></textarea>
+              </div>
+
+              <div class="mt-3">
+                <form
+                  id="import-config-form"
+                  phx-change="set_import_config"
+                  phx-submit="import_config"
+                  class="space-y-2"
+                >
+                  <p class="text-xs font-semibold uppercase tracking-wide text-gray-600">
+                    Import Config JSON
+                  </p>
+
+                  <textarea
+                    id="import-config-json"
+                    name="import[json]"
+                    value={@import_config_json}
+                    class="h-24 w-full rounded-lg border-gray-300 font-mono text-xs text-gray-700 focus:border-blue-400 focus:ring-blue-200"
+                    placeholder="Paste exported config JSON"
+                  ></textarea>
+
+                  <button
+                    type="submit"
+                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                  >
+                    Import config
+                  </button>
+                </form>
+              </div>
             </div>
           </section>
         </div>
@@ -874,6 +1106,12 @@ defmodule SelectoTestWeb.StudioLive do
                 </span>
                 <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">
                   {@query_total_rows} rows
+                </span>
+                <span
+                  :if={@query_running}
+                  class="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700"
+                >
+                  running
                 </span>
               </div>
             </div>
@@ -897,7 +1135,7 @@ defmodule SelectoTestWeb.StudioLive do
                 id="query-prev-page"
                 type="button"
                 phx-click="prev_page"
-                disabled={@query_page <= 1 or @query_total_pages <= 1}
+                disabled={@query_running or @query_page <= 1 or @query_total_pages <= 1}
                 class="rounded-md border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Prev
@@ -911,10 +1149,36 @@ defmodule SelectoTestWeb.StudioLive do
                 id="query-next-page"
                 type="button"
                 phx-click="next_page"
-                disabled={@query_page >= @query_total_pages or @query_total_pages <= 1}
+                disabled={
+                  @query_running or @query_page >= @query_total_pages or @query_total_pages <= 1
+                }
                 class="rounded-md border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Next
+              </button>
+            </div>
+
+            <div class="mb-3 grid grid-cols-2 gap-2">
+              <button
+                id="download-csv-page"
+                type="button"
+                phx-click="download_csv"
+                phx-value-scope="page"
+                disabled={@query_rows == [] or @query_running}
+                class="rounded-lg border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Download current page CSV
+              </button>
+
+              <button
+                id="download-csv-all"
+                type="button"
+                phx-click="download_csv"
+                phx-value-scope="all"
+                disabled={@query_running}
+                class="rounded-lg border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Download all rows CSV
               </button>
             </div>
 
@@ -996,6 +1260,7 @@ defmodule SelectoTestWeb.StudioLive do
         |> assign(:query_total_pages, 0)
         |> assign(:sort_column_ref, nil)
         |> assign(:sort_direction, "asc")
+        |> assign(:query_running, false)
         |> assign(:load_error, "Could not load database metadata: #{db_error(reason)}")
     end
   end
@@ -1024,6 +1289,7 @@ defmodule SelectoTestWeb.StudioLive do
     |> assign(:query_total_pages, 0)
     |> assign(:sort_column_ref, nil)
     |> assign(:sort_direction, "asc")
+    |> assign(:query_running, false)
     |> assign(:preview_error, nil)
     |> assign(:join_error, nil)
     |> refresh_output_configs()
@@ -1063,6 +1329,7 @@ defmodule SelectoTestWeb.StudioLive do
     |> assign(:query_total_pages, 0)
     |> assign(:sort_column_ref, nil)
     |> assign(:sort_direction, "asc")
+    |> assign(:query_running, false)
     |> assign(:preview_error, preview_error)
     |> assign(:join_error, join_error_message(join_errors))
     |> refresh_output_configs()
@@ -1102,6 +1369,7 @@ defmodule SelectoTestWeb.StudioLive do
             |> assign(:query_page, 1)
             |> assign(:query_total_rows, 0)
             |> assign(:query_total_pages, 0)
+            |> assign(:query_running, false)
 
           :error ->
             socket
@@ -1136,6 +1404,7 @@ defmodule SelectoTestWeb.StudioLive do
           |> assign(:query_page, 1)
           |> assign(:query_total_rows, 0)
           |> assign(:query_total_pages, 0)
+          |> assign(:query_running, false)
 
         Enum.reduce(join_ids, base_socket, fn join_id, acc_socket ->
           add_join_by_id(acc_socket, join_id)
@@ -1323,31 +1592,56 @@ defmodule SelectoTestWeb.StudioLive do
       )
 
     sort_direction = normalize_sort_direction(socket.assigns.sort_direction)
+    query_page_size = normalize_query_page_size(socket.assigns.query_page_size)
 
     socket
     |> assign(:selected_columns, selected_columns)
     |> assign(:filters, filters)
     |> assign(:sort_column_ref, sort_column_ref)
     |> assign(:sort_direction, sort_direction)
+    |> assign(:query_page_size, query_page_size)
   end
 
-  defp run_joined_query(socket) do
-    with {:ok, query} <- build_joined_query(socket),
+  defp start_query_run(socket) do
+    query_socket = query_socket_for_execution(socket.assigns)
+
+    socket
+    |> cancel_async(:studio_query)
+    |> assign(:query_running, true)
+    |> assign(:query_error, nil)
+    |> start_async(:studio_query, fn -> execute_joined_query(query_socket) end)
+  end
+
+  defp reset_query_state(socket) do
+    socket
+    |> cancel_async(:studio_query)
+    |> assign(:query_columns, [])
+    |> assign(:query_rows, [])
+    |> assign(:query_sql, nil)
+    |> assign(:query_error, nil)
+    |> assign(:query_page, 1)
+    |> assign(:query_total_rows, 0)
+    |> assign(:query_total_pages, 0)
+    |> assign(:query_running, false)
+  end
+
+  defp execute_joined_query(query_socket) do
+    with {:ok, query} <- build_joined_query(query_socket),
          {:ok, %{rows: [[total_rows_raw]]}} <-
-           SQL.query(Repo, query.count_sql, query.count_params) do
+           SQL.query(Repo, query.count_sql, query.count_params, timeout: @query_timeout_ms) do
       total_rows = normalize_total_rows(total_rows_raw)
-      total_pages = compute_total_pages(total_rows, socket.assigns.query_page_size)
-      clamped_page = clamp_query_page(socket.assigns.query_page, total_pages)
+      total_pages = compute_total_pages(total_rows, query_socket.assigns.query_page_size)
+      clamped_page = clamp_query_page(query_socket.assigns.query_page, total_pages)
 
       query =
         if clamped_page == query.page do
           query
         else
-          {:ok, rebuilt_query} = build_joined_query(socket, clamped_page)
+          {:ok, rebuilt_query} = build_joined_query(query_socket, clamped_page)
           rebuilt_query
         end
 
-      case SQL.query(Repo, query.sql, query.params) do
+      case SQL.query(Repo, query.sql, query.params, timeout: @query_timeout_ms) do
         {:ok, %{columns: columns, rows: rows}} ->
           shaped_rows =
             Enum.map(rows, fn values ->
@@ -1356,40 +1650,216 @@ defmodule SelectoTestWeb.StudioLive do
               |> Enum.into(%{})
             end)
 
-          socket
-          |> assign(:query_columns, columns)
-          |> assign(:query_rows, shaped_rows)
-          |> assign(:query_sql, query.sql)
-          |> assign(:query_error, nil)
-          |> assign(:query_page, clamped_page)
-          |> assign(:query_total_rows, total_rows)
-          |> assign(:query_total_pages, total_pages)
+          {:ok,
+           %{
+             columns: columns,
+             rows: shaped_rows,
+             sql: query.sql,
+             page: clamped_page,
+             total_rows: total_rows,
+             total_pages: total_pages
+           }}
 
         {:error, reason} ->
-          socket
-          |> assign(:query_sql, query.sql)
-          |> assign(:query_rows, [])
-          |> assign(:query_columns, [])
-          |> assign(:query_total_rows, 0)
-          |> assign(:query_total_pages, 0)
-          |> assign(:query_error, "Could not run joined query: #{db_error(reason)}")
+          {:error, "Could not run joined query: #{db_error(reason)}"}
       end
     else
       {:error, message} ->
-        socket
-        |> assign(:query_rows, [])
-        |> assign(:query_columns, [])
-        |> assign(:query_total_rows, 0)
-        |> assign(:query_total_pages, 0)
-        |> assign(:query_error, db_error(message))
+        {:error, db_error(message)}
 
       {:ok, _other} ->
-        socket
-        |> assign(:query_rows, [])
-        |> assign(:query_columns, [])
-        |> assign(:query_total_rows, 0)
-        |> assign(:query_total_pages, 0)
-        |> assign(:query_error, "Could not determine total row count")
+        {:error, "Could not determine total row count"}
+    end
+  end
+
+  defp query_socket_for_execution(assigns) do
+    %{
+      assigns: %{
+        selected_table: assigns.selected_table,
+        selected_joins: assigns.selected_joins,
+        available_columns: assigns.available_columns,
+        selected_columns: assigns.selected_columns,
+        filters: assigns.filters,
+        sort_column_ref: assigns.sort_column_ref,
+        sort_direction: assigns.sort_direction,
+        query_page_size: assigns.query_page_size,
+        query_page: assigns.query_page
+      }
+    }
+  end
+
+  defp download_csv(socket, "page") do
+    if socket.assigns.query_rows == [] or socket.assigns.query_columns == [] do
+      {:error, "Run a query first before downloading CSV", socket}
+    else
+      csv = encode_csv(socket.assigns.query_columns, socket.assigns.query_rows)
+
+      {:ok,
+       push_event(socket, "download_csv", %{
+         filename: "studio_query_page_#{socket.assigns.query_page}.csv",
+         content: csv
+       })}
+    end
+  end
+
+  defp download_csv(socket, "all") do
+    query_socket =
+      socket.assigns
+      |> query_socket_for_execution()
+      |> put_in([:assigns, :query_page_size], @max_csv_export_rows)
+      |> put_in([:assigns, :query_page], 1)
+
+    with {:ok, query} <- build_joined_query(query_socket),
+         {:ok, %{rows: [[total_rows_raw]]}} <-
+           SQL.query(Repo, query.count_sql, query.count_params, timeout: @query_timeout_ms),
+         {:ok, %{columns: columns, rows: rows}} <-
+           SQL.query(Repo, query.sql, query.params, timeout: @query_timeout_ms) do
+      total_rows = normalize_total_rows(total_rows_raw)
+
+      shaped_rows =
+        Enum.map(rows, fn values ->
+          columns
+          |> Enum.zip(values)
+          |> Enum.into(%{})
+        end)
+
+      csv = encode_csv(columns, shaped_rows)
+
+      socket =
+        if total_rows > @max_csv_export_rows do
+          put_flash(
+            socket,
+            :info,
+            "CSV export limited to #{@max_csv_export_rows} rows (#{total_rows} total matched)"
+          )
+        else
+          socket
+        end
+
+      {:ok,
+       push_event(socket, "download_csv", %{
+         filename: "studio_query_all.csv",
+         content: csv
+       })}
+    else
+      {:error, reason} -> {:error, "Could not export CSV: #{db_error(reason)}", socket}
+      {:ok, _other} -> {:error, "Could not export CSV", socket}
+    end
+  end
+
+  defp download_csv(socket, _scope), do: {:error, "Unsupported CSV export scope", socket}
+
+  defp encode_csv(columns, rows) do
+    header = Enum.map_join(columns, ",", &csv_escape/1)
+
+    body =
+      Enum.map_join(rows, "\n", fn row ->
+        columns
+        |> Enum.map(fn column -> Map.get(row, column) end)
+        |> Enum.map_join(",", &csv_escape/1)
+      end)
+
+    if body == "" do
+      header <> "\n"
+    else
+      header <> "\n" <> body <> "\n"
+    end
+  end
+
+  defp csv_escape(nil), do: ""
+
+  defp csv_escape(value) do
+    text =
+      case value do
+        %Date{} -> Date.to_iso8601(value)
+        %Time{} -> Time.to_iso8601(value)
+        %NaiveDateTime{} -> NaiveDateTime.to_iso8601(value)
+        %DateTime{} -> DateTime.to_iso8601(value)
+        value when is_binary(value) -> value
+        value -> to_string(value)
+      end
+
+    escaped = String.replace(text, "\"", "\"\"")
+
+    if String.contains?(escaped, [",", "\n", "\r", "\""]) do
+      "\"#{escaped}\""
+    else
+      escaped
+    end
+  end
+
+  defp build_full_config_json(
+         selected_table,
+         selected_joins,
+         selected_columns,
+         filters,
+         sort_column_ref,
+         sort_direction,
+         query_page_size
+       ) do
+    %{
+      version: 1,
+      base_table: full_table_name(selected_table),
+      selected_join_ids: Enum.map(selected_joins, & &1.id),
+      selected_columns: selected_columns,
+      filters: filters,
+      sort: %{column_ref: sort_column_ref, direction: sort_direction},
+      page_size: query_page_size
+    }
+    |> Jason.encode!(pretty: true)
+  end
+
+  defp parse_import_config(json) do
+    payload = to_string(json || "") |> String.trim()
+
+    if payload == "" do
+      {:error, "Paste a config JSON payload to import"}
+    else
+      case Jason.decode(payload) do
+        {:ok, decoded} when is_map(decoded) ->
+          {:ok,
+           %{
+             base_table: normalize_optional_string(Map.get(decoded, "base_table")),
+             selected_join_ids: normalize_string_list(Map.get(decoded, "selected_join_ids", [])),
+             selected_columns: normalize_string_list(Map.get(decoded, "selected_columns", [])),
+             filters: Map.get(decoded, "filters", []),
+             sort_column_ref: normalize_optional_string(get_in(decoded, ["sort", "column_ref"])),
+             sort_direction: get_in(decoded, ["sort", "direction"]),
+             page_size: Map.get(decoded, "page_size")
+           }}
+
+        {:ok, _decoded} ->
+          {:error, "Import payload must be a JSON object"}
+
+        {:error, _reason} ->
+          {:error, "Invalid JSON payload"}
+      end
+    end
+  end
+
+  defp apply_imported_config(socket, imported) do
+    case find_table_by_full_name(socket.assigns.tables, imported.base_table) do
+      nil ->
+        {:error, "Imported base table is not available", socket}
+
+      table ->
+        filters = normalize_saved_filters(imported.filters)
+
+        socket =
+          socket
+          |> load_selected_table(table)
+          |> rebuild_selected_joins(imported.selected_join_ids)
+          |> assign(:selected_columns, normalize_selected_columns(imported.selected_columns))
+          |> assign(:filters, filters)
+          |> assign(:filter_seq, next_filter_seq(filters))
+          |> assign(:sort_column_ref, imported.sort_column_ref)
+          |> assign(:sort_direction, normalize_sort_direction(imported.sort_direction))
+          |> assign(:query_page_size, normalize_query_page_size(imported.page_size))
+          |> assign(:query_page, 1)
+          |> sanitize_query_state()
+          |> reset_query_state()
+
+        {:ok, socket}
     end
   end
 
@@ -1682,6 +2152,135 @@ defmodule SelectoTestWeb.StudioLive do
   end
 
   defp column_ref(schema, table, column), do: "#{schema}|#{table}|#{column}"
+
+  defp build_selecto_handoff_snippet(
+         selected_table,
+         selected_columns,
+         filters,
+         sort_column_ref,
+         sort_direction
+       ) do
+    select_fields =
+      selected_columns
+      |> Enum.map(&column_ref_to_field/1)
+      |> Enum.reject(&is_nil/1)
+
+    filter_terms =
+      filters
+      |> Enum.map(&filter_to_selecto_term/1)
+      |> Enum.reject(&is_nil/1)
+
+    order_terms =
+      case column_ref_to_field(sort_column_ref) do
+        nil -> []
+        field -> [{field, sort_direction_atom(sort_direction)}]
+      end
+
+    lines =
+      [
+        "# Generated from /studio",
+        "selecto = Selecto.configure(your_domain, SelectoTest.Repo)",
+        "",
+        "query =",
+        "  selecto",
+        "  |> Selecto.select(#{inspect(select_fields, pretty: true, limit: :infinity)})"
+      ] ++
+        handoff_filter_lines(filter_terms) ++
+        handoff_order_lines(order_terms) ++
+        ["", "results = Selecto.execute(query)"]
+
+    if is_nil(selected_table) do
+      "# Pick a base table first"
+    else
+      Enum.join(lines, "\n")
+    end
+  end
+
+  defp handoff_filter_lines([]), do: []
+
+  defp handoff_filter_lines(filter_terms) do
+    ["  |> Selecto.filter(#{inspect(filter_terms, pretty: true, limit: :infinity)})"]
+  end
+
+  defp handoff_order_lines([]), do: []
+
+  defp handoff_order_lines(order_terms) do
+    ["  |> Selecto.order_by(#{inspect(order_terms, pretty: true, limit: :infinity)})"]
+  end
+
+  defp filter_to_selecto_term(%{column_ref: column_ref, operator: operator, value: value}) do
+    with field when not is_nil(field) <- column_ref_to_field(column_ref) do
+      case normalize_operator(operator) do
+        "eq" -> {field, value}
+        "neq" -> {field, {:not, value}}
+        "gt" -> {field, {:>, value}}
+        "gte" -> {field, {:>=, value}}
+        "lt" -> {field, {:<, value}}
+        "lte" -> {field, {:<=, value}}
+        "contains" -> {field, {:ilike, "%#{value}%"}}
+        "starts_with" -> {field, {:ilike, "#{value}%"}}
+        "ends_with" -> {field, {:ilike, "%#{value}"}}
+        "is_null" -> {field, nil}
+        "is_not_null" -> {field, {:not, nil}}
+        _ -> nil
+      end
+    end
+  end
+
+  defp filter_to_selecto_term(_), do: nil
+
+  defp column_ref_to_field(nil), do: nil
+
+  defp column_ref_to_field(column_ref) do
+    case String.split(to_string(column_ref), "|", parts: 3) do
+      [_schema, table, column] -> "#{table}.#{column}"
+      _ -> nil
+    end
+  end
+
+  defp query_page_size_options, do: [10, 25, 50, 100, 200]
+
+  defp normalize_query_page_size(value) when is_integer(value) do
+    value
+    |> max(1)
+    |> min(@max_query_page_size)
+  end
+
+  defp normalize_query_page_size(value) when is_binary(value) do
+    case Integer.parse(String.trim(value)) do
+      {parsed, ""} -> normalize_query_page_size(parsed)
+      _ -> @query_page_size
+    end
+  end
+
+  defp normalize_query_page_size(_), do: @query_page_size
+
+  defp normalize_optional_string(nil), do: nil
+
+  defp normalize_optional_string(value) do
+    value
+    |> to_string()
+    |> String.trim()
+    |> case do
+      "" -> nil
+      trimmed -> trimmed
+    end
+  end
+
+  defp normalize_string_list(values) when is_list(values) do
+    values
+    |> Enum.map(&normalize_optional_string/1)
+    |> Enum.reject(&is_nil/1)
+  end
+
+  defp normalize_string_list(value), do: normalize_string_list([value])
+
+  defp sort_direction_atom(direction) do
+    case normalize_sort_direction(direction) do
+      "desc" -> :desc
+      _ -> :asc
+    end
+  end
 
   defp grouped_available_columns(available_columns) do
     available_columns

@@ -123,6 +123,8 @@ defmodule SelectoTestWeb.StudioLiveTest do
                filter.value == "99"
            end)
 
+    assert saved.query_page_size == 25
+
     saved_dom_id = dom_id(saved.id)
 
     assert has_element?(view, "#saved-config-#{saved_dom_id}")
@@ -207,6 +209,8 @@ defmodule SelectoTestWeb.StudioLiveTest do
     |> form("#query-builder-form", query_params)
     |> render_submit()
 
+    render_async(view)
+
     assert has_element?(view, "#joined-results-table")
     assert has_element?(view, "#joined-query-sql")
 
@@ -263,6 +267,8 @@ defmodule SelectoTestWeb.StudioLiveTest do
     |> form("#query-builder-form", invalid_params)
     |> render_submit()
 
+    render_async(view)
+
     assert render(view) =~ "Invalid integer value"
   end
 
@@ -306,12 +312,16 @@ defmodule SelectoTestWeb.StudioLiveTest do
     |> form("#query-builder-form", query_params)
     |> render_submit()
 
+    render_async(view)
+
     assert has_element?(view, "#query-page-indicator", "Page 1 / 2")
     refute render(view) =~ "note-130"
 
     view
     |> element("#query-next-page")
     |> render_click()
+
+    render_async(view)
 
     assert has_element?(view, "#query-page-indicator", "Page 2 / 2")
     assert render(view) =~ "note-130"
@@ -320,7 +330,108 @@ defmodule SelectoTestWeb.StudioLiveTest do
     |> element("#query-prev-page")
     |> render_click()
 
+    render_async(view)
+
     assert has_element?(view, "#query-page-indicator", "Page 1 / 2")
+  end
+
+  test "imports full config json and restores query state", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/studio")
+
+    import_json =
+      Jason.encode!(%{
+        version: 1,
+        base_table: "public.studio_lv_authors",
+        selected_join_ids: [@posts_author_join_id, @comments_post_join_id],
+        selected_columns: ["public|studio_lv_authors|name", "public|studio_lv_comments|id"],
+        filters: [
+          %{
+            id: "f1",
+            column_ref: "public|studio_lv_comments|id",
+            operator: "gt",
+            value: "99"
+          }
+        ],
+        sort: %{column_ref: "public|studio_lv_comments|id", direction: "desc"},
+        page_size: 50
+      })
+
+    view
+    |> form("#import-config-form", %{"import" => %{"json" => import_json}})
+    |> render_change()
+
+    view
+    |> form("#import-config-form")
+    |> render_submit()
+
+    posts_join_dom_id = dom_id(@posts_author_join_id)
+    comments_join_dom_id = dom_id(@comments_post_join_id)
+
+    assert has_element?(view, "#selected-join-#{posts_join_dom_id}")
+    assert has_element?(view, "#selected-join-#{comments_join_dom_id}")
+    assert has_element?(view, "#query-col-public-studio-lv-authors-name[checked]")
+    assert has_element?(view, "#query-col-public-studio-lv-comments-id[checked]")
+    assert has_element?(view, "#filter-row-f1")
+    assert has_element?(view, "#sort-direction-select option[value=desc][selected]")
+    assert has_element?(view, "#query-page-size option[value='50'][selected]")
+  end
+
+  test "pushes csv download events for current page and all rows", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/studio")
+
+    view
+    |> element("#table-public-studio-lv-authors")
+    |> render_click()
+
+    posts_join_dom_id = dom_id(@posts_author_join_id)
+    comments_join_dom_id = dom_id(@comments_post_join_id)
+
+    view
+    |> element("#add-join-#{posts_join_dom_id}")
+    |> render_click()
+
+    view
+    |> element("#add-join-#{comments_join_dom_id}")
+    |> render_click()
+
+    query_params = %{
+      "query" => %{
+        "selected_columns" => ["public|studio_lv_authors|name", "public|studio_lv_comments|body"],
+        "sort_column_ref" => "public|studio_lv_comments|id",
+        "sort_direction" => "asc",
+        "page_size" => "25",
+        "filters" => %{}
+      }
+    }
+
+    view
+    |> form("#query-builder-form", query_params)
+    |> render_change()
+
+    view
+    |> form("#query-builder-form", query_params)
+    |> render_submit()
+
+    render_async(view)
+
+    view
+    |> element("#download-csv-page")
+    |> render_click()
+
+    assert_push_event(view, "download_csv", %{
+      filename: "studio_query_page_1.csv",
+      content: page_csv
+    })
+
+    assert page_csv =~ "public__studio_lv_authors__name"
+    assert page_csv =~ "Ada Lovelace"
+
+    view
+    |> element("#download-csv-all")
+    |> render_click()
+
+    assert_push_event(view, "download_csv", %{filename: "studio_query_all.csv", content: all_csv})
+    assert all_csv =~ "public__studio_lv_comments__body"
   end
 
   defp clear_saved_configs do
