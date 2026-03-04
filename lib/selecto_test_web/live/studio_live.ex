@@ -7,7 +7,7 @@ defmodule SelectoTestWeb.StudioLive do
   alias SelectoTest.SchemaExplorer
 
   @preview_limit 30
-  @query_limit 100
+  @query_page_size 25
   @default_column_count 6
 
   @impl true
@@ -37,7 +37,12 @@ defmodule SelectoTestWeb.StudioLive do
       |> assign(:query_sql, nil)
       |> assign(:query_error, nil)
       |> assign(:query_builder_error, nil)
-      |> assign(:query_limit, @query_limit)
+      |> assign(:query_page_size, @query_page_size)
+      |> assign(:query_page, 1)
+      |> assign(:query_total_rows, 0)
+      |> assign(:query_total_pages, 0)
+      |> assign(:sort_column_ref, nil)
+      |> assign(:sort_direction, "asc")
       |> assign(:save_name, "")
       |> assign(:saved_configs, [])
       |> assign(:load_error, nil)
@@ -99,6 +104,8 @@ defmodule SelectoTestWeb.StudioLive do
   def handle_event("update_query", %{"query" => query_params}, socket) do
     selected_columns = normalize_selected_columns(Map.get(query_params, "selected_columns"))
     filter_params = Map.get(query_params, "filters", %{})
+    sort_column_ref = Map.get(query_params, "sort_column_ref")
+    sort_direction = Map.get(query_params, "sort_direction", "asc")
 
     filters =
       socket.assigns.filters
@@ -117,6 +124,9 @@ defmodule SelectoTestWeb.StudioLive do
       socket
       |> assign(:selected_columns, selected_columns)
       |> assign(:filters, filters)
+      |> assign(:sort_column_ref, sort_column_ref)
+      |> assign(:sort_direction, sort_direction)
+      |> assign(:query_page, 1)
       |> sanitize_query_state()
 
     {:noreply, socket}
@@ -147,6 +157,7 @@ defmodule SelectoTestWeb.StudioLive do
           socket
           |> assign(:filter_seq, next_seq)
           |> assign(:filters, socket.assigns.filters ++ [new_filter])
+          |> assign(:query_page, 1)
           |> sanitize_query_state()
 
         {:noreply, socket}
@@ -156,12 +167,50 @@ defmodule SelectoTestWeb.StudioLive do
   @impl true
   def handle_event("remove_filter", %{"id" => filter_id}, socket) do
     filters = Enum.reject(socket.assigns.filters, &(&1.id == filter_id))
-    {:noreply, assign(socket, :filters, filters)}
+
+    {:noreply,
+     socket
+     |> assign(:filters, filters)
+     |> assign(:query_page, 1)
+     |> sanitize_query_state()}
   end
 
   @impl true
   def handle_event("run_query", _params, socket) do
     {:noreply, run_joined_query(socket)}
+  end
+
+  @impl true
+  def handle_event("prev_page", _params, socket) do
+    next_page = max(socket.assigns.query_page - 1, 1)
+
+    socket =
+      if next_page == socket.assigns.query_page do
+        socket
+      else
+        socket
+        |> assign(:query_page, next_page)
+        |> run_joined_query()
+      end
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("next_page", _params, socket) do
+    max_page = max(socket.assigns.query_total_pages, 1)
+    next_page = min(socket.assigns.query_page + 1, max_page)
+
+    socket =
+      if next_page == socket.assigns.query_page do
+        socket
+      else
+        socket
+        |> assign(:query_page, next_page)
+        |> run_joined_query()
+      end
+
+    {:noreply, socket}
   end
 
   @impl true
@@ -188,6 +237,8 @@ defmodule SelectoTestWeb.StudioLive do
           selected_join_ids: Enum.map(socket.assigns.selected_joins, & &1.id),
           selected_columns: socket.assigns.selected_columns,
           filters: socket.assigns.filters,
+          sort_column_ref: socket.assigns.sort_column_ref,
+          sort_direction: socket.assigns.sort_direction,
           join_config_json: socket.assigns.join_config_json,
           selecto_join_config: socket.assigns.selecto_join_config
         }
@@ -227,6 +278,8 @@ defmodule SelectoTestWeb.StudioLive do
 
               filters = normalize_saved_filters(Map.get(config, :filters, []))
               filter_seq = next_filter_seq(filters)
+              sort_column_ref = Map.get(config, :sort_column_ref)
+              sort_direction = normalize_sort_direction(Map.get(config, :sort_direction, "asc"))
 
               socket
               |> load_selected_table(table)
@@ -234,11 +287,16 @@ defmodule SelectoTestWeb.StudioLive do
               |> assign(:selected_columns, selected_columns)
               |> assign(:filters, filters)
               |> assign(:filter_seq, filter_seq)
+              |> assign(:sort_column_ref, sort_column_ref)
+              |> assign(:sort_direction, sort_direction)
               |> sanitize_query_state()
               |> assign(:query_columns, [])
               |> assign(:query_rows, [])
               |> assign(:query_sql, nil)
               |> assign(:query_error, nil)
+              |> assign(:query_page, 1)
+              |> assign(:query_total_rows, 0)
+              |> assign(:query_total_pages, 0)
               |> assign(:save_name, config.name)
               |> assign(:save_error, nil)
               |> put_flash(:info, "Loaded #{config.name}")
@@ -557,6 +615,35 @@ defmodule SelectoTestWeb.StudioLive do
                 </div>
 
                 <div>
+                  <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">Sort</p>
+
+                  <div class="grid grid-cols-[1fr_auto] gap-2 rounded-lg border border-gray-200 p-2">
+                    <select
+                      id="sort-column-select"
+                      name="query[sort_column_ref]"
+                      class="rounded-md border-gray-300 px-2 py-1 text-xs focus:border-blue-400 focus:ring-blue-200"
+                    >
+                      <option
+                        :for={column <- @available_columns}
+                        value={column.id}
+                        selected={column.id == @sort_column_ref}
+                      >
+                        {column.label}
+                      </option>
+                    </select>
+
+                    <select
+                      id="sort-direction-select"
+                      name="query[sort_direction]"
+                      class="rounded-md border-gray-300 px-2 py-1 text-xs focus:border-blue-400 focus:ring-blue-200"
+                    >
+                      <option value="asc" selected={@sort_direction == "asc"}>asc</option>
+                      <option value="desc" selected={@sort_direction == "desc"}>desc</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
                   <div class="mb-2 flex items-center justify-between">
                     <p class="text-xs font-semibold uppercase tracking-wide text-gray-600">Filters</p>
                     <button
@@ -597,7 +684,7 @@ defmodule SelectoTestWeb.StudioLive do
                             class="rounded-md border-gray-300 px-2 py-1 text-xs focus:border-blue-400 focus:ring-blue-200"
                           >
                             <option
-                              :for={operator <- filter_operator_options()}
+                              :for={operator <- filter_operator_options(filter, @available_columns)}
                               value={operator.value}
                               selected={operator.value == filter.operator}
                             >
@@ -616,15 +703,72 @@ defmodule SelectoTestWeb.StudioLive do
                           </button>
                         </div>
 
-                        <input
-                          id={"filter-value-#{filter.id}"}
-                          type="text"
-                          name={"query[filters][#{filter.id}][value]"}
-                          value={filter.value}
-                          disabled={not operator_requires_value?(filter.operator)}
-                          placeholder="Filter value"
-                          class="rounded-md border-gray-300 px-2 py-1 text-xs focus:border-blue-400 focus:ring-blue-200 disabled:bg-gray-100"
-                        />
+                        <div>
+                          <%= case filter_input_kind(filter, @available_columns) do %>
+                            <% :boolean -> %>
+                              <select
+                                id={"filter-value-#{filter.id}"}
+                                name={"query[filters][#{filter.id}][value]"}
+                                disabled={not operator_requires_value?(filter.operator)}
+                                class="w-full rounded-md border-gray-300 px-2 py-1 text-xs focus:border-blue-400 focus:ring-blue-200 disabled:bg-gray-100"
+                              >
+                                <option value="true" selected={filter.value in ["true", "1"]}>
+                                  true
+                                </option>
+                                <option value="false" selected={filter.value in ["false", "0"]}>
+                                  false
+                                </option>
+                              </select>
+                            <% :number -> %>
+                              <input
+                                id={"filter-value-#{filter.id}"}
+                                type="number"
+                                step="any"
+                                name={"query[filters][#{filter.id}][value]"}
+                                value={filter.value}
+                                disabled={not operator_requires_value?(filter.operator)}
+                                placeholder="Numeric value"
+                                class="w-full rounded-md border-gray-300 px-2 py-1 text-xs focus:border-blue-400 focus:ring-blue-200 disabled:bg-gray-100"
+                              />
+                            <% :date -> %>
+                              <input
+                                id={"filter-value-#{filter.id}"}
+                                type="date"
+                                name={"query[filters][#{filter.id}][value]"}
+                                value={filter.value}
+                                disabled={not operator_requires_value?(filter.operator)}
+                                class="w-full rounded-md border-gray-300 px-2 py-1 text-xs focus:border-blue-400 focus:ring-blue-200 disabled:bg-gray-100"
+                              />
+                            <% :datetime -> %>
+                              <input
+                                id={"filter-value-#{filter.id}"}
+                                type="datetime-local"
+                                name={"query[filters][#{filter.id}][value]"}
+                                value={normalize_datetime_value_for_input(filter.value)}
+                                disabled={not operator_requires_value?(filter.operator)}
+                                class="w-full rounded-md border-gray-300 px-2 py-1 text-xs focus:border-blue-400 focus:ring-blue-200 disabled:bg-gray-100"
+                              />
+                            <% :time -> %>
+                              <input
+                                id={"filter-value-#{filter.id}"}
+                                type="time"
+                                name={"query[filters][#{filter.id}][value]"}
+                                value={normalize_time_value_for_input(filter.value)}
+                                disabled={not operator_requires_value?(filter.operator)}
+                                class="w-full rounded-md border-gray-300 px-2 py-1 text-xs focus:border-blue-400 focus:ring-blue-200 disabled:bg-gray-100"
+                              />
+                            <% _ -> %>
+                              <input
+                                id={"filter-value-#{filter.id}"}
+                                type="text"
+                                name={"query[filters][#{filter.id}][value]"}
+                                value={filter.value}
+                                disabled={not operator_requires_value?(filter.operator)}
+                                placeholder="Filter value"
+                                class="w-full rounded-md border-gray-300 px-2 py-1 text-xs focus:border-blue-400 focus:ring-blue-200 disabled:bg-gray-100"
+                              />
+                          <% end %>
+                        </div>
                       </div>
                     </div>
 
@@ -724,9 +868,14 @@ defmodule SelectoTestWeb.StudioLive do
               <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-700">
                 Joined Results
               </h2>
-              <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">
-                limit {@query_limit}
-              </span>
+              <div class="flex items-center gap-2">
+                <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">
+                  page size {@query_page_size}
+                </span>
+                <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">
+                  {@query_total_rows} rows
+                </span>
+              </div>
             </div>
 
             <p :if={@query_error} class="mb-2 text-sm text-rose-600">{@query_error}</p>
@@ -741,6 +890,32 @@ defmodule SelectoTestWeb.StudioLive do
                 class="h-24 w-full rounded-lg border-gray-300 font-mono text-xs text-gray-700"
                 value={@query_sql}
               ></textarea>
+            </div>
+
+            <div class="mb-3 flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2">
+              <button
+                id="query-prev-page"
+                type="button"
+                phx-click="prev_page"
+                disabled={@query_page <= 1 or @query_total_pages <= 1}
+                class="rounded-md border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Prev
+              </button>
+
+              <p id="query-page-indicator" class="text-xs font-semibold text-gray-700">
+                Page {@query_page} / {display_total_pages(@query_total_pages)}
+              </p>
+
+              <button
+                id="query-next-page"
+                type="button"
+                phx-click="next_page"
+                disabled={@query_page >= @query_total_pages or @query_total_pages <= 1}
+                class="rounded-md border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Next
+              </button>
             </div>
 
             <p :if={@query_rows == [] and @query_error == nil} class="text-sm text-gray-600">
@@ -816,6 +991,11 @@ defmodule SelectoTestWeb.StudioLive do
         |> assign(:query_sql, nil)
         |> assign(:query_error, nil)
         |> assign(:query_builder_error, nil)
+        |> assign(:query_page, 1)
+        |> assign(:query_total_rows, 0)
+        |> assign(:query_total_pages, 0)
+        |> assign(:sort_column_ref, nil)
+        |> assign(:sort_direction, "asc")
         |> assign(:load_error, "Could not load database metadata: #{db_error(reason)}")
     end
   end
@@ -839,6 +1019,11 @@ defmodule SelectoTestWeb.StudioLive do
     |> assign(:query_sql, nil)
     |> assign(:query_error, nil)
     |> assign(:query_builder_error, nil)
+    |> assign(:query_page, 1)
+    |> assign(:query_total_rows, 0)
+    |> assign(:query_total_pages, 0)
+    |> assign(:sort_column_ref, nil)
+    |> assign(:sort_direction, "asc")
     |> assign(:preview_error, nil)
     |> assign(:join_error, nil)
     |> refresh_output_configs()
@@ -873,6 +1058,11 @@ defmodule SelectoTestWeb.StudioLive do
     |> assign(:query_sql, nil)
     |> assign(:query_error, nil)
     |> assign(:query_builder_error, nil)
+    |> assign(:query_page, 1)
+    |> assign(:query_total_rows, 0)
+    |> assign(:query_total_pages, 0)
+    |> assign(:sort_column_ref, nil)
+    |> assign(:sort_direction, "asc")
     |> assign(:preview_error, preview_error)
     |> assign(:join_error, join_error_message(join_errors))
     |> refresh_output_configs()
@@ -905,6 +1095,13 @@ defmodule SelectoTestWeb.StudioLive do
             |> assign(:join_error, join_error_message(join_errors))
             |> refresh_output_configs()
             |> refresh_query_state()
+            |> assign(:query_columns, [])
+            |> assign(:query_rows, [])
+            |> assign(:query_sql, nil)
+            |> assign(:query_error, nil)
+            |> assign(:query_page, 1)
+            |> assign(:query_total_rows, 0)
+            |> assign(:query_total_pages, 0)
 
           :error ->
             socket
@@ -932,6 +1129,13 @@ defmodule SelectoTestWeb.StudioLive do
           |> assign(:join_error, join_error_message(join_errors))
           |> refresh_output_configs()
           |> refresh_query_state()
+          |> assign(:query_columns, [])
+          |> assign(:query_rows, [])
+          |> assign(:query_sql, nil)
+          |> assign(:query_error, nil)
+          |> assign(:query_page, 1)
+          |> assign(:query_total_rows, 0)
+          |> assign(:query_total_pages, 0)
 
         Enum.reduce(join_ids, base_socket, fn join_id, acc_socket ->
           add_join_by_id(acc_socket, join_id)
@@ -971,11 +1175,22 @@ defmodule SelectoTestWeb.StudioLive do
 
     filters = normalize_filters(socket.assigns.filters, available_columns)
 
+    sort_column_ref =
+      normalize_sort_column_ref(
+        socket.assigns.sort_column_ref,
+        selected_columns,
+        available_columns
+      )
+
+    sort_direction = normalize_sort_direction(socket.assigns.sort_direction)
+
     socket
     |> assign(:column_cache, column_cache)
     |> assign(:available_columns, available_columns)
     |> assign(:selected_columns, selected_columns)
     |> assign(:filters, filters)
+    |> assign(:sort_column_ref, sort_column_ref)
+    |> assign(:sort_direction, sort_direction)
     |> assign(:query_builder_error, query_builder_error_message(column_errors))
   end
 
@@ -1047,9 +1262,7 @@ defmodule SelectoTestWeb.StudioLive do
     valid_column_ids = MapSet.new(Enum.map(available_columns, & &1.id))
 
     default_column_ref =
-      available_columns
-      |> List.first()
-      |> case do
+      case List.first(available_columns) do
         nil -> nil
         column -> column.id
       end
@@ -1062,11 +1275,14 @@ defmodule SelectoTestWeb.StudioLive do
           default_column_ref
         end
 
+      column = find_column(available_columns, column_ref)
+      operator = normalize_operator_for_column(filter.operator, column)
+
       %{
         filter
         | column_ref: column_ref,
-          operator: normalize_operator(filter.operator),
-          value: to_string(filter.value || "")
+          operator: operator,
+          value: normalize_filter_value(filter.value, column, operator)
       }
     end)
   end
@@ -1099,14 +1315,39 @@ defmodule SelectoTestWeb.StudioLive do
 
     filters = normalize_filters(socket.assigns.filters, socket.assigns.available_columns)
 
+    sort_column_ref =
+      normalize_sort_column_ref(
+        socket.assigns.sort_column_ref,
+        selected_columns,
+        socket.assigns.available_columns
+      )
+
+    sort_direction = normalize_sort_direction(socket.assigns.sort_direction)
+
     socket
     |> assign(:selected_columns, selected_columns)
     |> assign(:filters, filters)
+    |> assign(:sort_column_ref, sort_column_ref)
+    |> assign(:sort_direction, sort_direction)
   end
 
   defp run_joined_query(socket) do
-    with {:ok, sql, params} <- build_joined_query(socket) do
-      case SQL.query(Repo, sql, params) do
+    with {:ok, query} <- build_joined_query(socket),
+         {:ok, %{rows: [[total_rows_raw]]}} <-
+           SQL.query(Repo, query.count_sql, query.count_params) do
+      total_rows = normalize_total_rows(total_rows_raw)
+      total_pages = compute_total_pages(total_rows, socket.assigns.query_page_size)
+      clamped_page = clamp_query_page(socket.assigns.query_page, total_pages)
+
+      query =
+        if clamped_page == query.page do
+          query
+        else
+          {:ok, rebuilt_query} = build_joined_query(socket, clamped_page)
+          rebuilt_query
+        end
+
+      case SQL.query(Repo, query.sql, query.params) do
         {:ok, %{columns: columns, rows: rows}} ->
           shaped_rows =
             Enum.map(rows, fn values ->
@@ -1118,14 +1359,19 @@ defmodule SelectoTestWeb.StudioLive do
           socket
           |> assign(:query_columns, columns)
           |> assign(:query_rows, shaped_rows)
-          |> assign(:query_sql, sql)
+          |> assign(:query_sql, query.sql)
           |> assign(:query_error, nil)
+          |> assign(:query_page, clamped_page)
+          |> assign(:query_total_rows, total_rows)
+          |> assign(:query_total_pages, total_pages)
 
         {:error, reason} ->
           socket
-          |> assign(:query_sql, sql)
+          |> assign(:query_sql, query.sql)
           |> assign(:query_rows, [])
           |> assign(:query_columns, [])
+          |> assign(:query_total_rows, 0)
+          |> assign(:query_total_pages, 0)
           |> assign(:query_error, "Could not run joined query: #{db_error(reason)}")
       end
     else
@@ -1133,12 +1379,24 @@ defmodule SelectoTestWeb.StudioLive do
         socket
         |> assign(:query_rows, [])
         |> assign(:query_columns, [])
-        |> assign(:query_error, message)
+        |> assign(:query_total_rows, 0)
+        |> assign(:query_total_pages, 0)
+        |> assign(:query_error, db_error(message))
+
+      {:ok, _other} ->
+        socket
+        |> assign(:query_rows, [])
+        |> assign(:query_columns, [])
+        |> assign(:query_total_rows, 0)
+        |> assign(:query_total_pages, 0)
+        |> assign(:query_error, "Could not determine total row count")
     end
   end
 
-  defp build_joined_query(socket) do
+  defp build_joined_query(socket, page_override \\ nil) do
     selected_table = socket.assigns.selected_table
+    page_size = socket.assigns.query_page_size
+    page = page_override || socket.assigns.query_page
 
     cond do
       is_nil(selected_table) ->
@@ -1159,7 +1417,14 @@ defmodule SelectoTestWeb.StudioLive do
                  table_aliases
                ),
              {:ok, where_clauses, params} <-
-               build_where_clauses(socket.assigns.filters, available_columns_by_id, table_aliases) do
+               build_where_clauses(socket.assigns.filters, available_columns_by_id, table_aliases),
+             {:ok, order_clause} <-
+               build_order_clause(
+                 socket.assigns.sort_column_ref,
+                 socket.assigns.sort_direction,
+                 available_columns_by_id,
+                 table_aliases
+               ) do
           joins_sql = if join_clauses == [], do: "", else: "\n" <> Enum.join(join_clauses, "\n")
 
           where_sql =
@@ -1169,15 +1434,37 @@ defmodule SelectoTestWeb.StudioLive do
               "\nwhere " <> Enum.join(where_clauses, " and ")
             end
 
+          order_sql = if is_nil(order_clause), do: "", else: "\norder by " <> order_clause
+
+          page = max(page, 1)
+          offset = (page - 1) * page_size
+          limit_placeholder = "$#{length(params) + 1}"
+          offset_placeholder = "$#{length(params) + 2}"
+          query_params = params ++ [page_size, offset]
+
           sql =
             """
             select #{Enum.join(select_clauses, ", ")}
-            from #{quote_table(selected_table.schema, selected_table.table)} as t0#{joins_sql}#{where_sql}
-            limit #{@query_limit}
+            from #{quote_table(selected_table.schema, selected_table.table)} as t0#{joins_sql}#{where_sql}#{order_sql}
+            limit #{limit_placeholder} offset #{offset_placeholder}
             """
             |> String.trim()
 
-          {:ok, sql, params}
+          count_sql =
+            """
+            select count(*)
+            from #{quote_table(selected_table.schema, selected_table.table)} as t0#{joins_sql}#{where_sql}
+            """
+            |> String.trim()
+
+          {:ok,
+           %{
+             sql: sql,
+             params: query_params,
+             count_sql: count_sql,
+             count_params: params,
+             page: page
+           }}
         end
     end
   end
@@ -1270,7 +1557,7 @@ defmodule SelectoTestWeb.StudioLive do
           else
             column_sql = "#{table_alias}.#{quote_identifier(column.column)}"
 
-            case build_filter_clause(column_sql, filter.operator, filter.value, params) do
+            case build_filter_clause(column_sql, filter.operator, filter.value, params, column) do
               {:ok, nil, next_params} ->
                 {:cont, {:ok, clauses, next_params}}
 
@@ -1285,26 +1572,95 @@ defmodule SelectoTestWeb.StudioLive do
     end)
   end
 
-  defp build_filter_clause(column_sql, operator, value, params) do
+  defp build_order_clause(sort_column_ref, sort_direction, available_columns_by_id, table_aliases) do
+    case Map.get(available_columns_by_id, sort_column_ref) do
+      nil ->
+        {:ok, nil}
+
+      column ->
+        table_alias = Map.get(table_aliases, table_key(column.schema, column.table))
+
+        if is_nil(table_alias) do
+          {:ok, nil}
+        else
+          direction = normalize_sort_direction(sort_direction) |> String.upcase()
+          {:ok, "#{table_alias}.#{quote_identifier(column.column)} #{direction}"}
+        end
+    end
+  end
+
+  defp build_filter_clause(column_sql, operator, value, params, column) do
+    operator = normalize_operator_for_column(operator, column)
     normalized_value = value |> to_string() |> String.trim()
 
-    case normalize_operator(operator) do
-      "eq" -> build_value_filter(column_sql, "=", normalized_value, params)
-      "neq" -> build_value_filter(column_sql, "!=", normalized_value, params)
-      "gt" -> build_value_filter(column_sql, ">", normalized_value, params)
-      "gte" -> build_value_filter(column_sql, ">=", normalized_value, params)
-      "lt" -> build_value_filter(column_sql, "<", normalized_value, params)
-      "lte" -> build_value_filter(column_sql, "<=", normalized_value, params)
-      "contains" -> build_value_filter(column_sql, "ilike", "%#{normalized_value}%", params)
-      "starts_with" -> build_value_filter(column_sql, "ilike", "#{normalized_value}%", params)
-      "ends_with" -> build_value_filter(column_sql, "ilike", "%#{normalized_value}", params)
-      "is_null" -> {:ok, "#{column_sql} is null", params}
-      "is_not_null" -> {:ok, "#{column_sql} is not null", params}
-      _ -> {:error, "Unsupported filter operator"}
+    case operator do
+      "eq" ->
+        build_typed_value_filter(column_sql, "=", normalized_value, params, column)
+
+      "neq" ->
+        build_typed_value_filter(column_sql, "!=", normalized_value, params, column)
+
+      "gt" ->
+        build_typed_value_filter(column_sql, ">", normalized_value, params, column)
+
+      "gte" ->
+        build_typed_value_filter(column_sql, ">=", normalized_value, params, column)
+
+      "lt" ->
+        build_typed_value_filter(column_sql, "<", normalized_value, params, column)
+
+      "lte" ->
+        build_typed_value_filter(column_sql, "<=", normalized_value, params, column)
+
+      "contains" ->
+        build_typed_value_filter(
+          "cast(#{column_sql} as text)",
+          "ilike",
+          "%#{normalized_value}%",
+          params,
+          %{column | data_type: "text"}
+        )
+
+      "starts_with" ->
+        build_typed_value_filter(
+          "cast(#{column_sql} as text)",
+          "ilike",
+          "#{normalized_value}%",
+          params,
+          %{column | data_type: "text"}
+        )
+
+      "ends_with" ->
+        build_typed_value_filter(
+          "cast(#{column_sql} as text)",
+          "ilike",
+          "%#{normalized_value}",
+          params,
+          %{column | data_type: "text"}
+        )
+
+      "is_null" ->
+        {:ok, "#{column_sql} is null", params}
+
+      "is_not_null" ->
+        {:ok, "#{column_sql} is not null", params}
+
+      _ ->
+        {:error, "Unsupported filter operator"}
+    end
+  end
+
+  defp build_typed_value_filter(column_sql, operator_sql, value, params, column) do
+    with {:ok, typed_value} <- coerce_filter_value(column, value) do
+      case typed_value do
+        :skip -> {:ok, nil, params}
+        actual_value -> build_value_filter(column_sql, operator_sql, actual_value, params)
+      end
     end
   end
 
   defp build_value_filter(_column_sql, _operator_sql, "", params), do: {:ok, nil, params}
+  defp build_value_filter(_column_sql, _operator_sql, nil, params), do: {:ok, nil, params}
 
   defp build_value_filter(column_sql, operator_sql, value, params) do
     placeholder = "$#{length(params) + 1}"
@@ -1438,25 +1794,310 @@ defmodule SelectoTestWeb.StudioLive do
     max(max_numeric_id, length(filters))
   end
 
-  defp filter_operator_options do
-    [
-      %{label: "=", value: "eq"},
-      %{label: "!=", value: "neq"},
-      %{label: ">", value: "gt"},
-      %{label: ">=", value: "gte"},
-      %{label: "<", value: "lt"},
-      %{label: "<=", value: "lte"},
-      %{label: "contains", value: "contains"},
-      %{label: "starts with", value: "starts_with"},
-      %{label: "ends with", value: "ends_with"},
-      %{label: "is null", value: "is_null"},
-      %{label: "is not null", value: "is_not_null"}
-    ]
+  defp filter_operator_options(filter, available_columns) do
+    column = find_column(available_columns, filter.column_ref)
+
+    column
+    |> filter_operator_values_for_column()
+    |> Enum.map(fn value ->
+      %{label: operator_label(value), value: value}
+    end)
+  end
+
+  defp filter_operator_values_for_column(nil), do: ["eq", "neq", "is_null", "is_not_null"]
+
+  defp filter_operator_values_for_column(column) do
+    case column_type_kind(column.data_type) do
+      :text -> ["eq", "neq", "contains", "starts_with", "ends_with", "is_null", "is_not_null"]
+      :boolean -> ["eq", "neq", "is_null", "is_not_null"]
+      :number -> ["eq", "neq", "gt", "gte", "lt", "lte", "is_null", "is_not_null"]
+      :date -> ["eq", "neq", "gt", "gte", "lt", "lte", "is_null", "is_not_null"]
+      :datetime -> ["eq", "neq", "gt", "gte", "lt", "lte", "is_null", "is_not_null"]
+      :time -> ["eq", "neq", "gt", "gte", "lt", "lte", "is_null", "is_not_null"]
+      :other -> ["eq", "neq", "is_null", "is_not_null"]
+    end
+  end
+
+  defp operator_label("eq"), do: "="
+  defp operator_label("neq"), do: "!="
+  defp operator_label("gt"), do: ">"
+  defp operator_label("gte"), do: ">="
+  defp operator_label("lt"), do: "<"
+  defp operator_label("lte"), do: "<="
+  defp operator_label("contains"), do: "contains"
+  defp operator_label("starts_with"), do: "starts with"
+  defp operator_label("ends_with"), do: "ends with"
+  defp operator_label("is_null"), do: "is null"
+  defp operator_label("is_not_null"), do: "is not null"
+  defp operator_label(_), do: "="
+
+  defp filter_input_kind(filter, available_columns) do
+    case find_column(available_columns, filter.column_ref) do
+      nil ->
+        :text
+
+      column ->
+        case column_type_kind(column.data_type) do
+          :boolean -> :boolean
+          :number -> :number
+          :date -> :date
+          :datetime -> :datetime
+          :time -> :time
+          _ -> :text
+        end
+    end
+  end
+
+  defp normalize_datetime_value_for_input(value) when is_binary(value) do
+    value
+    |> String.trim()
+    |> String.replace(" ", "T")
+    |> String.replace(~r/:\d{2}(?:\.\d+)?$/, "")
+  end
+
+  defp normalize_datetime_value_for_input(_), do: ""
+
+  defp normalize_time_value_for_input(value) when is_binary(value) do
+    value
+    |> String.trim()
+    |> String.replace(~r/:\d{2}(?:\.\d+)?$/, "")
+  end
+
+  defp normalize_time_value_for_input(_), do: ""
+
+  defp normalize_operator_for_column(operator, column) do
+    normalized = normalize_operator(operator)
+    allowed = filter_operator_values_for_column(column)
+
+    if normalized in allowed do
+      normalized
+    else
+      List.first(allowed) || "eq"
+    end
+  end
+
+  defp normalize_filter_value(value, column, operator) do
+    normalized_value = to_string(value || "")
+
+    cond do
+      not operator_requires_value?(operator) ->
+        ""
+
+      is_nil(column) ->
+        normalized_value
+
+      column_type_kind(column.data_type) == :boolean ->
+        if normalized_value in ["true", "false", "1", "0"], do: normalized_value, else: "true"
+
+      true ->
+        normalized_value
+    end
+  end
+
+  defp coerce_filter_value(_column, ""), do: {:ok, :skip}
+
+  defp coerce_filter_value(column, value) do
+    case column_type_kind(column.data_type) do
+      :boolean ->
+        parse_boolean_value(value, column)
+
+      :number ->
+        parse_number_value(value, column)
+
+      :date ->
+        parse_date_value(value, column)
+
+      :datetime ->
+        parse_datetime_value(value, column)
+
+      :time ->
+        parse_time_value(value, column)
+
+      _ ->
+        {:ok, value}
+    end
+  end
+
+  defp parse_boolean_value(value, column) do
+    case String.downcase(String.trim(to_string(value))) do
+      "true" -> {:ok, true}
+      "false" -> {:ok, false}
+      "1" -> {:ok, true}
+      "0" -> {:ok, false}
+      _ -> {:error, "Invalid boolean value for #{column.label}"}
+    end
+  end
+
+  defp parse_number_value(value, column) do
+    normalized = String.trim(to_string(value))
+
+    if integer_data_type?(column.data_type) do
+      case Integer.parse(normalized) do
+        {parsed, ""} -> {:ok, parsed}
+        _ -> {:error, "Invalid integer value for #{column.label}"}
+      end
+    else
+      case Float.parse(normalized) do
+        {parsed, ""} -> {:ok, parsed}
+        _ -> {:error, "Invalid numeric value for #{column.label}"}
+      end
+    end
+  end
+
+  defp parse_date_value(value, column) do
+    normalized = String.trim(to_string(value))
+
+    case Date.from_iso8601(normalized) do
+      {:ok, parsed} -> {:ok, parsed}
+      {:error, _reason} -> {:error, "Invalid date value for #{column.label}"}
+    end
+  end
+
+  defp parse_datetime_value(value, column) do
+    normalized =
+      value
+      |> to_string()
+      |> String.trim()
+      |> String.replace("T", " ")
+      |> normalize_datetime_string()
+
+    case NaiveDateTime.from_iso8601(normalized) do
+      {:ok, parsed} -> {:ok, parsed}
+      {:error, _reason} -> {:error, "Invalid datetime value for #{column.label}"}
+    end
+  end
+
+  defp parse_time_value(value, column) do
+    normalized =
+      value
+      |> to_string()
+      |> String.trim()
+      |> normalize_time_string()
+
+    case Time.from_iso8601(normalized) do
+      {:ok, parsed} -> {:ok, parsed}
+      {:error, _reason} -> {:error, "Invalid time value for #{column.label}"}
+    end
+  end
+
+  defp normalize_datetime_string(value) do
+    if Regex.match?(~r/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/, value) do
+      value <> ":00"
+    else
+      value
+    end
+  end
+
+  defp normalize_time_string(value) do
+    if Regex.match?(~r/^\d{2}:\d{2}$/, value) do
+      value <> ":00"
+    else
+      value
+    end
   end
 
   defp operator_requires_value?(operator) do
     normalize_operator(operator) not in ["is_null", "is_not_null"]
   end
+
+  defp find_column(_available_columns, nil), do: nil
+
+  defp find_column(available_columns, column_ref) do
+    Enum.find(available_columns, &(&1.id == column_ref))
+  end
+
+  defp normalize_sort_column_ref(sort_column_ref, selected_columns, available_columns) do
+    valid_ids = MapSet.new(Enum.map(available_columns, & &1.id))
+
+    cond do
+      is_binary(sort_column_ref) and MapSet.member?(valid_ids, sort_column_ref) ->
+        sort_column_ref
+
+      selected_columns != [] ->
+        Enum.find(selected_columns, &MapSet.member?(valid_ids, &1))
+
+      true ->
+        case List.first(available_columns) do
+          nil -> nil
+          column -> column.id
+        end
+    end
+  end
+
+  defp normalize_sort_direction(direction) when direction in ["asc", "desc"], do: direction
+  defp normalize_sort_direction(_), do: "asc"
+
+  defp column_type_kind(nil), do: :other
+
+  defp column_type_kind(data_type) do
+    normalized = String.downcase(to_string(data_type))
+
+    cond do
+      normalized in ["text", "character varying", "character", "citext"] ->
+        :text
+
+      normalized in ["boolean"] ->
+        :boolean
+
+      normalized in [
+        "smallint",
+        "integer",
+        "bigint",
+        "numeric",
+        "decimal",
+        "real",
+        "double precision"
+      ] ->
+        :number
+
+      normalized == "date" ->
+        :date
+
+      normalized in ["timestamp without time zone", "timestamp with time zone"] ->
+        :datetime
+
+      normalized in ["time without time zone", "time with time zone"] ->
+        :time
+
+      true ->
+        :other
+    end
+  end
+
+  defp integer_data_type?(data_type) do
+    normalized = String.downcase(to_string(data_type))
+    normalized in ["smallint", "integer", "bigint"]
+  end
+
+  defp normalize_total_rows(value) when is_integer(value), do: value
+
+  defp normalize_total_rows(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {parsed, ""} -> parsed
+      _ -> 0
+    end
+  end
+
+  defp normalize_total_rows(_), do: 0
+
+  defp compute_total_pages(total_rows, _page_size) when total_rows <= 0, do: 0
+
+  defp compute_total_pages(total_rows, page_size) do
+    div(total_rows - 1, page_size) + 1
+  end
+
+  defp clamp_query_page(page, total_pages) when total_pages <= 0 do
+    max(page, 1)
+  end
+
+  defp clamp_query_page(page, total_pages) do
+    page
+    |> max(1)
+    |> min(total_pages)
+  end
+
+  defp display_total_pages(total_pages) when total_pages <= 0, do: 1
+  defp display_total_pages(total_pages), do: total_pages
 
   defp query_builder_error_message([]), do: nil
 

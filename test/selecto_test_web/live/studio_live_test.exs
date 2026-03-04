@@ -81,11 +81,13 @@ defmodule SelectoTestWeb.StudioLiveTest do
           "public|studio_lv_authors|name",
           "public|studio_lv_comments|body"
         ],
+        "sort_column_ref" => "public|studio_lv_comments|id",
+        "sort_direction" => "asc",
         "filters" => %{
           "f1" => %{
-            "column_ref" => "public|studio_lv_comments|body",
-            "operator" => "contains",
-            "value" => "great"
+            "column_ref" => "public|studio_lv_comments|id",
+            "operator" => "gt",
+            "value" => "99"
           }
         }
       }
@@ -116,9 +118,9 @@ defmodule SelectoTestWeb.StudioLiveTest do
 
     assert Enum.any?(saved.filters, fn filter ->
              filter.id == "f1" and
-               filter.column_ref == "public|studio_lv_comments|body" and
-               filter.operator == "contains" and
-               filter.value == "great"
+               filter.column_ref == "public|studio_lv_comments|id" and
+               filter.operator == "gt" and
+               filter.value == "99"
            end)
 
     saved_dom_id = dom_id(saved.id)
@@ -143,8 +145,9 @@ defmodule SelectoTestWeb.StudioLiveTest do
     assert has_element?(view, "#query-col-public-studio-lv-authors-name[checked]")
     assert has_element?(view, "#query-col-public-studio-lv-comments-body[checked]")
     assert has_element?(view, "#filter-row-f1")
-    assert has_element?(view, "#filter-operator-f1 option[value=contains][selected]")
-    assert has_element?(view, "#filter-value-f1[value=great]")
+    assert has_element?(view, "#filter-operator-f1 option[value=gt][selected]")
+    assert has_element?(view, "#filter-value-f1")
+    assert render(view) =~ "value=\"99\""
 
     view
     |> element("#delete-saved-#{saved_dom_id}")
@@ -184,11 +187,13 @@ defmodule SelectoTestWeb.StudioLiveTest do
           "public|studio_lv_authors|name",
           "public|studio_lv_comments|body"
         ],
+        "sort_column_ref" => "public|studio_lv_comments|body",
+        "sort_direction" => "asc",
         "filters" => %{
           "f1" => %{
             "column_ref" => "public|studio_lv_comments|body",
-            "operator" => "contains",
-            "value" => "great"
+            "operator" => "eq",
+            "value" => "great read"
           }
         }
       }
@@ -209,6 +214,113 @@ defmodule SelectoTestWeb.StudioLiveTest do
 
     assert html =~ "Ada Lovelace"
     assert html =~ "great read"
+  end
+
+  test "type-aware numeric filters reject invalid values", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/studio")
+
+    view
+    |> element("#table-public-studio-lv-authors")
+    |> render_click()
+
+    posts_join_dom_id = dom_id(@posts_author_join_id)
+    comments_join_dom_id = dom_id(@comments_post_join_id)
+
+    view
+    |> element("#add-join-#{posts_join_dom_id}")
+    |> render_click()
+
+    view
+    |> element("#add-join-#{comments_join_dom_id}")
+    |> render_click()
+
+    view
+    |> element("#add-filter-button")
+    |> render_click()
+
+    invalid_params = %{
+      "query" => %{
+        "selected_columns" => ["public|studio_lv_comments|id"],
+        "sort_column_ref" => "public|studio_lv_comments|id",
+        "sort_direction" => "asc",
+        "filters" => %{
+          "f1" => %{
+            "column_ref" => "public|studio_lv_comments|id",
+            "operator" => "gt",
+            "value" => "abc"
+          }
+        }
+      }
+    }
+
+    refute has_element?(view, "#filter-operator-f1 option[value=contains]")
+
+    view
+    |> form("#query-builder-form", invalid_params)
+    |> render_change()
+
+    view
+    |> form("#query-builder-form", invalid_params)
+    |> render_submit()
+
+    assert render(view) =~ "Invalid integer value"
+  end
+
+  test "supports sorting and pagination", %{conn: conn} do
+    insert_comment_range(101, 135)
+
+    {:ok, view, _html} = live(conn, ~p"/studio")
+
+    view
+    |> element("#table-public-studio-lv-authors")
+    |> render_click()
+
+    posts_join_dom_id = dom_id(@posts_author_join_id)
+    comments_join_dom_id = dom_id(@comments_post_join_id)
+
+    view
+    |> element("#add-join-#{posts_join_dom_id}")
+    |> render_click()
+
+    view
+    |> element("#add-join-#{comments_join_dom_id}")
+    |> render_click()
+
+    query_params = %{
+      "query" => %{
+        "selected_columns" => [
+          "public|studio_lv_comments|id",
+          "public|studio_lv_comments|body"
+        ],
+        "sort_column_ref" => "public|studio_lv_comments|id",
+        "sort_direction" => "asc",
+        "filters" => %{}
+      }
+    }
+
+    view
+    |> form("#query-builder-form", query_params)
+    |> render_change()
+
+    view
+    |> form("#query-builder-form", query_params)
+    |> render_submit()
+
+    assert has_element?(view, "#query-page-indicator", "Page 1 / 2")
+    refute render(view) =~ "note-130"
+
+    view
+    |> element("#query-next-page")
+    |> render_click()
+
+    assert has_element?(view, "#query-page-indicator", "Page 2 / 2")
+    assert render(view) =~ "note-130"
+
+    view
+    |> element("#query-prev-page")
+    |> render_click()
+
+    assert has_element?(view, "#query-page-indicator", "Page 1 / 2")
   end
 
   defp clear_saved_configs do
@@ -272,6 +384,18 @@ defmodule SelectoTestWeb.StudioLiveTest do
       Repo,
       "insert into studio_lv_comments (id, post_id, body) values (100, 10, 'great read')",
       []
+    )
+  end
+
+  defp insert_comment_range(from_id, to_id) do
+    SQL.query!(
+      Repo,
+      """
+      insert into studio_lv_comments (id, post_id, body)
+      select gs, 10, 'note-' || gs::text
+      from generate_series($1::integer, $2::integer) as gs
+      """,
+      [from_id, to_id]
     )
   end
 
