@@ -72,6 +72,30 @@ defmodule SelectoTestWeb.StudioLiveTest do
     |> render_click()
 
     view
+    |> element("#add-filter-button")
+    |> render_click()
+
+    query_params = %{
+      "query" => %{
+        "selected_columns" => [
+          "public|studio_lv_authors|name",
+          "public|studio_lv_comments|body"
+        ],
+        "filters" => %{
+          "f1" => %{
+            "column_ref" => "public|studio_lv_comments|body",
+            "operator" => "contains",
+            "value" => "great"
+          }
+        }
+      }
+    }
+
+    view
+    |> form("#query-builder-form", query_params)
+    |> render_change()
+
+    view
     |> form("#save-config-form", %{"save" => %{"name" => "Authors to comments"}})
     |> render_change()
 
@@ -84,6 +108,18 @@ defmodule SelectoTestWeb.StudioLiveTest do
       |> Enum.find(&(&1.name == "Authors to comments"))
 
     assert saved
+
+    assert saved.selected_columns == [
+             "public|studio_lv_authors|name",
+             "public|studio_lv_comments|body"
+           ]
+
+    assert Enum.any?(saved.filters, fn filter ->
+             filter.id == "f1" and
+               filter.column_ref == "public|studio_lv_comments|body" and
+               filter.operator == "contains" and
+               filter.value == "great"
+           end)
 
     saved_dom_id = dom_id(saved.id)
 
@@ -104,6 +140,11 @@ defmodule SelectoTestWeb.StudioLiveTest do
 
     assert has_element?(view, "#selected-join-#{posts_join_dom_id}")
     assert has_element?(view, "#selected-join-#{comments_join_dom_id}")
+    assert has_element?(view, "#query-col-public-studio-lv-authors-name[checked]")
+    assert has_element?(view, "#query-col-public-studio-lv-comments-body[checked]")
+    assert has_element?(view, "#filter-row-f1")
+    assert has_element?(view, "#filter-operator-f1 option[value=contains][selected]")
+    assert has_element?(view, "#filter-value-f1[value=great]")
 
     view
     |> element("#delete-saved-#{saved_dom_id}")
@@ -111,6 +152,63 @@ defmodule SelectoTestWeb.StudioLiveTest do
 
     refute has_element?(view, "#saved-config-#{saved_dom_id}")
     assert JoinConfigStore.list_configs() == []
+  end
+
+  test "runs joined query with selected columns and filters", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/studio")
+
+    view
+    |> element("#table-public-studio-lv-authors")
+    |> render_click()
+
+    posts_join_dom_id = dom_id(@posts_author_join_id)
+    comments_join_dom_id = dom_id(@comments_post_join_id)
+
+    view
+    |> element("#add-join-#{posts_join_dom_id}")
+    |> render_click()
+
+    view
+    |> element("#add-join-#{comments_join_dom_id}")
+    |> render_click()
+
+    view
+    |> element("#add-filter-button")
+    |> render_click()
+
+    assert has_element?(view, "#filter-row-f1")
+
+    query_params = %{
+      "query" => %{
+        "selected_columns" => [
+          "public|studio_lv_authors|name",
+          "public|studio_lv_comments|body"
+        ],
+        "filters" => %{
+          "f1" => %{
+            "column_ref" => "public|studio_lv_comments|body",
+            "operator" => "contains",
+            "value" => "great"
+          }
+        }
+      }
+    }
+
+    view
+    |> form("#query-builder-form", query_params)
+    |> render_change()
+
+    view
+    |> form("#query-builder-form", query_params)
+    |> render_submit()
+
+    assert has_element?(view, "#joined-results-table")
+    assert has_element?(view, "#joined-query-sql")
+
+    html = render(view)
+
+    assert html =~ "Ada Lovelace"
+    assert html =~ "great read"
   end
 
   defp clear_saved_configs do
