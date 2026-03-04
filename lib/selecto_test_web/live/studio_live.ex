@@ -1,10 +1,14 @@
 defmodule SelectoTestWeb.StudioLive do
   use SelectoTestWeb, :live_view
 
+  alias Ecto.Adapters.SQL
   alias SelectoTest.JoinConfigStore
+  alias SelectoTest.Repo
   alias SelectoTest.SchemaExplorer
 
   @preview_limit 30
+  @query_limit 100
+  @default_column_count 6
 
   @impl true
   def mount(_params, _session, socket) do
@@ -19,10 +23,21 @@ defmodule SelectoTestWeb.StudioLive do
       |> assign(:preview_rows, [])
       |> assign(:connected_tables, MapSet.new())
       |> assign(:join_cache, %{})
+      |> assign(:column_cache, %{})
       |> assign(:available_joins, [])
       |> assign(:selected_joins, [])
+      |> assign(:available_columns, [])
+      |> assign(:selected_columns, [])
+      |> assign(:filters, [])
+      |> assign(:filter_seq, 0)
       |> assign(:join_config_json, empty_join_config())
       |> assign(:selecto_join_config, empty_selecto_join_config())
+      |> assign(:query_columns, [])
+      |> assign(:query_rows, [])
+      |> assign(:query_sql, nil)
+      |> assign(:query_error, nil)
+      |> assign(:query_builder_error, nil)
+      |> assign(:query_limit, @query_limit)
       |> assign(:save_name, "")
       |> assign(:saved_configs, [])
       |> assign(:load_error, nil)
@@ -81,6 +96,75 @@ defmodule SelectoTestWeb.StudioLive do
   end
 
   @impl true
+  def handle_event("update_query", %{"query" => query_params}, socket) do
+    selected_columns = normalize_selected_columns(Map.get(query_params, "selected_columns"))
+    filter_params = Map.get(query_params, "filters", %{})
+
+    filters =
+      socket.assigns.filters
+      |> Enum.map(fn filter ->
+        params = Map.get(filter_params, filter.id, %{})
+
+        %{
+          filter
+          | column_ref: Map.get(params, "column_ref", filter.column_ref),
+            operator: Map.get(params, "operator", filter.operator),
+            value: Map.get(params, "value", filter.value)
+        }
+      end)
+
+    socket =
+      socket
+      |> assign(:selected_columns, selected_columns)
+      |> assign(:filters, filters)
+      |> sanitize_query_state()
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("update_query", _params, socket) do
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("add_filter", _params, socket) do
+    case socket.assigns.available_columns do
+      [] ->
+        {:noreply, put_flash(socket, :error, "Connect at least one table with columns first")}
+
+      _columns ->
+        next_seq = socket.assigns.filter_seq + 1
+
+        new_filter = %{
+          id: "f#{next_seq}",
+          column_ref: List.first(socket.assigns.available_columns).id,
+          operator: "eq",
+          value: ""
+        }
+
+        socket =
+          socket
+          |> assign(:filter_seq, next_seq)
+          |> assign(:filters, socket.assigns.filters ++ [new_filter])
+          |> sanitize_query_state()
+
+        {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_event("remove_filter", %{"id" => filter_id}, socket) do
+    filters = Enum.reject(socket.assigns.filters, &(&1.id == filter_id))
+    {:noreply, assign(socket, :filters, filters)}
+  end
+
+  @impl true
+  def handle_event("run_query", _params, socket) do
+    {:noreply, run_joined_query(socket)}
+  end
+
+  @impl true
   def handle_event("set_save_name", %{"save" => %{"name" => name}}, socket) do
     {:noreply, assign(socket, :save_name, name)}
   end
@@ -102,6 +186,8 @@ defmodule SelectoTestWeb.StudioLive do
           name: socket.assigns.save_name,
           base_table: full_table_name(socket.assigns.selected_table),
           selected_join_ids: Enum.map(socket.assigns.selected_joins, & &1.id),
+          selected_columns: socket.assigns.selected_columns,
+          filters: socket.assigns.filters,
           join_config_json: socket.assigns.join_config_json,
           selecto_join_config: socket.assigns.selecto_join_config
         }
@@ -136,9 +222,23 @@ defmodule SelectoTestWeb.StudioLive do
               put_flash(socket, :error, "Saved base table #{config.base_table} is not available")
 
             table ->
+              selected_columns =
+                normalize_selected_columns(Map.get(config, :selected_columns, []))
+
+              filters = normalize_saved_filters(Map.get(config, :filters, []))
+              filter_seq = next_filter_seq(filters)
+
               socket
               |> load_selected_table(table)
-              |> rebuild_selected_joins(config.selected_join_ids)
+              |> rebuild_selected_joins(Map.get(config, :selected_join_ids, []))
+              |> assign(:selected_columns, selected_columns)
+              |> assign(:filters, filters)
+              |> assign(:filter_seq, filter_seq)
+              |> sanitize_query_state()
+              |> assign(:query_columns, [])
+              |> assign(:query_rows, [])
+              |> assign(:query_sql, nil)
+              |> assign(:query_error, nil)
               |> assign(:save_name, config.name)
               |> assign(:save_error, nil)
               |> put_flash(:info, "Loaded #{config.name}")
@@ -408,6 +508,145 @@ defmodule SelectoTestWeb.StudioLive do
             <div class="rounded-xl border border-gray-200 bg-white p-4">
               <div class="mb-3 flex items-center justify-between">
                 <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-700">
+                  Query Builder
+                </h2>
+                <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">
+                  {length(@selected_columns)} cols
+                </span>
+              </div>
+
+              <p :if={@query_builder_error} class="mb-2 text-sm text-rose-600">
+                {@query_builder_error}
+              </p>
+
+              <form
+                id="query-builder-form"
+                phx-change="update_query"
+                phx-submit="run_query"
+                class="space-y-3"
+              >
+                <div>
+                  <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                    Columns
+                  </p>
+
+                  <div class="max-h-[16vh] space-y-2 overflow-y-auto rounded-lg border border-gray-200 p-2">
+                    <div :for={group <- grouped_available_columns(@available_columns)}>
+                      <p class="mb-1 text-xs font-semibold text-gray-500">{group.table_label}</p>
+                      <label
+                        :for={column <- group.columns}
+                        class="flex items-center gap-2 py-0.5 text-xs text-gray-700"
+                      >
+                        <input
+                          id={"query-col-#{dom_id(column.id)}"}
+                          type="checkbox"
+                          name="query[selected_columns][]"
+                          value={column.id}
+                          checked={column_selected?(@selected_columns, column.id)}
+                          class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span class="font-mono">{column.column}</span>
+                        <span class="text-gray-400">({column.data_type})</span>
+                      </label>
+                    </div>
+
+                    <p :if={@available_columns == []} class="text-xs text-gray-500">
+                      No columns available yet. Pick a table first.
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="mb-2 flex items-center justify-between">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-600">Filters</p>
+                    <button
+                      id="add-filter-button"
+                      type="button"
+                      phx-click="add_filter"
+                      class="rounded-md border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                    >
+                      Add filter
+                    </button>
+                  </div>
+
+                  <div class="max-h-[20vh] space-y-2 overflow-y-auto">
+                    <div
+                      :for={filter <- @filters}
+                      id={"filter-row-#{filter.id}"}
+                      class="rounded-lg border border-gray-200 p-2"
+                    >
+                      <div class="grid gap-2">
+                        <select
+                          id={"filter-column-#{filter.id}"}
+                          name={"query[filters][#{filter.id}][column_ref]"}
+                          class="rounded-md border-gray-300 px-2 py-1 text-xs focus:border-blue-400 focus:ring-blue-200"
+                        >
+                          <option
+                            :for={column <- @available_columns}
+                            value={column.id}
+                            selected={column.id == filter.column_ref}
+                          >
+                            {column.label}
+                          </option>
+                        </select>
+
+                        <div class="grid grid-cols-[1fr_auto] gap-2">
+                          <select
+                            id={"filter-operator-#{filter.id}"}
+                            name={"query[filters][#{filter.id}][operator]"}
+                            class="rounded-md border-gray-300 px-2 py-1 text-xs focus:border-blue-400 focus:ring-blue-200"
+                          >
+                            <option
+                              :for={operator <- filter_operator_options()}
+                              value={operator.value}
+                              selected={operator.value == filter.operator}
+                            >
+                              {operator.label}
+                            </option>
+                          </select>
+
+                          <button
+                            id={"remove-filter-#{filter.id}"}
+                            type="button"
+                            phx-click="remove_filter"
+                            phx-value-id={filter.id}
+                            class="rounded-md border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                          >
+                            Remove
+                          </button>
+                        </div>
+
+                        <input
+                          id={"filter-value-#{filter.id}"}
+                          type="text"
+                          name={"query[filters][#{filter.id}][value]"}
+                          value={filter.value}
+                          disabled={not operator_requires_value?(filter.operator)}
+                          placeholder="Filter value"
+                          class="rounded-md border-gray-300 px-2 py-1 text-xs focus:border-blue-400 focus:ring-blue-200 disabled:bg-gray-100"
+                        />
+                      </div>
+                    </div>
+
+                    <p :if={@filters == []} class="text-xs text-gray-500">
+                      No filters configured.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  id="run-query-button"
+                  type="submit"
+                  class="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-500"
+                >
+                  Run joined query
+                </button>
+              </form>
+            </div>
+
+            <div class="rounded-xl border border-gray-200 bg-white p-4">
+              <div class="mb-3 flex items-center justify-between">
+                <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-700">
                   Saved Configs
                 </h2>
                 <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
@@ -478,6 +717,68 @@ defmodule SelectoTestWeb.StudioLive do
             </div>
           </section>
         </div>
+
+        <div class="border-t border-gray-100 p-4">
+          <section class="rounded-xl border border-gray-200 bg-white p-4">
+            <div class="mb-3 flex items-center justify-between">
+              <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-700">
+                Joined Results
+              </h2>
+              <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">
+                limit {@query_limit}
+              </span>
+            </div>
+
+            <p :if={@query_error} class="mb-2 text-sm text-rose-600">{@query_error}</p>
+
+            <div :if={@query_sql} class="mb-3">
+              <p class="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                SQL Preview
+              </p>
+              <textarea
+                id="joined-query-sql"
+                readonly
+                class="h-24 w-full rounded-lg border-gray-300 font-mono text-xs text-gray-700"
+                value={@query_sql}
+              ></textarea>
+            </div>
+
+            <p :if={@query_rows == [] and @query_error == nil} class="text-sm text-gray-600">
+              Run a query to preview joined results.
+            </p>
+
+            <div
+              :if={@query_rows != [] and @query_error == nil}
+              class="max-h-[42vh] overflow-auto rounded-lg border border-gray-200"
+            >
+              <table
+                id="joined-results-table"
+                class="min-w-full divide-y divide-gray-200 text-left text-xs"
+              >
+                <thead class="sticky top-0 z-10 bg-gray-50">
+                  <tr>
+                    <th
+                      :for={column <- @query_columns}
+                      class="whitespace-nowrap px-3 py-2 font-semibold text-gray-700"
+                    >
+                      {column}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                  <tr :for={row <- @query_rows}>
+                    <td
+                      :for={column <- @query_columns}
+                      class="max-w-[260px] px-3 py-2 align-top font-mono text-[11px] text-gray-700"
+                    >
+                      {format_cell(Map.get(row, column))}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
       </div>
     </div>
     """
@@ -501,10 +802,20 @@ defmodule SelectoTestWeb.StudioLive do
         |> assign(:preview_rows, [])
         |> assign(:connected_tables, MapSet.new())
         |> assign(:join_cache, %{})
+        |> assign(:column_cache, %{})
         |> assign(:available_joins, [])
         |> assign(:selected_joins, [])
+        |> assign(:available_columns, [])
+        |> assign(:selected_columns, [])
+        |> assign(:filters, [])
+        |> assign(:filter_seq, 0)
         |> assign(:join_config_json, empty_join_config())
         |> assign(:selecto_join_config, empty_selecto_join_config())
+        |> assign(:query_columns, [])
+        |> assign(:query_rows, [])
+        |> assign(:query_sql, nil)
+        |> assign(:query_error, nil)
+        |> assign(:query_builder_error, nil)
         |> assign(:load_error, "Could not load database metadata: #{db_error(reason)}")
     end
   end
@@ -516,8 +827,18 @@ defmodule SelectoTestWeb.StudioLive do
     |> assign(:preview_rows, [])
     |> assign(:connected_tables, MapSet.new())
     |> assign(:join_cache, %{})
+    |> assign(:column_cache, %{})
     |> assign(:available_joins, [])
     |> assign(:selected_joins, [])
+    |> assign(:available_columns, [])
+    |> assign(:selected_columns, [])
+    |> assign(:filters, [])
+    |> assign(:filter_seq, 0)
+    |> assign(:query_columns, [])
+    |> assign(:query_rows, [])
+    |> assign(:query_sql, nil)
+    |> assign(:query_error, nil)
+    |> assign(:query_builder_error, nil)
     |> assign(:preview_error, nil)
     |> assign(:join_error, nil)
     |> refresh_output_configs()
@@ -541,11 +862,21 @@ defmodule SelectoTestWeb.StudioLive do
     |> assign(:preview_rows, preview_rows)
     |> assign(:connected_tables, connected_tables)
     |> assign(:join_cache, join_cache)
+    |> assign(:column_cache, %{})
     |> assign(:available_joins, available_joins)
     |> assign(:selected_joins, [])
+    |> assign(:selected_columns, [])
+    |> assign(:filters, [])
+    |> assign(:filter_seq, 0)
+    |> assign(:query_columns, [])
+    |> assign(:query_rows, [])
+    |> assign(:query_sql, nil)
+    |> assign(:query_error, nil)
+    |> assign(:query_builder_error, nil)
     |> assign(:preview_error, preview_error)
     |> assign(:join_error, join_error_message(join_errors))
     |> refresh_output_configs()
+    |> refresh_query_state()
   end
 
   defp add_join_by_id(socket, join_id) do
@@ -573,6 +904,7 @@ defmodule SelectoTestWeb.StudioLive do
             |> assign(:available_joins, available_joins)
             |> assign(:join_error, join_error_message(join_errors))
             |> refresh_output_configs()
+            |> refresh_query_state()
 
           :error ->
             socket
@@ -599,6 +931,7 @@ defmodule SelectoTestWeb.StudioLive do
           |> assign(:selected_joins, [])
           |> assign(:join_error, join_error_message(join_errors))
           |> refresh_output_configs()
+          |> refresh_query_state()
 
         Enum.reduce(join_ids, base_socket, fn join_id, acc_socket ->
           add_join_by_id(acc_socket, join_id)
@@ -622,6 +955,514 @@ defmodule SelectoTestWeb.StudioLive do
         end
       end
     end)
+  end
+
+  defp refresh_query_state(socket) do
+    {column_cache, column_errors} =
+      ensure_column_cache(socket.assigns.column_cache, socket.assigns.connected_tables)
+
+    available_columns = build_available_columns(socket.assigns.connected_tables, column_cache)
+
+    selected_columns =
+      socket.assigns.selected_columns
+      |> normalize_selected_columns()
+      |> Enum.filter(&column_available?(available_columns, &1))
+      |> maybe_default_columns(socket.assigns.selected_table, available_columns)
+
+    filters = normalize_filters(socket.assigns.filters, available_columns)
+
+    socket
+    |> assign(:column_cache, column_cache)
+    |> assign(:available_columns, available_columns)
+    |> assign(:selected_columns, selected_columns)
+    |> assign(:filters, filters)
+    |> assign(:query_builder_error, query_builder_error_message(column_errors))
+  end
+
+  defp ensure_column_cache(column_cache, connected_tables) do
+    Enum.reduce(connected_tables, {column_cache, []}, fn table_key, {cache, errors} ->
+      if Map.has_key?(cache, table_key) do
+        {cache, errors}
+      else
+        {schema, table} = table_key
+
+        case SchemaExplorer.table_columns(schema, table) do
+          {:ok, columns} ->
+            {Map.put(cache, table_key, columns), errors}
+
+          {:error, reason} ->
+            {Map.put(cache, table_key, []), [db_error(reason) | errors]}
+        end
+      end
+    end)
+  end
+
+  defp build_available_columns(connected_tables, column_cache) do
+    connected_tables
+    |> Enum.sort_by(&table_key_to_string/1)
+    |> Enum.flat_map(fn {schema, table} = key ->
+      column_cache
+      |> Map.get(key, [])
+      |> Enum.map(fn %{name: name, data_type: data_type} ->
+        %{
+          id: column_ref(schema, table, name),
+          schema: schema,
+          table: table,
+          column: name,
+          data_type: data_type,
+          table_label: "#{schema}.#{table}",
+          label: "#{schema}.#{table}.#{name}"
+        }
+      end)
+    end)
+  end
+
+  defp maybe_default_columns([], selected_table, available_columns) do
+    base_columns =
+      available_columns
+      |> Enum.filter(fn column ->
+        not is_nil(selected_table) and
+          column.schema == selected_table.schema and column.table == selected_table.table
+      end)
+      |> Enum.take(@default_column_count)
+      |> Enum.map(& &1.id)
+
+    if base_columns == [] do
+      available_columns
+      |> Enum.take(@default_column_count)
+      |> Enum.map(& &1.id)
+    else
+      base_columns
+    end
+  end
+
+  defp maybe_default_columns(selected_columns, _selected_table, _available_columns),
+    do: selected_columns
+
+  defp column_available?(available_columns, column_ref) do
+    Enum.any?(available_columns, &(&1.id == column_ref))
+  end
+
+  defp normalize_filters(filters, available_columns) do
+    valid_column_ids = MapSet.new(Enum.map(available_columns, & &1.id))
+
+    default_column_ref =
+      available_columns
+      |> List.first()
+      |> case do
+        nil -> nil
+        column -> column.id
+      end
+
+    Enum.map(filters, fn filter ->
+      column_ref =
+        if MapSet.member?(valid_column_ids, filter.column_ref) do
+          filter.column_ref
+        else
+          default_column_ref
+        end
+
+      %{
+        filter
+        | column_ref: column_ref,
+          operator: normalize_operator(filter.operator),
+          value: to_string(filter.value || "")
+      }
+    end)
+  end
+
+  defp normalize_operator(operator)
+       when operator in [
+              "eq",
+              "neq",
+              "gt",
+              "gte",
+              "lt",
+              "lte",
+              "contains",
+              "starts_with",
+              "ends_with",
+              "is_null",
+              "is_not_null"
+            ],
+       do: operator
+
+  defp normalize_operator(_), do: "eq"
+
+  defp sanitize_query_state(socket) do
+    valid_column_ids = MapSet.new(Enum.map(socket.assigns.available_columns, & &1.id))
+
+    selected_columns =
+      socket.assigns.selected_columns
+      |> normalize_selected_columns()
+      |> Enum.filter(&MapSet.member?(valid_column_ids, &1))
+
+    filters = normalize_filters(socket.assigns.filters, socket.assigns.available_columns)
+
+    socket
+    |> assign(:selected_columns, selected_columns)
+    |> assign(:filters, filters)
+  end
+
+  defp run_joined_query(socket) do
+    with {:ok, sql, params} <- build_joined_query(socket) do
+      case SQL.query(Repo, sql, params) do
+        {:ok, %{columns: columns, rows: rows}} ->
+          shaped_rows =
+            Enum.map(rows, fn values ->
+              columns
+              |> Enum.zip(values)
+              |> Enum.into(%{})
+            end)
+
+          socket
+          |> assign(:query_columns, columns)
+          |> assign(:query_rows, shaped_rows)
+          |> assign(:query_sql, sql)
+          |> assign(:query_error, nil)
+
+        {:error, reason} ->
+          socket
+          |> assign(:query_sql, sql)
+          |> assign(:query_rows, [])
+          |> assign(:query_columns, [])
+          |> assign(:query_error, "Could not run joined query: #{db_error(reason)}")
+      end
+    else
+      {:error, message} ->
+        socket
+        |> assign(:query_rows, [])
+        |> assign(:query_columns, [])
+        |> assign(:query_error, message)
+    end
+  end
+
+  defp build_joined_query(socket) do
+    selected_table = socket.assigns.selected_table
+
+    cond do
+      is_nil(selected_table) ->
+        {:error, "Pick a base table first"}
+
+      socket.assigns.selected_columns == [] ->
+        {:error, "Pick at least one column before running a query"}
+
+      true ->
+        available_columns_by_id = Map.new(socket.assigns.available_columns, &{&1.id, &1})
+
+        with {:ok, table_aliases, join_clauses} <-
+               build_aliases_and_joins(selected_table, socket.assigns.selected_joins),
+             {:ok, select_clauses} <-
+               build_select_clauses(
+                 socket.assigns.selected_columns,
+                 available_columns_by_id,
+                 table_aliases
+               ),
+             {:ok, where_clauses, params} <-
+               build_where_clauses(socket.assigns.filters, available_columns_by_id, table_aliases) do
+          joins_sql = if join_clauses == [], do: "", else: "\n" <> Enum.join(join_clauses, "\n")
+
+          where_sql =
+            if where_clauses == [] do
+              ""
+            else
+              "\nwhere " <> Enum.join(where_clauses, " and ")
+            end
+
+          sql =
+            """
+            select #{Enum.join(select_clauses, ", ")}
+            from #{quote_table(selected_table.schema, selected_table.table)} as t0#{joins_sql}#{where_sql}
+            limit #{@query_limit}
+            """
+            |> String.trim()
+
+          {:ok, sql, params}
+        end
+    end
+  end
+
+  defp build_aliases_and_joins(selected_table, selected_joins) do
+    base_key = table_key(selected_table.schema, selected_table.table)
+
+    Enum.reduce_while(selected_joins, {%{base_key => "t0"}, [], 1}, fn join,
+                                                                       {aliases, join_clauses,
+                                                                        next_alias_idx} ->
+      parent_key = table_key(join.parent_schema, join.parent_table)
+      child_key = table_key(join.child_schema, join.child_table)
+
+      case Map.get(aliases, parent_key) do
+        nil ->
+          {:halt, {:error, "Invalid join path: #{parent_full_name(join)} is disconnected"}}
+
+        parent_alias ->
+          {aliases, child_alias, next_alias_idx} =
+            case Map.get(aliases, child_key) do
+              nil ->
+                alias_name = "t#{next_alias_idx}"
+                {Map.put(aliases, child_key, alias_name), alias_name, next_alias_idx + 1}
+
+              existing_alias ->
+                {aliases, existing_alias, next_alias_idx}
+            end
+
+          on_clause =
+            join.on
+            |> Enum.map(fn %{parent_column: parent_column, child_column: child_column} ->
+              "#{parent_alias}.#{quote_identifier(parent_column)} = #{child_alias}.#{quote_identifier(child_column)}"
+            end)
+            |> Enum.join(" and ")
+
+          join_clause =
+            "left join #{quote_table(join.child_schema, join.child_table)} as #{child_alias} on #{on_clause}"
+
+          {:cont, {aliases, join_clauses ++ [join_clause], next_alias_idx}}
+      end
+    end)
+    |> case do
+      {:error, _message} = error -> error
+      {aliases, join_clauses, _next_alias_idx} -> {:ok, aliases, join_clauses}
+    end
+  end
+
+  defp build_select_clauses(selected_columns, available_columns_by_id, table_aliases) do
+    select_clauses =
+      selected_columns
+      |> Enum.reduce([], fn column_ref, clauses ->
+        case Map.get(available_columns_by_id, column_ref) do
+          nil ->
+            clauses
+
+          column ->
+            table_alias = Map.get(table_aliases, table_key(column.schema, column.table))
+
+            if is_nil(table_alias) do
+              clauses
+            else
+              column_alias = column_sql_alias(column)
+
+              clauses ++
+                [
+                  "#{table_alias}.#{quote_identifier(column.column)} as #{quote_identifier(column_alias)}"
+                ]
+            end
+        end
+      end)
+
+    if select_clauses == [] do
+      {:error, "No valid selected columns available in the current join graph"}
+    else
+      {:ok, select_clauses}
+    end
+  end
+
+  defp build_where_clauses(filters, available_columns_by_id, table_aliases) do
+    Enum.reduce_while(filters, {:ok, [], []}, fn filter, {:ok, clauses, params} ->
+      case Map.get(available_columns_by_id, filter.column_ref) do
+        nil ->
+          {:cont, {:ok, clauses, params}}
+
+        column ->
+          table_alias = Map.get(table_aliases, table_key(column.schema, column.table))
+
+          if is_nil(table_alias) do
+            {:cont, {:ok, clauses, params}}
+          else
+            column_sql = "#{table_alias}.#{quote_identifier(column.column)}"
+
+            case build_filter_clause(column_sql, filter.operator, filter.value, params) do
+              {:ok, nil, next_params} ->
+                {:cont, {:ok, clauses, next_params}}
+
+              {:ok, clause, next_params} ->
+                {:cont, {:ok, clauses ++ [clause], next_params}}
+
+              {:error, message} ->
+                {:halt, {:error, message}}
+            end
+          end
+      end
+    end)
+  end
+
+  defp build_filter_clause(column_sql, operator, value, params) do
+    normalized_value = value |> to_string() |> String.trim()
+
+    case normalize_operator(operator) do
+      "eq" -> build_value_filter(column_sql, "=", normalized_value, params)
+      "neq" -> build_value_filter(column_sql, "!=", normalized_value, params)
+      "gt" -> build_value_filter(column_sql, ">", normalized_value, params)
+      "gte" -> build_value_filter(column_sql, ">=", normalized_value, params)
+      "lt" -> build_value_filter(column_sql, "<", normalized_value, params)
+      "lte" -> build_value_filter(column_sql, "<=", normalized_value, params)
+      "contains" -> build_value_filter(column_sql, "ilike", "%#{normalized_value}%", params)
+      "starts_with" -> build_value_filter(column_sql, "ilike", "#{normalized_value}%", params)
+      "ends_with" -> build_value_filter(column_sql, "ilike", "%#{normalized_value}", params)
+      "is_null" -> {:ok, "#{column_sql} is null", params}
+      "is_not_null" -> {:ok, "#{column_sql} is not null", params}
+      _ -> {:error, "Unsupported filter operator"}
+    end
+  end
+
+  defp build_value_filter(_column_sql, _operator_sql, "", params), do: {:ok, nil, params}
+
+  defp build_value_filter(column_sql, operator_sql, value, params) do
+    placeholder = "$#{length(params) + 1}"
+    {:ok, "#{column_sql} #{operator_sql} #{placeholder}", params ++ [value]}
+  end
+
+  defp column_sql_alias(column) do
+    "#{column.schema}__#{column.table}__#{column.column}"
+    |> String.replace(~r/[^a-zA-Z0-9_]/, "_")
+  end
+
+  defp quote_table(schema, table) do
+    "#{quote_identifier(schema)}.#{quote_identifier(table)}"
+  end
+
+  defp quote_identifier(identifier) do
+    escaped = String.replace(identifier, "\"", "\"\"")
+    ~s("#{escaped}")
+  end
+
+  defp column_ref(schema, table, column), do: "#{schema}|#{table}|#{column}"
+
+  defp grouped_available_columns(available_columns) do
+    available_columns
+    |> Enum.group_by(& &1.table_label)
+    |> Enum.sort_by(fn {table_label, _columns} -> table_label end)
+    |> Enum.map(fn {table_label, columns} ->
+      %{table_label: table_label, columns: columns}
+    end)
+  end
+
+  defp column_selected?(selected_columns, column_ref) do
+    Enum.member?(selected_columns, column_ref)
+  end
+
+  defp normalize_selected_columns(nil), do: []
+
+  defp normalize_selected_columns(selected_columns) when is_list(selected_columns) do
+    selected_columns
+    |> Enum.map(&to_string/1)
+    |> Enum.reject(&(&1 == ""))
+    |> Enum.uniq()
+  end
+
+  defp normalize_selected_columns(selected_column) do
+    normalize_selected_columns([selected_column])
+  end
+
+  defp normalize_saved_filters(nil), do: []
+
+  defp normalize_saved_filters(filters) when is_list(filters) do
+    filters
+    |> Enum.map(&normalize_saved_filter/1)
+    |> Enum.reject(&is_nil/1)
+    |> ensure_unique_filter_ids()
+  end
+
+  defp normalize_saved_filters(_), do: []
+
+  defp normalize_saved_filter(filter) when is_map(filter) do
+    column_ref = Map.get(filter, :column_ref) || Map.get(filter, "column_ref")
+
+    if is_nil(column_ref) do
+      nil
+    else
+      %{
+        id: to_string(Map.get(filter, :id) || Map.get(filter, "id") || ""),
+        column_ref: to_string(column_ref),
+        operator: to_string(Map.get(filter, :operator) || Map.get(filter, "operator") || "eq"),
+        value: to_string(Map.get(filter, :value) || Map.get(filter, "value") || "")
+      }
+    end
+  end
+
+  defp normalize_saved_filter(_), do: nil
+
+  defp ensure_unique_filter_ids(filters) do
+    {_, normalized} =
+      Enum.reduce(filters, {MapSet.new(), []}, fn filter, {used_ids, acc} ->
+        candidate_id =
+          filter.id
+          |> to_string()
+          |> String.trim()
+
+        unique_id =
+          if candidate_id == "" do
+            next_generated_filter_id(used_ids)
+          else
+            ensure_unique_filter_id(candidate_id, used_ids)
+          end
+
+        {MapSet.put(used_ids, unique_id), acc ++ [%{filter | id: unique_id}]}
+      end)
+
+    normalized
+  end
+
+  defp ensure_unique_filter_id(candidate_id, used_ids) do
+    if MapSet.member?(used_ids, candidate_id) do
+      next_generated_filter_id(used_ids)
+    else
+      candidate_id
+    end
+  end
+
+  defp next_generated_filter_id(used_ids) do
+    next_generated_filter_id(used_ids, 1)
+  end
+
+  defp next_generated_filter_id(used_ids, index) do
+    candidate = "f#{index}"
+
+    if MapSet.member?(used_ids, candidate) do
+      next_generated_filter_id(used_ids, index + 1)
+    else
+      candidate
+    end
+  end
+
+  defp next_filter_seq(filters) do
+    max_numeric_id =
+      filters
+      |> Enum.map(fn filter ->
+        case Regex.run(~r/^f(\d+)$/, filter.id) do
+          [_, value] -> String.to_integer(value)
+          _ -> 0
+        end
+      end)
+      |> Enum.max(fn -> 0 end)
+
+    max(max_numeric_id, length(filters))
+  end
+
+  defp filter_operator_options do
+    [
+      %{label: "=", value: "eq"},
+      %{label: "!=", value: "neq"},
+      %{label: ">", value: "gt"},
+      %{label: ">=", value: "gte"},
+      %{label: "<", value: "lt"},
+      %{label: "<=", value: "lte"},
+      %{label: "contains", value: "contains"},
+      %{label: "starts with", value: "starts_with"},
+      %{label: "ends with", value: "ends_with"},
+      %{label: "is null", value: "is_null"},
+      %{label: "is not null", value: "is_not_null"}
+    ]
+  end
+
+  defp operator_requires_value?(operator) do
+    normalize_operator(operator) not in ["is_null", "is_not_null"]
+  end
+
+  defp query_builder_error_message([]), do: nil
+
+  defp query_builder_error_message(errors) do
+    messages = errors |> Enum.reverse() |> Enum.uniq() |> Enum.join(" | ")
+    "Some columns could not be loaded: #{messages}"
   end
 
   defp available_frontier_joins(connected_tables, join_cache, selected_joins) do

@@ -46,6 +46,14 @@ defmodule SelectoTest.SchemaExplorer do
   order by tc.constraint_name, fk.ordinal_position
   """
 
+  @columns_sql """
+  select column_name, data_type
+  from information_schema.columns
+  where table_schema = $1
+    and table_name = $2
+  order by ordinal_position
+  """
+
   @spec list_tables() :: {:ok, [map()]} | {:error, term()}
   def list_tables do
     with {:ok, %{rows: rows}} <- SQL.query(Repo, @tables_sql, []) do
@@ -126,6 +134,18 @@ defmodule SelectoTest.SchemaExplorer do
         )
 
       {:ok, joins}
+    end
+  end
+
+  @spec table_columns(binary(), binary()) :: {:ok, [map()]} | {:error, term()}
+  def table_columns(schema, table) do
+    with {:ok, %{rows: rows}} <- SQL.query(Repo, @columns_sql, [schema, table]) do
+      columns =
+        Enum.map(rows, fn [name, data_type] ->
+          %{name: name, data_type: data_type}
+        end)
+
+      {:ok, columns}
     end
   end
 
