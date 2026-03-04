@@ -76,6 +76,27 @@ window.addEventListener("phx:download_csv", (event) => {
   URL.revokeObjectURL(url)
 })
 
+window.addEventListener("phx:download_file", (event) => {
+  const { filename, content, mime_type } = event.detail || {}
+
+  if (!filename || content === undefined || content === null) {
+    return
+  }
+
+  const blob = new Blob([content], { type: mime_type || "text/plain;charset=utf-8" })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement("a")
+
+  link.href = url
+  link.download = filename
+  link.style.display = "none"
+
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+})
+
 // connect if there are any LiveViews on the page
 liveSocket.connect()
 

@@ -33,6 +33,8 @@ defmodule SelectoTestWeb.StudioLive do
       |> assign(:selected_columns, [])
       |> assign(:filters, [])
       |> assign(:filter_seq, 0)
+      |> assign(:sort_rules, [])
+      |> assign(:sort_seq, 0)
       |> assign(:join_config_json, empty_join_config())
       |> assign(:selecto_join_config, empty_selecto_join_config())
       |> assign(:query_columns, [])
@@ -42,12 +44,17 @@ defmodule SelectoTestWeb.StudioLive do
       |> assign(:query_builder_error, nil)
       |> assign(:query_page_size, @query_page_size)
       |> assign(:max_query_page_size, @max_query_page_size)
+      |> assign(:max_csv_export_rows, @max_csv_export_rows)
       |> assign(:query_page, 1)
       |> assign(:query_total_rows, 0)
       |> assign(:query_total_pages, 0)
       |> assign(:sort_column_ref, nil)
       |> assign(:sort_direction, "asc")
       |> assign(:query_running, false)
+      |> assign(:query_explain, nil)
+      |> assign(:query_explain_error, nil)
+      |> assign(:explain_running, false)
+      |> assign(:explain_analyze, false)
       |> assign(:import_config_json, "")
       |> assign(:save_name, "")
       |> assign(:saved_configs, [])
@@ -107,12 +114,45 @@ defmodule SelectoTestWeb.StudioLive do
   end
 
   @impl true
+  def handle_event("set_join_type", %{"join" => %{"id" => join_id, "type" => join_type}}, socket) do
+    selected_joins =
+      Enum.map(socket.assigns.selected_joins, fn join ->
+        if join.id == join_id do
+          %{join | join_type: normalize_join_type(join_type)}
+        else
+          join
+        end
+      end)
+
+    socket =
+      socket
+      |> cancel_async(:studio_query)
+      |> cancel_async(:studio_explain)
+      |> assign(:selected_joins, selected_joins)
+      |> assign(:query_page, 1)
+      |> assign(:query_running, false)
+      |> assign(:explain_running, false)
+      |> refresh_output_configs()
+      |> clear_query_results()
+      |> clear_explain_state()
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("set_join_type", _params, socket) do
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_event("update_query", %{"query" => query_params}, socket) do
     selected_columns = normalize_selected_columns(Map.get(query_params, "selected_columns"))
     filter_params = Map.get(query_params, "filters", %{})
+    sort_params = Map.get(query_params, "sorts", %{})
     sort_column_ref = Map.get(query_params, "sort_column_ref")
     sort_direction = Map.get(query_params, "sort_direction", "asc")
     page_size = Map.get(query_params, "page_size")
+    explain_analyze = truthy?(Map.get(query_params, "explain_analyze"))
 
     filters =
       socket.assigns.filters
@@ -127,17 +167,42 @@ defmodule SelectoTestWeb.StudioLive do
         }
       end)
 
+    sort_rules =
+      socket.assigns.sort_rules
+      |> Enum.map(fn sort_rule ->
+        params = Map.get(sort_params, sort_rule.id, %{})
+
+        %{
+          sort_rule
+          | column_ref: Map.get(params, "column_ref", sort_rule.column_ref),
+            direction: Map.get(params, "direction", sort_rule.direction)
+        }
+      end)
+
+    sort_rules =
+      if sort_rules == [] do
+        sort_rules_from_legacy(sort_column_ref, sort_direction)
+      else
+        sort_rules
+      end
+
     socket =
       socket
       |> cancel_async(:studio_query)
+      |> cancel_async(:studio_explain)
       |> assign(:selected_columns, selected_columns)
       |> assign(:filters, filters)
+      |> assign(:sort_rules, sort_rules)
       |> assign(:sort_column_ref, sort_column_ref)
       |> assign(:sort_direction, sort_direction)
       |> assign(:query_page_size, page_size)
+      |> assign(:explain_analyze, explain_analyze)
       |> assign(:query_page, 1)
       |> assign(:query_running, false)
+      |> assign(:explain_running, false)
       |> sanitize_query_state()
+      |> clear_query_results()
+      |> clear_explain_state()
 
     {:noreply, socket}
   end
@@ -166,11 +231,15 @@ defmodule SelectoTestWeb.StudioLive do
         socket =
           socket
           |> cancel_async(:studio_query)
+          |> cancel_async(:studio_explain)
           |> assign(:filter_seq, next_seq)
           |> assign(:filters, socket.assigns.filters ++ [new_filter])
           |> assign(:query_page, 1)
           |> assign(:query_running, false)
+          |> assign(:explain_running, false)
           |> sanitize_query_state()
+          |> clear_query_results()
+          |> clear_explain_state()
 
         {:noreply, socket}
     end
@@ -183,15 +252,76 @@ defmodule SelectoTestWeb.StudioLive do
     {:noreply,
      socket
      |> cancel_async(:studio_query)
+     |> cancel_async(:studio_explain)
      |> assign(:filters, filters)
      |> assign(:query_page, 1)
      |> assign(:query_running, false)
-     |> sanitize_query_state()}
+     |> assign(:explain_running, false)
+     |> sanitize_query_state()
+     |> clear_query_results()
+     |> clear_explain_state()}
+  end
+
+  @impl true
+  def handle_event("add_sort", _params, socket) do
+    case socket.assigns.available_columns do
+      [] ->
+        {:noreply, put_flash(socket, :error, "Connect at least one table with columns first")}
+
+      _columns ->
+        next_seq = socket.assigns.sort_seq + 1
+
+        new_sort = %{
+          id: "s#{next_seq}",
+          column_ref: List.first(socket.assigns.available_columns).id,
+          direction: "asc"
+        }
+
+        socket =
+          socket
+          |> cancel_async(:studio_query)
+          |> cancel_async(:studio_explain)
+          |> assign(:sort_seq, next_seq)
+          |> assign(:sort_rules, socket.assigns.sort_rules ++ [new_sort])
+          |> assign(:query_page, 1)
+          |> assign(:query_running, false)
+          |> assign(:explain_running, false)
+          |> sanitize_query_state()
+          |> clear_query_results()
+          |> clear_explain_state()
+
+        {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_event("remove_sort", %{"id" => sort_id}, socket) do
+    sort_rules = Enum.reject(socket.assigns.sort_rules, &(&1.id == sort_id))
+
+    socket =
+      socket
+      |> cancel_async(:studio_query)
+      |> cancel_async(:studio_explain)
+      |> assign(:sort_rules, sort_rules)
+      |> assign(:sort_seq, next_sort_seq(sort_rules))
+      |> assign(:query_page, 1)
+      |> assign(:query_running, false)
+      |> assign(:explain_running, false)
+      |> sanitize_query_state()
+      |> clear_query_results()
+      |> clear_explain_state()
+
+    {:noreply, socket}
   end
 
   @impl true
   def handle_event("run_query", _params, socket) do
     {:noreply, start_query_run(socket)}
+  end
+
+  @impl true
+  def handle_event("run_explain", _params, socket) do
+    {:noreply, start_explain_run(socket)}
   end
 
   @impl true
@@ -237,7 +367,9 @@ defmodule SelectoTestWeb.StudioLive do
     socket =
       socket
       |> cancel_async(:studio_query)
+      |> cancel_async(:studio_explain)
       |> assign(:query_running, false)
+      |> assign(:explain_running, false)
       |> put_flash(:info, "Cancelled query")
 
     {:noreply, socket}
@@ -247,6 +379,17 @@ defmodule SelectoTestWeb.StudioLive do
   def handle_event("download_csv", %{"scope" => scope}, socket) do
     socket =
       case download_csv(socket, scope) do
+        {:ok, socket} -> socket
+        {:error, message, socket} -> put_flash(socket, :error, message)
+      end
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("download_codegen", %{"kind" => kind}, socket) do
+    socket =
+      case download_codegen_file(socket, kind) do
         {:ok, socket} -> socket
         {:error, message, socket} -> put_flash(socket, :error, message)
       end
@@ -308,8 +451,10 @@ defmodule SelectoTestWeb.StudioLive do
           name: socket.assigns.save_name,
           base_table: full_table_name(socket.assigns.selected_table),
           selected_join_ids: Enum.map(socket.assigns.selected_joins, & &1.id),
+          join_type_by_id: join_type_by_id(socket.assigns.selected_joins),
           selected_columns: socket.assigns.selected_columns,
           filters: socket.assigns.filters,
+          sort_rules: socket.assigns.sort_rules,
           sort_column_ref: socket.assigns.sort_column_ref,
           sort_direction: socket.assigns.sort_direction,
           query_page_size: socket.assigns.query_page_size,
@@ -352,6 +497,15 @@ defmodule SelectoTestWeb.StudioLive do
 
               filters = normalize_saved_filters(Map.get(config, :filters, []))
               filter_seq = next_filter_seq(filters)
+              join_type_by_id = normalize_join_type_by_id(Map.get(config, :join_type_by_id, %{}))
+
+              sort_rules =
+                sort_rules_from_import(
+                  normalize_saved_sort_rules(Map.get(config, :sort_rules, [])),
+                  Map.get(config, :sort_column_ref),
+                  Map.get(config, :sort_direction, "asc")
+                )
+
               sort_column_ref = Map.get(config, :sort_column_ref)
               sort_direction = normalize_sort_direction(Map.get(config, :sort_direction, "asc"))
               query_page_size = normalize_query_page_size(Map.get(config, :query_page_size))
@@ -359,21 +513,18 @@ defmodule SelectoTestWeb.StudioLive do
               socket
               |> load_selected_table(table)
               |> rebuild_selected_joins(Map.get(config, :selected_join_ids, []))
+              |> apply_join_type_by_id(join_type_by_id)
               |> assign(:selected_columns, selected_columns)
               |> assign(:filters, filters)
               |> assign(:filter_seq, filter_seq)
+              |> assign(:sort_rules, sort_rules)
+              |> assign(:sort_seq, next_sort_seq(sort_rules))
               |> assign(:sort_column_ref, sort_column_ref)
               |> assign(:sort_direction, sort_direction)
               |> assign(:query_page_size, query_page_size)
               |> sanitize_query_state()
-              |> assign(:query_columns, [])
-              |> assign(:query_rows, [])
-              |> assign(:query_sql, nil)
-              |> assign(:query_error, nil)
-              |> assign(:query_page, 1)
-              |> assign(:query_total_rows, 0)
-              |> assign(:query_total_pages, 0)
-              |> assign(:query_running, false)
+              |> reset_query_state()
+              |> clear_explain_state()
               |> assign(:save_name, config.name)
               |> assign(:save_error, nil)
               |> put_flash(:info, "Loaded #{config.name}")
@@ -439,6 +590,44 @@ defmodule SelectoTestWeb.StudioLive do
       socket
       |> assign(:query_running, false)
       |> assign(:query_error, "Query failed: #{inspect(reason)}")
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_async(:studio_explain, {:ok, {:ok, explain_text}}, socket) do
+    socket =
+      socket
+      |> assign(:query_explain, explain_text)
+      |> assign(:query_explain_error, nil)
+      |> assign(:explain_running, false)
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_async(:studio_explain, {:ok, {:error, message}}, socket) do
+    socket =
+      socket
+      |> assign(:query_explain, nil)
+      |> assign(:query_explain_error, db_error(message))
+      |> assign(:explain_running, false)
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_async(:studio_explain, {:exit, {:shutdown, :cancel}}, socket) do
+    {:noreply, assign(socket, :explain_running, false)}
+  end
+
+  @impl true
+  def handle_async(:studio_explain, {:exit, reason}, socket) do
+    socket =
+      socket
+      |> assign(:query_explain, nil)
+      |> assign(:query_explain_error, "Explain failed: #{inspect(reason)}")
+      |> assign(:explain_running, false)
 
     {:noreply, socket}
   end
@@ -643,26 +832,42 @@ defmodule SelectoTestWeb.StudioLive do
                 <div
                   :for={join <- @selected_joins}
                   id={"selected-join-#{dom_id(join.id)}"}
-                  class="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2"
+                  class="rounded-lg border border-gray-200 px-3 py-2"
                 >
-                  <div>
-                    <p class="text-sm font-medium text-gray-900">
-                      {parent_full_name(join)}
-                      <span class="text-gray-400">-></span>
-                      {child_full_name(join)}
-                    </p>
-                    <p class="font-mono text-xs text-gray-600">{selected_join_condition(join)}</p>
-                  </div>
+                  <div class="flex items-start justify-between gap-2">
+                    <div>
+                      <p class="text-sm font-medium text-gray-900">
+                        {parent_full_name(join)}
+                        <span class="text-gray-400">-></span>
+                        {child_full_name(join)}
+                      </p>
+                      <p class="font-mono text-xs text-gray-600">{selected_join_condition(join)}</p>
+                    </div>
 
-                  <button
-                    id={"remove-join-#{dom_id(join.id)}"}
-                    type="button"
-                    phx-click="remove_join"
-                    phx-value-id={join.id}
-                    class="rounded-md border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                  >
-                    Remove
-                  </button>
+                    <div class="flex items-center gap-2">
+                      <form id={"join-type-form-#{dom_id(join.id)}"} phx-change="set_join_type">
+                        <input type="hidden" name="join[id]" value={join.id} />
+                        <select
+                          id={"join-type-#{dom_id(join.id)}"}
+                          name="join[type]"
+                          class="rounded-md border-gray-300 px-2 py-1 text-xs focus:border-blue-400 focus:ring-blue-200"
+                        >
+                          <option value="left" selected={join.join_type == "left"}>left</option>
+                          <option value="inner" selected={join.join_type == "inner"}>inner</option>
+                        </select>
+                      </form>
+
+                      <button
+                        id={"remove-join-#{dom_id(join.id)}"}
+                        type="button"
+                        phx-click="remove_join"
+                        phx-value-id={join.id}
+                        class="rounded-md border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -696,11 +901,32 @@ defmodule SelectoTestWeb.StudioLive do
                     @selected_table,
                     @selected_columns,
                     @filters,
-                    @sort_column_ref,
-                    @sort_direction
+                    @sort_rules
                   )
                 }
               ></textarea>
+
+              <div class="mt-2 grid grid-cols-2 gap-2">
+                <button
+                  id="download-codegen-query"
+                  type="button"
+                  phx-click="download_codegen"
+                  phx-value-kind="query_module"
+                  class="rounded-lg border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                >
+                  Download Query Module
+                </button>
+
+                <button
+                  id="download-codegen-overlay"
+                  type="button"
+                  phx-click="download_codegen"
+                  phx-value-kind="overlay_snippet"
+                  class="rounded-lg border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                >
+                  Download Overlay Snippet
+                </button>
+              </div>
             </div>
 
             <div class="rounded-xl border border-gray-200 bg-white p-4">
@@ -757,29 +983,54 @@ defmodule SelectoTestWeb.StudioLive do
                 <div>
                   <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">Sort</p>
 
-                  <div class="grid grid-cols-[1fr_auto] gap-2 rounded-lg border border-gray-200 p-2">
-                    <select
-                      id="sort-column-select"
-                      name="query[sort_column_ref]"
-                      class="rounded-md border-gray-300 px-2 py-1 text-xs focus:border-blue-400 focus:ring-blue-200"
+                  <div class="space-y-2 rounded-lg border border-gray-200 p-2">
+                    <div
+                      :for={sort_rule <- @sort_rules}
+                      id={"sort-row-#{sort_rule.id}"}
+                      class="grid grid-cols-[1fr_auto_auto] gap-2"
                     >
-                      <option
-                        :for={column <- @available_columns}
-                        value={column.id}
-                        selected={column.id == @sort_column_ref}
+                      <select
+                        id={"sort-column-#{sort_rule.id}"}
+                        name={"query[sorts][#{sort_rule.id}][column_ref]"}
+                        class="rounded-md border-gray-300 px-2 py-1 text-xs focus:border-blue-400 focus:ring-blue-200"
                       >
-                        {column.label}
-                      </option>
-                    </select>
+                        <option
+                          :for={column <- @available_columns}
+                          value={column.id}
+                          selected={column.id == sort_rule.column_ref}
+                        >
+                          {column.label}
+                        </option>
+                      </select>
 
-                    <select
-                      id="sort-direction-select"
-                      name="query[sort_direction]"
-                      class="rounded-md border-gray-300 px-2 py-1 text-xs focus:border-blue-400 focus:ring-blue-200"
+                      <select
+                        id={"sort-direction-#{sort_rule.id}"}
+                        name={"query[sorts][#{sort_rule.id}][direction]"}
+                        class="rounded-md border-gray-300 px-2 py-1 text-xs focus:border-blue-400 focus:ring-blue-200"
+                      >
+                        <option value="asc" selected={sort_rule.direction == "asc"}>asc</option>
+                        <option value="desc" selected={sort_rule.direction == "desc"}>desc</option>
+                      </select>
+
+                      <button
+                        id={"remove-sort-#{sort_rule.id}"}
+                        type="button"
+                        phx-click="remove_sort"
+                        phx-value-id={sort_rule.id}
+                        class="rounded-md border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                      >
+                        Remove
+                      </button>
+                    </div>
+
+                    <button
+                      id="add-sort-button"
+                      type="button"
+                      phx-click="add_sort"
+                      class="w-full rounded-md border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
                     >
-                      <option value="asc" selected={@sort_direction == "asc"}>asc</option>
-                      <option value="desc" selected={@sort_direction == "desc"}>desc</option>
-                    </select>
+                      Add sort column
+                    </button>
                   </div>
                 </div>
 
@@ -939,6 +1190,17 @@ defmodule SelectoTestWeb.StudioLive do
                 </div>
 
                 <div class="grid grid-cols-3 gap-2">
+                  <label class="col-span-3 flex items-center gap-2 rounded-md border border-gray-200 px-2 py-1 text-xs text-gray-700">
+                    <input
+                      id="explain-analyze-toggle"
+                      type="checkbox"
+                      name="query[explain_analyze]"
+                      value="true"
+                      checked={@explain_analyze}
+                      class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    /> Include ANALYZE when running EXPLAIN
+                  </label>
+
                   <button
                     id="run-query-button"
                     type="submit"
@@ -965,6 +1227,16 @@ defmodule SelectoTestWeb.StudioLive do
                     class="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
                   >
                     Reset
+                  </button>
+
+                  <button
+                    id="run-explain-button"
+                    type="button"
+                    phx-click="run_explain"
+                    disabled={@explain_running}
+                    class="col-span-3 rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {if @explain_running, do: "Running explain...", else: "Run EXPLAIN"}
                   </button>
                 </div>
               </form>
@@ -1055,8 +1327,7 @@ defmodule SelectoTestWeb.StudioLive do
                       @selected_joins,
                       @selected_columns,
                       @filters,
-                      @sort_column_ref,
-                      @sort_direction,
+                      @sort_rules,
                       @query_page_size
                     )
                   }
@@ -1117,6 +1388,9 @@ defmodule SelectoTestWeb.StudioLive do
             </div>
 
             <p :if={@query_error} class="mb-2 text-sm text-rose-600">{@query_error}</p>
+            <p :if={@query_explain_error} class="mb-2 text-sm text-rose-600">
+              {@query_explain_error}
+            </p>
 
             <div :if={@query_sql} class="mb-3">
               <p class="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-600">
@@ -1127,6 +1401,18 @@ defmodule SelectoTestWeb.StudioLive do
                 readonly
                 class="h-24 w-full rounded-lg border-gray-300 font-mono text-xs text-gray-700"
                 value={@query_sql}
+              ></textarea>
+            </div>
+
+            <div :if={@query_explain} class="mb-3">
+              <p class="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                Explain Plan
+              </p>
+              <textarea
+                id="joined-query-explain"
+                readonly
+                class="h-28 w-full rounded-lg border-gray-300 font-mono text-xs text-gray-700"
+                value={@query_explain}
               ></textarea>
             </div>
 
@@ -1175,12 +1461,21 @@ defmodule SelectoTestWeb.StudioLive do
                 type="button"
                 phx-click="download_csv"
                 phx-value-scope="all"
-                disabled={@query_running}
+                disabled={@query_running or @query_total_rows <= 0}
                 class="rounded-lg border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Download all rows CSV
+                {if @query_total_rows > @max_csv_export_rows,
+                  do: "Download first #{@max_csv_export_rows} rows CSV",
+                  else: "Download all rows CSV"}
               </button>
             </div>
+
+            <p
+              :if={@query_total_rows > @max_csv_export_rows}
+              class="mb-3 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800"
+            >
+              Export safety cap applied: maximum {@max_csv_export_rows} rows per CSV export.
+            </p>
 
             <p :if={@query_rows == [] and @query_error == nil} class="text-sm text-gray-600">
               Run a query to preview joined results.
@@ -1248,6 +1543,8 @@ defmodule SelectoTestWeb.StudioLive do
         |> assign(:selected_columns, [])
         |> assign(:filters, [])
         |> assign(:filter_seq, 0)
+        |> assign(:sort_rules, [])
+        |> assign(:sort_seq, 0)
         |> assign(:join_config_json, empty_join_config())
         |> assign(:selecto_join_config, empty_selecto_join_config())
         |> assign(:query_columns, [])
@@ -1261,6 +1558,10 @@ defmodule SelectoTestWeb.StudioLive do
         |> assign(:sort_column_ref, nil)
         |> assign(:sort_direction, "asc")
         |> assign(:query_running, false)
+        |> assign(:query_explain, nil)
+        |> assign(:query_explain_error, nil)
+        |> assign(:explain_running, false)
+        |> assign(:explain_analyze, false)
         |> assign(:load_error, "Could not load database metadata: #{db_error(reason)}")
     end
   end
@@ -1279,6 +1580,8 @@ defmodule SelectoTestWeb.StudioLive do
     |> assign(:selected_columns, [])
     |> assign(:filters, [])
     |> assign(:filter_seq, 0)
+    |> assign(:sort_rules, [])
+    |> assign(:sort_seq, 0)
     |> assign(:query_columns, [])
     |> assign(:query_rows, [])
     |> assign(:query_sql, nil)
@@ -1290,6 +1593,10 @@ defmodule SelectoTestWeb.StudioLive do
     |> assign(:sort_column_ref, nil)
     |> assign(:sort_direction, "asc")
     |> assign(:query_running, false)
+    |> assign(:query_explain, nil)
+    |> assign(:query_explain_error, nil)
+    |> assign(:explain_running, false)
+    |> assign(:explain_analyze, false)
     |> assign(:preview_error, nil)
     |> assign(:join_error, nil)
     |> refresh_output_configs()
@@ -1319,6 +1626,8 @@ defmodule SelectoTestWeb.StudioLive do
     |> assign(:selected_columns, [])
     |> assign(:filters, [])
     |> assign(:filter_seq, 0)
+    |> assign(:sort_rules, [])
+    |> assign(:sort_seq, 0)
     |> assign(:query_columns, [])
     |> assign(:query_rows, [])
     |> assign(:query_sql, nil)
@@ -1330,6 +1639,10 @@ defmodule SelectoTestWeb.StudioLive do
     |> assign(:sort_column_ref, nil)
     |> assign(:sort_direction, "asc")
     |> assign(:query_running, false)
+    |> assign(:query_explain, nil)
+    |> assign(:query_explain_error, nil)
+    |> assign(:explain_running, false)
+    |> assign(:explain_analyze, false)
     |> assign(:preview_error, preview_error)
     |> assign(:join_error, join_error_message(join_errors))
     |> refresh_output_configs()
@@ -1362,14 +1675,8 @@ defmodule SelectoTestWeb.StudioLive do
             |> assign(:join_error, join_error_message(join_errors))
             |> refresh_output_configs()
             |> refresh_query_state()
-            |> assign(:query_columns, [])
-            |> assign(:query_rows, [])
-            |> assign(:query_sql, nil)
-            |> assign(:query_error, nil)
-            |> assign(:query_page, 1)
-            |> assign(:query_total_rows, 0)
-            |> assign(:query_total_pages, 0)
-            |> assign(:query_running, false)
+            |> clear_query_results()
+            |> clear_explain_state()
 
           :error ->
             socket
@@ -1397,14 +1704,8 @@ defmodule SelectoTestWeb.StudioLive do
           |> assign(:join_error, join_error_message(join_errors))
           |> refresh_output_configs()
           |> refresh_query_state()
-          |> assign(:query_columns, [])
-          |> assign(:query_rows, [])
-          |> assign(:query_sql, nil)
-          |> assign(:query_error, nil)
-          |> assign(:query_page, 1)
-          |> assign(:query_total_rows, 0)
-          |> assign(:query_total_pages, 0)
-          |> assign(:query_running, false)
+          |> clear_query_results()
+          |> clear_explain_state()
 
         Enum.reduce(join_ids, base_socket, fn join_id, acc_socket ->
           add_join_by_id(acc_socket, join_id)
@@ -1444,20 +1745,24 @@ defmodule SelectoTestWeb.StudioLive do
 
     filters = normalize_filters(socket.assigns.filters, available_columns)
 
-    sort_column_ref =
-      normalize_sort_column_ref(
+    sort_rules =
+      normalize_sort_rules(
+        socket.assigns.sort_rules,
         socket.assigns.sort_column_ref,
+        socket.assigns.sort_direction,
         selected_columns,
         available_columns
       )
 
-    sort_direction = normalize_sort_direction(socket.assigns.sort_direction)
+    {sort_column_ref, sort_direction} = primary_sort(sort_rules)
 
     socket
     |> assign(:column_cache, column_cache)
     |> assign(:available_columns, available_columns)
     |> assign(:selected_columns, selected_columns)
     |> assign(:filters, filters)
+    |> assign(:sort_rules, sort_rules)
+    |> assign(:sort_seq, next_sort_seq(sort_rules))
     |> assign(:sort_column_ref, sort_column_ref)
     |> assign(:sort_direction, sort_direction)
     |> assign(:query_builder_error, query_builder_error_message(column_errors))
@@ -1584,19 +1889,23 @@ defmodule SelectoTestWeb.StudioLive do
 
     filters = normalize_filters(socket.assigns.filters, socket.assigns.available_columns)
 
-    sort_column_ref =
-      normalize_sort_column_ref(
+    sort_rules =
+      normalize_sort_rules(
+        socket.assigns.sort_rules,
         socket.assigns.sort_column_ref,
+        socket.assigns.sort_direction,
         selected_columns,
         socket.assigns.available_columns
       )
 
-    sort_direction = normalize_sort_direction(socket.assigns.sort_direction)
+    {sort_column_ref, sort_direction} = primary_sort(sort_rules)
     query_page_size = normalize_query_page_size(socket.assigns.query_page_size)
 
     socket
     |> assign(:selected_columns, selected_columns)
     |> assign(:filters, filters)
+    |> assign(:sort_rules, sort_rules)
+    |> assign(:sort_seq, next_sort_seq(sort_rules))
     |> assign(:sort_column_ref, sort_column_ref)
     |> assign(:sort_direction, sort_direction)
     |> assign(:query_page_size, query_page_size)
@@ -1612,9 +1921,21 @@ defmodule SelectoTestWeb.StudioLive do
     |> start_async(:studio_query, fn -> execute_joined_query(query_socket) end)
   end
 
+  defp start_explain_run(socket) do
+    query_socket = query_socket_for_execution(socket.assigns)
+    explain_analyze = socket.assigns.explain_analyze
+
+    socket
+    |> cancel_async(:studio_explain)
+    |> assign(:explain_running, true)
+    |> assign(:query_explain_error, nil)
+    |> start_async(:studio_explain, fn -> execute_query_explain(query_socket, explain_analyze) end)
+  end
+
   defp reset_query_state(socket) do
     socket
     |> cancel_async(:studio_query)
+    |> cancel_async(:studio_explain)
     |> assign(:query_columns, [])
     |> assign(:query_rows, [])
     |> assign(:query_sql, nil)
@@ -1623,6 +1944,28 @@ defmodule SelectoTestWeb.StudioLive do
     |> assign(:query_total_rows, 0)
     |> assign(:query_total_pages, 0)
     |> assign(:query_running, false)
+    |> assign(:query_explain, nil)
+    |> assign(:query_explain_error, nil)
+    |> assign(:explain_running, false)
+  end
+
+  defp clear_query_results(socket) do
+    socket
+    |> assign(:query_columns, [])
+    |> assign(:query_rows, [])
+    |> assign(:query_sql, nil)
+    |> assign(:query_error, nil)
+    |> assign(:query_page, 1)
+    |> assign(:query_total_rows, 0)
+    |> assign(:query_total_pages, 0)
+    |> assign(:query_running, false)
+  end
+
+  defp clear_explain_state(socket) do
+    socket
+    |> assign(:query_explain, nil)
+    |> assign(:query_explain_error, nil)
+    |> assign(:explain_running, false)
   end
 
   defp execute_joined_query(query_socket) do
@@ -1672,6 +2015,32 @@ defmodule SelectoTestWeb.StudioLive do
     end
   end
 
+  defp execute_query_explain(query_socket, explain_analyze) do
+    with {:ok, query} <- build_joined_query(query_socket) do
+      explain_prefix =
+        if explain_analyze do
+          "explain (analyze, format text) "
+        else
+          "explain (format text) "
+        end
+
+      explain_sql = explain_prefix <> query.sql
+
+      case SQL.query(Repo, explain_sql, query.params, timeout: @query_timeout_ms) do
+        {:ok, %{rows: rows}} ->
+          explain_text =
+            rows
+            |> Enum.map(fn [line | _rest] -> to_string(line) end)
+            |> Enum.join("\n")
+
+          {:ok, explain_text}
+
+        {:error, reason} ->
+          {:error, "Could not run EXPLAIN: #{db_error(reason)}"}
+      end
+    end
+  end
+
   defp query_socket_for_execution(assigns) do
     %{
       assigns: %{
@@ -1680,10 +2049,12 @@ defmodule SelectoTestWeb.StudioLive do
         available_columns: assigns.available_columns,
         selected_columns: assigns.selected_columns,
         filters: assigns.filters,
+        sort_rules: assigns.sort_rules,
         sort_column_ref: assigns.sort_column_ref,
         sort_direction: assigns.sort_direction,
         query_page_size: assigns.query_page_size,
-        query_page: assigns.query_page
+        query_page: assigns.query_page,
+        explain_analyze: assigns.explain_analyze
       }
     }
   end
@@ -1749,6 +2120,52 @@ defmodule SelectoTestWeb.StudioLive do
 
   defp download_csv(socket, _scope), do: {:error, "Unsupported CSV export scope", socket}
 
+  defp download_codegen_file(socket, "query_module") do
+    if is_nil(socket.assigns.selected_table) do
+      {:error, "Pick a base table before generating code", socket}
+    else
+      filename = "studio_generated_query.ex"
+
+      content =
+        build_codegen_query_module(
+          socket.assigns.selected_table,
+          socket.assigns.selected_joins,
+          socket.assigns.selected_columns,
+          socket.assigns.filters,
+          socket.assigns.sort_rules
+        )
+
+      {:ok,
+       push_event(socket, "download_file", %{
+         filename: filename,
+         content: content,
+         mime_type: "text/plain;charset=utf-8"
+       })}
+    end
+  end
+
+  defp download_codegen_file(socket, "overlay_snippet") do
+    if is_nil(socket.assigns.selected_table) do
+      {:error, "Pick a base table before generating code", socket}
+    else
+      filename = "studio_overlay_joins.exs"
+
+      content =
+        build_overlay_join_snippet(socket.assigns.selected_table, socket.assigns.selected_joins)
+
+      {:ok,
+       push_event(socket, "download_file", %{
+         filename: filename,
+         content: content,
+         mime_type: "text/plain;charset=utf-8"
+       })}
+    end
+  end
+
+  defp download_codegen_file(socket, _kind) do
+    {:error, "Unsupported codegen output", socket}
+  end
+
   defp encode_csv(columns, rows) do
     header = Enum.map_join(columns, ",", &csv_escape/1)
 
@@ -1793,17 +2210,18 @@ defmodule SelectoTestWeb.StudioLive do
          selected_joins,
          selected_columns,
          filters,
-         sort_column_ref,
-         sort_direction,
+         sort_rules,
          query_page_size
        ) do
     %{
       version: 1,
       base_table: full_table_name(selected_table),
       selected_join_ids: Enum.map(selected_joins, & &1.id),
+      join_type_by_id: join_type_by_id(selected_joins),
       selected_columns: selected_columns,
       filters: filters,
-      sort: %{column_ref: sort_column_ref, direction: sort_direction},
+      sorts: sort_rules,
+      sort: legacy_sort_payload(sort_rules),
       page_size: query_page_size
     }
     |> Jason.encode!(pretty: true)
@@ -1821,8 +2239,10 @@ defmodule SelectoTestWeb.StudioLive do
            %{
              base_table: normalize_optional_string(Map.get(decoded, "base_table")),
              selected_join_ids: normalize_string_list(Map.get(decoded, "selected_join_ids", [])),
+             join_type_by_id: normalize_join_type_by_id(Map.get(decoded, "join_type_by_id", %{})),
              selected_columns: normalize_string_list(Map.get(decoded, "selected_columns", [])),
              filters: Map.get(decoded, "filters", []),
+             sort_rules: normalize_saved_sort_rules(Map.get(decoded, "sorts", [])),
              sort_column_ref: normalize_optional_string(get_in(decoded, ["sort", "column_ref"])),
              sort_direction: get_in(decoded, ["sort", "direction"]),
              page_size: Map.get(decoded, "page_size")
@@ -1845,15 +2265,23 @@ defmodule SelectoTestWeb.StudioLive do
       table ->
         filters = normalize_saved_filters(imported.filters)
 
+        sort_rules =
+          sort_rules_from_import(
+            normalize_saved_sort_rules(imported.sort_rules),
+            imported.sort_column_ref,
+            imported.sort_direction
+          )
+
         socket =
           socket
           |> load_selected_table(table)
           |> rebuild_selected_joins(imported.selected_join_ids)
+          |> apply_join_type_by_id(imported.join_type_by_id)
           |> assign(:selected_columns, normalize_selected_columns(imported.selected_columns))
           |> assign(:filters, filters)
           |> assign(:filter_seq, next_filter_seq(filters))
-          |> assign(:sort_column_ref, imported.sort_column_ref)
-          |> assign(:sort_direction, normalize_sort_direction(imported.sort_direction))
+          |> assign(:sort_rules, sort_rules)
+          |> assign(:sort_seq, next_sort_seq(sort_rules))
           |> assign(:query_page_size, normalize_query_page_size(imported.page_size))
           |> assign(:query_page, 1)
           |> sanitize_query_state()
@@ -1890,8 +2318,7 @@ defmodule SelectoTestWeb.StudioLive do
                build_where_clauses(socket.assigns.filters, available_columns_by_id, table_aliases),
              {:ok, order_clause} <-
                build_order_clause(
-                 socket.assigns.sort_column_ref,
-                 socket.assigns.sort_direction,
+                 socket.assigns.sort_rules,
                  available_columns_by_id,
                  table_aliases
                ) do
@@ -1970,8 +2397,14 @@ defmodule SelectoTestWeb.StudioLive do
             end)
             |> Enum.join(" and ")
 
+          join_keyword =
+            case normalize_join_type(Map.get(join, :join_type)) do
+              "inner" -> "inner join"
+              _ -> "left join"
+            end
+
           join_clause =
-            "left join #{quote_table(join.child_schema, join.child_table)} as #{child_alias} on #{on_clause}"
+            "#{join_keyword} #{quote_table(join.child_schema, join.child_table)} as #{child_alias} on #{on_clause}"
 
           {:cont, {aliases, join_clauses ++ [join_clause], next_alias_idx}}
       end
@@ -2042,20 +2475,30 @@ defmodule SelectoTestWeb.StudioLive do
     end)
   end
 
-  defp build_order_clause(sort_column_ref, sort_direction, available_columns_by_id, table_aliases) do
-    case Map.get(available_columns_by_id, sort_column_ref) do
-      nil ->
-        {:ok, nil}
+  defp build_order_clause(sort_rules, available_columns_by_id, table_aliases) do
+    order_clauses =
+      sort_rules
+      |> Enum.reduce([], fn sort_rule, clauses ->
+        case Map.get(available_columns_by_id, sort_rule.column_ref) do
+          nil ->
+            clauses
 
-      column ->
-        table_alias = Map.get(table_aliases, table_key(column.schema, column.table))
+          column ->
+            table_alias = Map.get(table_aliases, table_key(column.schema, column.table))
 
-        if is_nil(table_alias) do
-          {:ok, nil}
-        else
-          direction = normalize_sort_direction(sort_direction) |> String.upcase()
-          {:ok, "#{table_alias}.#{quote_identifier(column.column)} #{direction}"}
+            if is_nil(table_alias) do
+              clauses
+            else
+              direction = normalize_sort_direction(sort_rule.direction) |> String.upcase()
+              clauses ++ ["#{table_alias}.#{quote_identifier(column.column)} #{direction}"]
+            end
         end
+      end)
+
+    if order_clauses == [] do
+      {:ok, nil}
+    else
+      {:ok, Enum.join(order_clauses, ", ")}
     end
   end
 
@@ -2157,8 +2600,7 @@ defmodule SelectoTestWeb.StudioLive do
          selected_table,
          selected_columns,
          filters,
-         sort_column_ref,
-         sort_direction
+         sort_rules
        ) do
     select_fields =
       selected_columns
@@ -2171,10 +2613,9 @@ defmodule SelectoTestWeb.StudioLive do
       |> Enum.reject(&is_nil/1)
 
     order_terms =
-      case column_ref_to_field(sort_column_ref) do
-        nil -> []
-        field -> [{field, sort_direction_atom(sort_direction)}]
-      end
+      sort_rules
+      |> Enum.map(&sort_rule_to_selecto_order/1)
+      |> Enum.reject(&is_nil/1)
 
     lines =
       [
@@ -2186,6 +2627,7 @@ defmodule SelectoTestWeb.StudioLive do
         "  |> Selecto.select(#{inspect(select_fields, pretty: true, limit: :infinity)})"
       ] ++
         handoff_filter_lines(filter_terms) ++
+        handoff_join_lines(selected_table) ++
         handoff_order_lines(order_terms) ++
         ["", "results = Selecto.execute(query)"]
 
@@ -2202,10 +2644,111 @@ defmodule SelectoTestWeb.StudioLive do
     ["  |> Selecto.filter(#{inspect(filter_terms, pretty: true, limit: :infinity)})"]
   end
 
+  defp handoff_join_lines(nil), do: []
+
+  defp handoff_join_lines(_selected_table) do
+    ["  # Optional: apply joins map from /studio export if needed"]
+  end
+
   defp handoff_order_lines([]), do: []
 
   defp handoff_order_lines(order_terms) do
     ["  |> Selecto.order_by(#{inspect(order_terms, pretty: true, limit: :infinity)})"]
+  end
+
+  defp sort_rule_to_selecto_order(%{column_ref: column_ref, direction: direction}) do
+    case column_ref_to_field(column_ref) do
+      nil -> nil
+      field -> {field, sort_direction_atom(direction)}
+    end
+  end
+
+  defp sort_rule_to_selecto_order(_), do: nil
+
+  defp build_codegen_query_module(
+         selected_table,
+         selected_joins,
+         selected_columns,
+         filters,
+         sort_rules
+       ) do
+    joins_map =
+      selected_table
+      |> build_selecto_join_config_map(selected_joins)
+      |> Map.get(:joins)
+
+    select_fields =
+      selected_columns
+      |> Enum.map(&column_ref_to_field/1)
+      |> Enum.reject(&is_nil/1)
+
+    filter_terms =
+      filters
+      |> Enum.map(&filter_to_selecto_term/1)
+      |> Enum.reject(&is_nil/1)
+
+    order_terms =
+      sort_rules
+      |> Enum.map(&sort_rule_to_selecto_order/1)
+      |> Enum.reject(&is_nil/1)
+
+    [
+      "defmodule SelectoTest.StudioGeneratedQuery do",
+      "  @moduledoc \"Generated by /studio codegen.\"",
+      "",
+      "  alias Selecto",
+      "",
+      "  @joins #{inspect(joins_map, pretty: true, limit: :infinity)}",
+      "  @selected #{inspect(select_fields, pretty: true, limit: :infinity)}",
+      "  @filters #{inspect(filter_terms, pretty: true, limit: :infinity)}",
+      "  @order_by #{inspect(order_terms, pretty: true, limit: :infinity)}",
+      "",
+      "  def build_query(domain, repo) do",
+      "    domain",
+      "    |> Selecto.configure(repo)",
+      "    |> Selecto.select(@selected)",
+      "    |> maybe_filter()",
+      "    |> maybe_order_by()",
+      "  end",
+      "",
+      "  def joins_map, do: @joins",
+      "",
+      "  defp maybe_filter(query) do",
+      "    if @filters == [] do",
+      "      query",
+      "    else",
+      "      Selecto.filter(query, @filters)",
+      "    end",
+      "  end",
+      "",
+      "  defp maybe_order_by(query) do",
+      "    if @order_by == [] do",
+      "      query",
+      "    else",
+      "      Selecto.order_by(query, @order_by)",
+      "    end",
+      "  end",
+      "end",
+      ""
+    ]
+    |> Enum.join("\n")
+  end
+
+  defp build_overlay_join_snippet(selected_table, selected_joins) do
+    joins_map =
+      selected_table
+      |> build_selecto_join_config_map(selected_joins)
+      |> Map.get(:joins)
+
+    [
+      "# Paste into your overlay module",
+      "",
+      "%{",
+      "  joins: #{inspect(joins_map, pretty: true, limit: :infinity)}",
+      "}",
+      ""
+    ]
+    |> Enum.join("\n")
   end
 
   defp filter_to_selecto_term(%{column_ref: column_ref, operator: operator, value: value}) do
@@ -2605,26 +3148,217 @@ defmodule SelectoTestWeb.StudioLive do
     Enum.find(available_columns, &(&1.id == column_ref))
   end
 
-  defp normalize_sort_column_ref(sort_column_ref, selected_columns, available_columns) do
-    valid_ids = MapSet.new(Enum.map(available_columns, & &1.id))
+  defp normalize_sort_direction(direction) when direction in ["asc", "desc"], do: direction
+  defp normalize_sort_direction(_), do: "asc"
 
-    cond do
-      is_binary(sort_column_ref) and MapSet.member?(valid_ids, sort_column_ref) ->
-        sort_column_ref
+  defp normalize_sort_rules(
+         sort_rules,
+         legacy_sort_column_ref,
+         legacy_sort_direction,
+         selected_columns,
+         available_columns
+       ) do
+    valid_column_ids = MapSet.new(Enum.map(available_columns, & &1.id))
 
-      selected_columns != [] ->
-        Enum.find(selected_columns, &MapSet.member?(valid_ids, &1))
+    default_column_ref =
+      cond do
+        selected_columns != [] ->
+          Enum.find(selected_columns, &MapSet.member?(valid_column_ids, &1))
 
-      true ->
-        case List.first(available_columns) do
-          nil -> nil
-          column -> column.id
-        end
+        true ->
+          case List.first(available_columns) do
+            nil -> nil
+            column -> column.id
+          end
+      end
+
+    base_sort_rules =
+      sort_rules
+      |> normalize_saved_sort_rules()
+      |> sort_rules_from_import(legacy_sort_column_ref, legacy_sort_direction)
+
+    normalized_rules =
+      base_sort_rules
+      |> Enum.map(fn sort_rule ->
+        column_ref =
+          if MapSet.member?(valid_column_ids, sort_rule.column_ref) do
+            sort_rule.column_ref
+          else
+            default_column_ref
+          end
+
+        %{
+          sort_rule
+          | column_ref: column_ref,
+            direction: normalize_sort_direction(sort_rule.direction)
+        }
+      end)
+      |> Enum.reject(&is_nil(&1.column_ref))
+
+    if normalized_rules == [] and not is_nil(default_column_ref) do
+      [%{id: "s1", column_ref: default_column_ref, direction: "asc"}]
+    else
+      normalized_rules
     end
   end
 
-  defp normalize_sort_direction(direction) when direction in ["asc", "desc"], do: direction
-  defp normalize_sort_direction(_), do: "asc"
+  defp normalize_saved_sort_rules(nil), do: []
+
+  defp normalize_saved_sort_rules(sort_rules) when is_list(sort_rules) do
+    sort_rules
+    |> Enum.map(&normalize_saved_sort_rule/1)
+    |> Enum.reject(&is_nil/1)
+    |> ensure_unique_sort_ids()
+  end
+
+  defp normalize_saved_sort_rules(_), do: []
+
+  defp normalize_saved_sort_rule(sort_rule) when is_map(sort_rule) do
+    column_ref = Map.get(sort_rule, :column_ref) || Map.get(sort_rule, "column_ref")
+
+    if is_nil(column_ref) do
+      nil
+    else
+      %{
+        id: to_string(Map.get(sort_rule, :id) || Map.get(sort_rule, "id") || ""),
+        column_ref: to_string(column_ref),
+        direction:
+          normalize_sort_direction(
+            Map.get(sort_rule, :direction) || Map.get(sort_rule, "direction") || "asc"
+          )
+      }
+    end
+  end
+
+  defp normalize_saved_sort_rule(_), do: nil
+
+  defp ensure_unique_sort_ids(sort_rules) do
+    {_, normalized} =
+      Enum.reduce(sort_rules, {MapSet.new(), []}, fn sort_rule, {used_ids, acc} ->
+        candidate_id = sort_rule.id |> to_string() |> String.trim()
+
+        unique_id =
+          if candidate_id == "" do
+            next_generated_sort_id(used_ids)
+          else
+            ensure_unique_sort_id(candidate_id, used_ids)
+          end
+
+        {MapSet.put(used_ids, unique_id), acc ++ [%{sort_rule | id: unique_id}]}
+      end)
+
+    normalized
+  end
+
+  defp ensure_unique_sort_id(candidate_id, used_ids) do
+    if MapSet.member?(used_ids, candidate_id) do
+      next_generated_sort_id(used_ids)
+    else
+      candidate_id
+    end
+  end
+
+  defp next_generated_sort_id(used_ids), do: next_generated_sort_id(used_ids, 1)
+
+  defp next_generated_sort_id(used_ids, index) do
+    candidate = "s#{index}"
+
+    if MapSet.member?(used_ids, candidate) do
+      next_generated_sort_id(used_ids, index + 1)
+    else
+      candidate
+    end
+  end
+
+  defp sort_rules_from_import(sort_rules, legacy_sort_column_ref, legacy_sort_direction) do
+    if sort_rules == [] do
+      sort_rules_from_legacy(legacy_sort_column_ref, legacy_sort_direction)
+    else
+      sort_rules
+    end
+  end
+
+  defp sort_rules_from_legacy(nil, _legacy_sort_direction), do: []
+
+  defp sort_rules_from_legacy(legacy_sort_column_ref, legacy_sort_direction) do
+    [
+      %{
+        id: "s1",
+        column_ref: to_string(legacy_sort_column_ref),
+        direction: normalize_sort_direction(legacy_sort_direction)
+      }
+    ]
+  end
+
+  defp primary_sort([]), do: {nil, "asc"}
+
+  defp primary_sort([sort_rule | _rest]) do
+    {sort_rule.column_ref, normalize_sort_direction(sort_rule.direction)}
+  end
+
+  defp next_sort_seq(sort_rules) do
+    max_numeric_id =
+      sort_rules
+      |> Enum.map(fn sort_rule ->
+        case Regex.run(~r/^s(\d+)$/, sort_rule.id) do
+          [_, value] -> String.to_integer(value)
+          _ -> 0
+        end
+      end)
+      |> Enum.max(fn -> 0 end)
+
+    max(max_numeric_id, length(sort_rules))
+  end
+
+  defp legacy_sort_payload([]), do: %{column_ref: nil, direction: "asc"}
+
+  defp legacy_sort_payload([sort_rule | _rest]) do
+    %{column_ref: sort_rule.column_ref, direction: normalize_sort_direction(sort_rule.direction)}
+  end
+
+  defp truthy?(value) when value in [true, "true", "1", 1, "on", "yes"], do: true
+  defp truthy?(_), do: false
+
+  defp normalize_join_type(join_type) when join_type in ["left", :left], do: "left"
+  defp normalize_join_type(join_type) when join_type in ["inner", :inner], do: "inner"
+  defp normalize_join_type(_), do: "left"
+
+  defp normalize_join_type_by_id(join_type_by_id) when is_map(join_type_by_id) do
+    join_type_by_id
+    |> Enum.reduce(%{}, fn {join_id, join_type}, acc ->
+      Map.put(acc, to_string(join_id), normalize_join_type(join_type))
+    end)
+  end
+
+  defp normalize_join_type_by_id(_), do: %{}
+
+  defp apply_join_type_by_id(socket, join_type_by_id) do
+    normalized = normalize_join_type_by_id(join_type_by_id)
+
+    selected_joins =
+      Enum.map(socket.assigns.selected_joins, fn join ->
+        join_type = Map.get(normalized, join.id, Map.get(join, :join_type, "left"))
+        %{join | join_type: normalize_join_type(join_type)}
+      end)
+
+    socket
+    |> assign(:selected_joins, selected_joins)
+    |> refresh_output_configs()
+  end
+
+  defp join_type_by_id(selected_joins) do
+    selected_joins
+    |> Enum.reduce(%{}, fn join, acc ->
+      Map.put(acc, join.id, normalize_join_type(Map.get(join, :join_type)))
+    end)
+  end
+
+  defp join_type_atom(join_type) do
+    case normalize_join_type(join_type) do
+      "inner" -> :inner
+      _ -> :left
+    end
+  end
 
   defp column_type_kind(nil), do: :other
 
@@ -2742,6 +3476,7 @@ defmodule SelectoTestWeb.StudioLive do
       parent_table: parent_table,
       child_schema: child_schema,
       child_table: child_table,
+      join_type: "left",
       on: directed_pairs_for_parent(join, parent_key)
     }
   end
@@ -2797,6 +3532,7 @@ defmodule SelectoTestWeb.StudioLive do
           %{
             id: join.id,
             constraint: join.constraint_name,
+            type: join.join_type,
             parent: parent_full_name(join),
             child: child_full_name(join),
             on: join.on
@@ -2809,6 +3545,16 @@ defmodule SelectoTestWeb.StudioLive do
   defp build_selecto_join_config(nil, _selected_joins), do: empty_selecto_join_config()
 
   defp build_selecto_join_config(selected_table, selected_joins) do
+    selected_table
+    |> build_selecto_join_config_map(selected_joins)
+    |> inspect(pretty: true, limit: :infinity, width: 100)
+  end
+
+  defp build_selecto_join_config_map(nil, _selected_joins) do
+    %{base_table: nil, joins: %{}}
+  end
+
+  defp build_selecto_join_config_map(selected_table, selected_joins) do
     base_table = full_table_name(selected_table)
     joins_by_parent = Enum.group_by(selected_joins, &parent_full_name/1)
 
@@ -2816,7 +3562,6 @@ defmodule SelectoTestWeb.StudioLive do
       base_table: base_table,
       joins: build_selecto_join_tree(base_table, joins_by_parent)
     }
-    |> inspect(pretty: true, limit: :infinity, width: 100)
   end
 
   defp build_selecto_join_tree(parent_full_name, joins_by_parent) do
@@ -2828,7 +3573,7 @@ defmodule SelectoTestWeb.StudioLive do
 
       Map.put(acc, selecto_join_key(join), %{
         name: child_full_name,
-        type: :left,
+        type: join_type_atom(join.join_type),
         source: parent_full_name,
         source_columns: Enum.map(join.on, & &1.parent_column),
         target: child_full_name,
@@ -2909,9 +3654,12 @@ defmodule SelectoTestWeb.StudioLive do
   end
 
   defp selected_join_condition(join) do
-    join.on
-    |> Enum.map(fn pair -> "#{pair.parent_column} = #{pair.child_column}" end)
-    |> Enum.join(" and ")
+    condition =
+      join.on
+      |> Enum.map(fn pair -> "#{pair.parent_column} = #{pair.child_column}" end)
+      |> Enum.join(" and ")
+
+    "[#{normalize_join_type(join.join_type)}] " <> condition
   end
 
   defp find_table_by_full_name(_tables, nil), do: nil
