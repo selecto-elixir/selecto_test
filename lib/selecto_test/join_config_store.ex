@@ -1,140 +1,17 @@
 defmodule SelectoTest.JoinConfigStore do
-  @moduledoc """
-  Ephemeral ETS-backed storage for saved join configurations.
+  @moduledoc false
 
-  This avoids requiring DB setup for config persistence in short-lived
-  or containerized deployments.
-  """
-
-  use GenServer
-
-  @table :selecto_test_join_configs
-
-  @type config_record :: %{
-          id: binary(),
-          name: binary(),
-          base_table: binary() | nil,
-          selected_join_ids: [binary()],
-          join_type_by_id: %{optional(binary()) => binary()},
-          selected_columns: [binary()],
-          filters: [map()],
-          sort_rules: [map()],
-          sort_column_ref: binary() | nil,
-          sort_direction: binary(),
-          query_page_size: integer(),
-          join_config_json: binary(),
-          selecto_join_config: binary(),
-          saved_at: DateTime.t(),
-          saved_at_unix: integer()
-        }
-
-  def start_link(opts \\ []) do
-    GenServer.start_link(__MODULE__, :ok, Keyword.put_new(opts, :name, __MODULE__))
-  end
+  @type config_record :: map()
 
   @spec list_configs() :: [config_record()]
-  def list_configs do
-    if table_ready?() do
-      @table
-      |> :ets.tab2list()
-      |> Enum.map(fn {_id, config} -> config end)
-      |> Enum.sort_by(& &1.saved_at_unix, :desc)
-    else
-      []
-    end
-  end
+  defdelegate list_configs(), to: SelectoStudio.JoinConfigStore
 
   @spec save_config(map()) :: {:ok, config_record()} | {:error, term()}
-  def save_config(attrs) when is_map(attrs) do
-    if table_ready?() do
-      now = DateTime.utc_now() |> DateTime.truncate(:second)
-      id = Ecto.UUID.generate()
-
-      record = %{
-        id: id,
-        name: normalize_name(Map.get(attrs, :name), now),
-        base_table: Map.get(attrs, :base_table),
-        selected_join_ids: Map.get(attrs, :selected_join_ids, []),
-        join_type_by_id: Map.get(attrs, :join_type_by_id, %{}),
-        selected_columns: Map.get(attrs, :selected_columns, []),
-        filters: Map.get(attrs, :filters, []),
-        sort_rules: Map.get(attrs, :sort_rules, []),
-        sort_column_ref: Map.get(attrs, :sort_column_ref),
-        sort_direction: Map.get(attrs, :sort_direction, "asc"),
-        query_page_size: Map.get(attrs, :query_page_size, 25),
-        join_config_json: Map.get(attrs, :join_config_json, ""),
-        selecto_join_config: Map.get(attrs, :selecto_join_config, ""),
-        saved_at: now,
-        saved_at_unix: DateTime.to_unix(now)
-      }
-
-      true = :ets.insert(@table, {id, record})
-      {:ok, record}
-    else
-      {:error, :store_not_ready}
-    end
-  end
+  defdelegate save_config(attrs), to: SelectoStudio.JoinConfigStore
 
   @spec get_config(binary()) :: {:ok, config_record()} | :error
-  def get_config(id) when is_binary(id) do
-    if table_ready?() do
-      case :ets.lookup(@table, id) do
-        [{^id, config}] -> {:ok, config}
-        [] -> :error
-      end
-    else
-      :error
-    end
-  end
+  defdelegate get_config(id), to: SelectoStudio.JoinConfigStore
 
   @spec delete_config(binary()) :: :ok
-  def delete_config(id) when is_binary(id) do
-    if table_ready?() do
-      :ets.delete(@table, id)
-    end
-
-    :ok
-  end
-
-  @impl true
-  def init(:ok) do
-    create_table()
-    {:ok, %{}}
-  end
-
-  defp create_table do
-    case :ets.whereis(@table) do
-      :undefined ->
-        :ets.new(@table, [
-          :named_table,
-          :public,
-          :set,
-          read_concurrency: true,
-          write_concurrency: true
-        ])
-
-      _tid ->
-        :ok
-    end
-  end
-
-  defp table_ready? do
-    :ets.whereis(@table) != :undefined
-  end
-
-  defp normalize_name(name, now) when is_binary(name) do
-    trimmed = String.trim(name)
-
-    if trimmed == "" do
-      default_name(now)
-    else
-      trimmed
-    end
-  end
-
-  defp normalize_name(_name, now), do: default_name(now)
-
-  defp default_name(now) do
-    "Join Config #{Calendar.strftime(now, "%Y-%m-%d %H:%M:%S UTC")}"
-  end
+  defdelegate delete_config(id), to: SelectoStudio.JoinConfigStore
 end

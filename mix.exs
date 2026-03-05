@@ -70,6 +70,7 @@ defmodule SelectoTest.MixProject do
       {:jason, "~> 1.2"},
       {:bandit, "~> 1.5"},
       selecto_dep(),
+      {:selecto_studio, path: "../selecto_studio", override: true, runtime: false},
       selecto_components_dep(),
       selecto_mix_dep(),
       {:timex, "~> 3.7.9"},

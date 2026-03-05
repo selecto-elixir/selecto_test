@@ -10,6 +10,13 @@ import Config
 config :selecto_test,
   ecto_repos: [SelectoTest.Repo]
 
+config :selecto_studio,
+  repo: SelectoTest.Repo,
+  join_config_store: SelectoStudio.JoinConfigStore,
+  schema_explorer: SelectoStudio.SchemaExplorer,
+  components_domain_builder: SelectoStudio.Studio.ComponentsDomainBuilder,
+  codegen_namespace: "SelectoTest"
+
 # Configures the endpoint
 config :selecto_test, SelectoTestWeb.Endpoint,
   url: [host: "localhost"],

@@ -281,6 +281,132 @@ defmodule SelectoTestWeb.StudioLiveTest do
     assert render(view) =~ "Invalid integer value"
   end
 
+  test "table preview supports pagination", %{conn: conn} do
+    insert_author_range(2, 75)
+
+    {:ok, view, _html} = live(conn, ~p"/studio")
+
+    view
+    |> element("#table-public-studio-lv-authors")
+    |> render_click()
+
+    assert has_element?(view, "#preview-page-indicator", "Page 1 / 3")
+    refute render(view) =~ "Author 70"
+
+    view
+    |> element("#preview-next-page")
+    |> render_click()
+
+    assert has_element?(view, "#preview-page-indicator", "Page 2 / 3")
+    assert render(view) =~ "Author 40"
+
+    view
+    |> element("#preview-next-page")
+    |> render_click()
+
+    assert has_element?(view, "#preview-page-indicator", "Page 3 / 3")
+    assert render(view) =~ "Author 70"
+  end
+
+  test "table preview applies query builder filters by default", %{conn: conn} do
+    insert_author_range(2, 4)
+
+    {:ok, view, _html} = live(conn, ~p"/studio")
+
+    view
+    |> element("#table-public-studio-lv-authors")
+    |> render_click()
+
+    view
+    |> element("#add-filter-button")
+    |> render_click()
+
+    query_params = %{
+      "query" => %{
+        "selected_columns" => ["public|studio_lv_authors|name"],
+        "sorts" => %{
+          "s1" => %{"column_ref" => "public|studio_lv_authors|id", "direction" => "asc"}
+        },
+        "filters" => %{
+          "f1" => %{
+            "column_ref" => "public|studio_lv_authors|name",
+            "operator" => "eq",
+            "value" => "Ada Lovelace"
+          }
+        }
+      }
+    }
+
+    view
+    |> form("#query-builder-form", query_params)
+    |> render_change()
+
+    assert has_element?(view, "#table-preview-table")
+    assert render(view) =~ "Ada Lovelace"
+    refute render(view) =~ "Author 2"
+  end
+
+  test "table preview supports insert edit and delete", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/studio")
+
+    view
+    |> element("#table-public-studio-lv-authors")
+    |> render_click()
+
+    view
+    |> form("#preview-insert-form", %{"insert" => %{"id" => "2", "name" => "Grace Hopper"}})
+    |> render_submit()
+
+    assert render(view) =~ "Grace Hopper"
+
+    view
+    |> element("#preview-edit-2")
+    |> render_click()
+
+    view
+    |> form("#preview-edit-form", %{
+      "row_index" => "1",
+      "edit" => %{"id" => "2", "name" => "Grace Brewster"}
+    })
+    |> render_submit()
+
+    assert render(view) =~ "Grace Brewster"
+
+    view
+    |> element("#preview-delete-2")
+    |> render_click()
+
+    refute render(view) =~ "Grace Brewster"
+  end
+
+  test "table preview row actions work without primary key", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/studio")
+
+    view
+    |> element("#table-public-studio-lv-notes")
+    |> render_click()
+
+    assert render(view) =~ "draft"
+
+    view
+    |> element("#table-preview-table button[id^='preview-edit-']")
+    |> render_click()
+
+    assert has_element?(view, "#preview-edit-form")
+
+    view
+    |> form("#preview-edit-form", %{"row_index" => "0", "edit" => %{"label" => "published"}})
+    |> render_submit()
+
+    assert render(view) =~ "published"
+
+    view
+    |> element("#table-preview-table button[id^='preview-delete-']")
+    |> render_click()
+
+    refute render(view) =~ "published"
+  end
+
   test "supports sorting and pagination", %{conn: conn} do
     insert_comment_range(101, 135)
 
@@ -581,6 +707,41 @@ defmodule SelectoTestWeb.StudioLiveTest do
     assert String.starts_with?(to, "/studio/components?payload=")
   end
 
+  test "hides table preview when joins are active", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/studio")
+
+    view
+    |> element("#table-public-studio-lv-authors")
+    |> render_click()
+
+    posts_join_dom_id = dom_id(@posts_author_join_id)
+
+    view
+    |> element("#add-join-#{posts_join_dom_id}")
+    |> render_click()
+
+    refute has_element?(view, "#table-preview-table")
+    assert render(view) =~ "Table preview is hidden when joins are active"
+  end
+
+  test "join tray is closed by default and can be toggled", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/studio")
+
+    assert has_element?(view, "#joins-tray.translate-x-full")
+
+    view
+    |> element("#open-joins-tray")
+    |> render_click()
+
+    assert has_element?(view, "#joins-tray.translate-x-0")
+
+    view
+    |> element("#close-joins-tray")
+    |> render_click()
+
+    assert has_element?(view, "#joins-tray.translate-x-full")
+  end
+
   defp clear_saved_configs do
     JoinConfigStore.list_configs()
     |> Enum.each(fn config ->
@@ -589,6 +750,7 @@ defmodule SelectoTestWeb.StudioLiveTest do
   end
 
   defp create_join_fixture_tables do
+    SQL.query!(Repo, "drop table if exists studio_lv_notes", [])
     SQL.query!(Repo, "drop table if exists studio_lv_comments", [])
     SQL.query!(Repo, "drop table if exists studio_lv_posts", [])
     SQL.query!(Repo, "drop table if exists studio_lv_authors", [])
@@ -630,6 +792,16 @@ defmodule SelectoTestWeb.StudioLiveTest do
       []
     )
 
+    SQL.query!(
+      Repo,
+      """
+      create table studio_lv_notes (
+        label text not null
+      )
+      """,
+      []
+    )
+
     SQL.query!(Repo, "insert into studio_lv_authors (id, name) values (1, 'Ada Lovelace')", [])
 
     SQL.query!(
@@ -643,6 +815,8 @@ defmodule SelectoTestWeb.StudioLiveTest do
       "insert into studio_lv_comments (id, post_id, body) values (100, 10, 'great read')",
       []
     )
+
+    SQL.query!(Repo, "insert into studio_lv_notes (label) values ('draft')", [])
   end
 
   defp insert_comment_range(from_id, to_id) do
@@ -651,6 +825,18 @@ defmodule SelectoTestWeb.StudioLiveTest do
       """
       insert into studio_lv_comments (id, post_id, body)
       select gs, 10, 'note-' || gs::text
+      from generate_series($1::integer, $2::integer) as gs
+      """,
+      [from_id, to_id]
+    )
+  end
+
+  defp insert_author_range(from_id, to_id) do
+    SQL.query!(
+      Repo,
+      """
+      insert into studio_lv_authors (id, name)
+      select gs, 'Author ' || gs::text
       from generate_series($1::integer, $2::integer) as gs
       """,
       [from_id, to_id]
