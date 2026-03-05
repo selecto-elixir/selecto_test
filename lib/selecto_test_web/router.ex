@@ -63,6 +63,7 @@ defmodule SelectoTestWeb.Router do
       live_dashboard "/dashboard",
         metrics: SelectoTestWeb.Telemetry,
         additional_pages: [
+          studio: SelectoStudioWeb.LiveDashboard.StudioPage,
           selecto: SelectoTestWeb.LiveDashboard.SelectoPage
         ]
 
