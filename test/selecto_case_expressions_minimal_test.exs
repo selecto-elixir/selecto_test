@@ -52,7 +52,10 @@ defmodule SelectoCaseExpressionsMinimalTest do
           [
             {"G", "General"},
             {"PG", "Parental"}
-          ], else: "Other", as: "rating_desc")
+          ],
+          else: "Other",
+          as: "rating_desc"
+        )
         |> Selecto.gen_sql([])
 
       # Test SQL structure
@@ -74,7 +77,10 @@ defmodule SelectoCaseExpressionsMinimalTest do
         |> Selecto.case_when_select(
           [
             {[{"length", {:>, 120}}], "Long"}
-          ], else: "Short", as: "length_desc")
+          ],
+          else: "Short",
+          as: "length_desc"
+        )
         |> Selecto.gen_sql([])
 
       # Test SQL structure
@@ -98,7 +104,10 @@ defmodule SelectoCaseExpressionsMinimalTest do
           [
             {90, "Ninety"},
             {120, "OneHundredTwenty"}
-          ], else: "Other", as: "length_desc")
+          ],
+          else: "Other",
+          as: "length_desc"
+        )
         # Use exact value instead of comparison
         |> Selecto.filter([{"film_id", 1}])
         |> Selecto.execute()
