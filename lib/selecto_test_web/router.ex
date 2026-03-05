@@ -1,6 +1,14 @@
 defmodule SelectoTestWeb.Router do
   use SelectoTestWeb, :router
 
+  @studio_path Application.compile_env(:selecto_studio, :studio_path, "/studio")
+
+  @studio_components_path Application.compile_env(
+                            :selecto_studio,
+                            :studio_components_path,
+                            "/studio/components"
+                          )
+
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
@@ -31,8 +39,8 @@ defmodule SelectoTestWeb.Router do
   scope "/" do
     pipe_through :browser
 
-    live "/studio", SelectoStudioWeb.StudioLive, :index
-    live "/studio/components", SelectoStudioWeb.StudioComponentsLive, :index
+    live @studio_path, SelectoStudioWeb.StudioLive, :index
+    live @studio_components_path, SelectoStudioWeb.StudioComponentsLive, :index
   end
 
   # Other scopes may use custom stacks.

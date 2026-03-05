@@ -15,7 +15,10 @@ config :selecto_studio,
   join_config_store: SelectoStudio.JoinConfigStore,
   schema_explorer: SelectoStudio.SchemaExplorer,
   components_domain_builder: SelectoStudio.Studio.ComponentsDomainBuilder,
-  codegen_namespace: "SelectoTest"
+  codegen_namespace: "SelectoTest",
+  studio_path: "/studio",
+  studio_components_path: "/studio/components",
+  studio_saved_view_context: "/studio/components"
 
 # Configures the endpoint
 config :selecto_test, SelectoTestWeb.Endpoint,
