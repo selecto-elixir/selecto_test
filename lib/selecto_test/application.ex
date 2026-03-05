@@ -12,7 +12,7 @@ defmodule SelectoTest.Application do
       SelectoTestWeb.Telemetry,
       # Start the Ecto repository
       SelectoTest.Repo,
-      SelectoTest.JoinConfigStore,
+      SelectoStudio.JoinConfigStore,
       # Start the PubSub system
       {Phoenix.PubSub, name: SelectoTest.PubSub},
       # Start Finch
