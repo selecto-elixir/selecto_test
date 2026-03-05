@@ -8,7 +8,7 @@ defmodule SelectoTestWeb.RatingFilterUITest do
 
       # Check for film rating filter configuration or any rating-related content
       rating_content =
-        html =~ "Film Rating" or html =~ "film[rating]" or
+        html =~ "Film Rating" or html =~ "film.rating" or
           html =~ "rating" or html =~ "Rating" or
           html =~ "filter" or html =~ "select" or
           html =~ "checkbox" or html =~ "form"
@@ -184,7 +184,7 @@ defmodule SelectoTestWeb.RatingFilterUITest do
       empty_filter = %{
         "filters" => %{
           "empty-rating" => %{
-            "filter" => "film[rating]",
+            "filter" => "film.rating",
             "value" => []
           }
         }
@@ -290,7 +290,7 @@ defmodule SelectoTestWeb.RatingFilterUITest do
           |> render_submit(%{
             "filters" => %{
               "persist-test" => %{
-                "filter" => "film[rating]",
+                "filter" => "film.rating",
                 "value" => ["PG"]
               }
             }
