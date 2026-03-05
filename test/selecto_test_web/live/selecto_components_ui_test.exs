@@ -67,7 +67,7 @@ defmodule SelectoTestWeb.SelectoComponentsUITest do
       # The rating filter might be in the SelectoComponents form or available as an option
       rating_present =
         html =~ "rating" or html =~ "Rating" or
-          html =~ "film[rating]" or html =~ "Film Rating" or
+          html =~ "film.rating" or html =~ "Film Rating" or
           html =~ "select" or html =~ "filter"
 
       # Should have some form of rating interface or filter capability
@@ -195,7 +195,7 @@ defmodule SelectoTestWeb.SelectoComponentsUITest do
       # This is a basic check - actual interaction depends on SelectoComponents UI
       rating_filter_present =
         html =~ "Film Rating" or
-          html =~ "film[rating]" or
+          html =~ "film.rating" or
           html =~ "rating"
 
       if rating_filter_present do

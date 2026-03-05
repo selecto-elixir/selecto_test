@@ -71,7 +71,7 @@ defmodule SelectoTestWeb.SelectoUIIntegrationTest do
       # Look for film rating filter
       has_rating_filter =
         html =~ "Film Rating" or
-          html =~ "film[rating]" or
+          html =~ "film.rating" or
           html =~ "rating"
 
       assert has_rating_filter

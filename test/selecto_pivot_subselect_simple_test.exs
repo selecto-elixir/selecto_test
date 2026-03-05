@@ -279,7 +279,7 @@ defmodule SelectoPivotSubselectSimpleTest do
       assert Selecto.Subselect.get_subselect_configs(selecto) == []
 
       # Add subselects
-      subselected = Selecto.subselect(selecto, ["posts[title]"])
+      subselected = Selecto.subselect(selecto, ["posts.title"])
       assert Selecto.Subselect.has_subselects?(subselected)
 
       configs = Selecto.Subselect.get_subselect_configs(subselected)
