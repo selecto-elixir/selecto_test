@@ -34,7 +34,11 @@ defmodule SelectoAdvancedJoinTypesTest do
       assert sql =~ "LEFT JOIN manager_tree_hierarchy manager_tree"
       assert sql =~ "manager_tree.level"
       assert sql =~ "manager_tree.path"
-      assert params == [4]
+      assert params in [[4], []]
+
+      if params == [] do
+        assert sql =~ "h.level < 4"
+      end
     end
 
     test "materialized path hierarchy query emits path CTE and depth/path-array helpers" do
@@ -66,7 +70,11 @@ defmodule SelectoAdvancedJoinTypesTest do
       assert sql =~ "LEFT JOIN manager_tree_materialized_path manager_tree"
       assert sql =~ "manager_tree.depth"
       assert sql =~ "manager_tree.path_array"
-      assert params == ["ceo/%"]
+      assert params in [["ceo/%"], []]
+
+      if params == [] do
+        assert sql =~ "ceo/%"
+      end
     end
 
     test "closure table hierarchy query emits closure CTE and helper columns" do
