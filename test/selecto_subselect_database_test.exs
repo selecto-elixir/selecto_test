@@ -66,7 +66,12 @@ defmodule SelectoSubselectDatabaseTest do
       selecto =
         create_selecto()
         |> Selecto.select(["first_name", "last_name"])
-        |> Selecto.subselect(["film[title,rating,release_year]"])
+        |> Selecto.subselect([
+          %{
+            fields: ["title", "rating", "release_year"],
+            target_schema: :film
+          }
+        ])
         |> Selecto.filter([{"last_name", "Johnson"}])
 
       case Selecto.execute(selecto) do
