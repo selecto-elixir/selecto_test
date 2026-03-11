@@ -552,6 +552,150 @@ const ColumnResize = {
   }
 }
 
+const ListPickerSortable = {
+  mounted() {
+    this.draggedItemId = null
+
+    const reorderButtonId = this.el.dataset.reorderButtonId
+    const reorderButton = reorderButtonId ? document.getElementById(reorderButtonId) : null
+
+    const itemElements = () => Array.from(this.el.querySelectorAll("[data-picker-item-id]"))
+
+    const clearDropIndicators = () => {
+      itemElements().forEach((item) => {
+        item.classList.remove("ring-2", "ring-primary/40")
+      })
+    }
+
+    const bindItem = (item) => {
+      if (item.dataset.sortableBound === "true") {
+        return
+      }
+
+      item.dataset.sortableBound = "true"
+
+      item.addEventListener("dragstart", (event) => {
+        this.draggedItemId = item.dataset.pickerItemId
+        item.classList.add("opacity-60")
+
+        if (event.dataTransfer) {
+          event.dataTransfer.effectAllowed = "move"
+          event.dataTransfer.setData("text/plain", this.draggedItemId || "")
+        }
+      })
+
+      item.addEventListener("dragend", () => {
+        item.classList.remove("opacity-60")
+        clearDropIndicators()
+      })
+
+      item.addEventListener("dragover", (event) => {
+        if (!this.draggedItemId || this.draggedItemId === item.dataset.pickerItemId) {
+          return
+        }
+
+        event.preventDefault()
+        clearDropIndicators()
+        item.classList.add("ring-2", "ring-primary/40")
+      })
+
+      item.addEventListener("dragleave", () => {
+        item.classList.remove("ring-2", "ring-primary/40")
+      })
+
+      item.addEventListener("drop", (event) => {
+        event.preventDefault()
+
+        const targetItemId = item.dataset.pickerItemId
+
+        clearDropIndicators()
+
+        if (!this.draggedItemId || !targetItemId || this.draggedItemId === targetItemId || !reorderButton) {
+          return
+        }
+
+        reorderButton.setAttribute("phx-value-item", this.draggedItemId)
+        reorderButton.setAttribute("phx-value-target-item", targetItemId)
+        reorderButton.click()
+      })
+    }
+
+    this.bindItems = () => {
+      itemElements().forEach(bindItem)
+    }
+
+    this.bindItems()
+  },
+
+  updated() {
+    if (this.bindItems) {
+      this.bindItems()
+    }
+  }
+}
+
+const ListPickerEditor = {
+  mounted() {
+    this.open = false
+
+    this.applyState = () => {
+      const content = this.el.querySelector('[data-editor-content]')
+      const openLabel = this.el.querySelector('[data-editor-open-label]')
+      const closeLabel = this.el.querySelector('[data-editor-close-label]')
+
+      if (content) {
+        content.classList.toggle('hidden', !this.open)
+      }
+
+      if (openLabel) {
+        openLabel.classList.toggle('hidden', this.open)
+      }
+
+      if (closeLabel) {
+        closeLabel.classList.toggle('hidden', !this.open)
+      }
+    }
+
+    this.setOpen = (nextOpen) => {
+      this.open = nextOpen
+      this.applyState()
+    }
+
+    this.handleClick = (event) => {
+      if (event.target.closest('[data-editor-toggle]')) {
+        event.preventDefault()
+        this.setOpen(!this.open)
+      }
+    }
+
+    this.handleDocumentClick = (event) => {
+      if (!this.open || this.el.contains(event.target)) {
+        return
+      }
+
+      this.setOpen(false)
+    }
+
+    this.el.addEventListener('click', this.handleClick)
+    document.addEventListener('click', this.handleDocumentClick)
+    this.applyState()
+  },
+
+  updated() {
+    this.applyState()
+  },
+
+  destroyed() {
+    if (this.handleClick) {
+      this.el.removeEventListener('click', this.handleClick)
+    }
+
+    if (this.handleDocumentClick) {
+      document.removeEventListener('click', this.handleDocumentClick)
+    }
+  }
+}
+
 // Subselect/Query builder hooks
 const SubselectBuilder = {
   mounted() {
@@ -701,6 +845,8 @@ export default {
   ColumnHeader,
   ResizeHandle,
   ColumnResize,
+  ListPickerSortable,
+  ListPickerEditor,
   SubselectBuilder,
   DraggableQueryComponent,
   ResponsiveTable,
