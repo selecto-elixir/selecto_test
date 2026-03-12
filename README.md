@@ -47,7 +47,7 @@ This project includes the complete Selecto ecosystem in the vendor directory:
 
 ## Requirements
 
-Projects using selecto_components should include Tailwind and Alpine.js as is done in this project. You also need to add the push event hook from assets/js/hooks.
+Projects using `selecto_components` should include the dependency in Tailwind sources and import `{hooks as selectoComponentsHooks}` from `phoenix-colocated/selecto_components` in `assets/js/app.js`.
 
 ## Setup
 

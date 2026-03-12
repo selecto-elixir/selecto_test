@@ -20,34 +20,24 @@ import "phoenix_html"
 // Establish Phoenix Socket and LiveView configuration.
 import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
+import {hooks as colocatedHooks} from "phoenix-colocated/selecto_test"
+import {hooks as selectoComponentsHooks} from "phoenix-colocated/selecto_components"
 import topbar from "../vendor/topbar"
 import hooks from "./hooks";
 
 // Load Chart.js globally
 import "../vendor/chart.js"
 
-// Import colocated hooks from Phoenix LiveView
-// Colocated hooks are automatically extracted and compiled
-// Import SelectoComponents colocated hooks
-import { selectoComponentsHooks } from "./selecto_components_hooks"
-
 // Combine all hooks
 let myHooks = {
   ...hooks,
+  ...colocatedHooks,
   ...selectoComponentsHooks
 }
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
     params: {_csrf_token: csrfToken},
     hooks: myHooks,
-    dom: {
-        onBeforeElUpdated(from, to) {
-        if (from._x_dataStack) {
-            window.Alpine.clone(from, to);
-        }
-        },
-    },
-
 })
 
 // Show progress bar on live navigation and form submits
