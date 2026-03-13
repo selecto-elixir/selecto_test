@@ -46,3 +46,5 @@ npm-debug.log
 .elixir_ls
 .DS_Store
 /.mise.toml
+
+.expert/
