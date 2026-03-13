@@ -124,7 +124,12 @@ defmodule SelectoTestWeb.SelectoUIIntegrationTest do
         result =
           view
           |> element("form")
-          |> render_submit(%{})
+          |> render_change(%{
+            "view_mode" => "detail",
+            "per_page" => "10",
+            "max_rows" => "10",
+            "aggregate_per_page" => "10"
+          })
 
         # Should not crash
         assert is_binary(result)

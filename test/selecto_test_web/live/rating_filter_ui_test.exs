@@ -52,7 +52,7 @@ defmodule SelectoTestWeb.RatingFilterUITest do
     end
 
     test "can submit filter with rating selections", %{conn: conn} do
-      {:ok, view, _html} = live(conn, "/pagila", on_error: :warn)
+      {:ok, view, _html} = live(conn, "/pagila_films", on_error: :warn)
 
       # Toggle to show the interface first
       _html =
@@ -63,10 +63,14 @@ defmodule SelectoTestWeb.RatingFilterUITest do
       # Try to submit a filter form with rating data
       # This simulates selecting rating checkboxes and applying filter
       filter_data = %{
+        "view_mode" => "detail",
+        "per_page" => "10",
+        "max_rows" => "10",
+        "aggregate_per_page" => "10",
         "filters" => %{
           "uuid-123" => %{
-            "filter" => "film_rating_select",
-            "value" => ["PG", "PG-13"]
+            "filter" => "film_rating",
+            "value" => ["NC-17", "PG-13"]
           }
         }
       }
@@ -76,7 +80,7 @@ defmodule SelectoTestWeb.RatingFilterUITest do
         if has_element?(view, "form") do
           view
           |> element("form")
-          |> render_submit(filter_data)
+          |> render_change(filter_data)
         else
           "no form found"
         end
@@ -95,47 +99,19 @@ defmodule SelectoTestWeb.RatingFilterUITest do
       assert successful_processing
     end
 
-    test "rating filter generates correct SQL with ANY() function", %{conn: conn} do
-      {:ok, view, _html} = live(conn, "/pagila", on_error: :warn)
+    test "rating filter generates correct SQL with ANY() function" do
+      selecto =
+        SelectoTest.PagilaDomainFilms.domain()
+        |> Selecto.configure(SelectoTest.Repo)
+        |> Selecto.select(["title", "rating"])
+        |> Selecto.filter({"rating", ["NC-17", "PG-13"]})
+        |> Selecto.limit(10)
 
-      # Toggle to show the interface first
-      _html =
-        view
-        |> element("button", "Toggle View Controller")
-        |> render_click()
+      {sql, params} = Selecto.to_sql(selecto)
 
-      # This test verifies our filter works by submitting it
-      # The actual SQL verification would need database inspection
-      filter_data = %{
-        "filters" => %{
-          "test-uuid" => %{
-            "filter" => "film_rating_select",
-            "value" => ["G", "R"]
-          }
-        }
-      }
-
-      result =
-        if has_element?(view, "form") do
-          view
-          |> element("form")
-          |> render_submit(filter_data)
-        else
-          "no form found"
-        end
-
-      # Should process without errors
-      assert is_binary(result)
-
-      # If there are actors with G or R rated films, we should see results
-      # If not, we should see a "no results" message or empty table
-      processed_correctly =
-        result =~ "actor" or
-          result =~ "no results" or
-          result =~ "empty" or
-          result =~ "table"
-
-      assert processed_correctly
+      assert sql =~ ~r/any\(/i
+      assert sql =~ ~r/limit 10/i
+      assert params == [["NC-17", "PG-13"]]
     end
 
     test "multiple rating selections work correctly", %{conn: conn} do

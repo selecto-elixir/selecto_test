@@ -70,6 +70,7 @@ defmodule SelectoTest.MixProject do
       {:jason, "~> 1.2"},
       {:bandit, "~> 1.5"},
       selecto_dep(),
+      selecto_db_postgresql_dep(),
       selecto_components_dep(),
       selecto_mix_dep(),
       {:timex, "~> 3.7.9"},
@@ -103,6 +104,14 @@ defmodule SelectoTest.MixProject do
       {:selecto_postgis, path: "../selecto_postgis", override: true}
     else
       {:selecto_postgis, "~> 0.1", override: true}
+    end
+  end
+
+  defp selecto_db_postgresql_dep do
+    if use_local_ecosystem?() do
+      {:selecto_db_postgresql, path: "../selecto_db_postgresql", override: true}
+    else
+      {:selecto_db_postgresql, ">= 0.1.0 and < 0.2.0", override: true}
     end
   end
 
