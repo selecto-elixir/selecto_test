@@ -2,30 +2,30 @@ defmodule SelectoTestWeb.Router do
   use SelectoTestWeb, :router
 
   pipeline :browser do
-    plug :accepts, ["html"]
-    plug :fetch_session
-    plug :fetch_live_flash
-    plug :put_root_layout, {SelectoTestWeb.Layouts, :root}
-    plug :protect_from_forgery
-    plug :put_secure_browser_headers
+    plug(:accepts, ["html"])
+    plug(:fetch_session)
+    plug(:fetch_live_flash)
+    plug(:put_root_layout, {SelectoTestWeb.Layouts, :root})
+    plug(:protect_from_forgery)
+    plug(:put_secure_browser_headers)
   end
 
   pipeline :api do
-    plug :accepts, ["json"]
+    plug(:accepts, ["json"])
   end
 
   scope "/", SelectoTestWeb do
-    pipe_through :browser
+    pipe_through(:browser)
 
-    live "/", PagilaLive, :index
-    live "/pagila", PagilaLive, :index
-    live "/pagila_stores", PagilaLive, :stores
-    live "/pagila_films", PagilaLive, :films
+    live("/", PagilaLive, :index)
+    live("/pagila", PagilaLive, :index)
+    live("/pagila_stores", PagilaLive, :stores)
+    live("/pagila_films", PagilaLive, :films)
 
-    live "/pagila/film/:film_id", PagilaFilmLive, :index
+    live("/pagila/film/:film_id", PagilaFilmLive, :index)
 
     # Selecto Documentation
-    live "/docs/selecto-system/*path", DocsLive
+    live("/docs/selecto-system/*path", DocsLive)
   end
 
   # Other scopes may use custom stacks.
@@ -43,15 +43,16 @@ defmodule SelectoTestWeb.Router do
     import Phoenix.LiveDashboard.Router
 
     scope "/dev" do
-      pipe_through :browser
+      pipe_through(:browser)
 
-      live_dashboard "/dashboard",
+      live_dashboard("/dashboard",
         metrics: SelectoTestWeb.Telemetry,
         additional_pages: [
           selecto: SelectoTestWeb.LiveDashboard.SelectoPage
         ]
+      )
 
-      forward "/mailbox", Plug.Swoosh.MailboxPreview
+      forward("/mailbox", Plug.Swoosh.MailboxPreview)
     end
   end
 end

@@ -79,7 +79,10 @@ defmodule SelectoCaseExpressionsTest do
             {"PG", "Parental Guidance"},
             {"PG-13", "Parents Strongly Cautioned"},
             {"R", "Restricted"}
-          ], else: "Not Rated", as: "rating_description")
+          ],
+          else: "Not Rated",
+          as: "rating_description"
+        )
         # Limit results
         |> Selecto.filter([{"film_id", {:<, 20}}])
         |> Selecto.execute()
@@ -103,7 +106,9 @@ defmodule SelectoCaseExpressionsTest do
           [
             {"G", "Family Friendly"},
             {"PG", "Family Safe"}
-          ], as: "family_rating")
+          ],
+          as: "family_rating"
+        )
         |> Selecto.filter([{"rating", {:in, ["G", "PG", "R"]}}])
         # Limit results
         |> Selecto.filter([{"film_id", {:<, 20}}])
@@ -130,7 +135,10 @@ defmodule SelectoCaseExpressionsTest do
             {[{"length", {:>, 120}}], "Long Film"},
             {[{"length", {:between, 90, 120}}], "Standard Film"},
             {[{"length", {:>, 0}}], "Short Film"}
-          ], else: "Unknown", as: "length_category")
+          ],
+          else: "Unknown",
+          as: "length_category"
+        )
         |> Selecto.filter([{"length", {:not, nil}}])
         # Limit results
         |> Selecto.filter([{"film_id", {:<, 20}}])
@@ -154,7 +162,10 @@ defmodule SelectoCaseExpressionsTest do
           [
             {[{"rating", "R"}, {"length", {:>, 120}}], "Long Adult Film"},
             {[{"rating", {:in, ["PG", "PG-13"]}}], "Teen Film"}
-          ], else: "Regular Film", as: "film_category")
+          ],
+          else: "Regular Film",
+          as: "film_category"
+        )
         # Limit results
         |> Selecto.filter([{"film_id", {:<, 30}}])
         |> Selecto.execute()
@@ -179,7 +190,10 @@ defmodule SelectoCaseExpressionsTest do
           [
             {"G", "General"},
             {"PG", "Parental"}
-          ], else: "Other", as: "rating_desc")
+          ],
+          else: "Other",
+          as: "rating_desc"
+        )
         |> Selecto.gen_sql([])
 
       assert String.contains?(sql, "CASE rating")
@@ -204,7 +218,10 @@ defmodule SelectoCaseExpressionsTest do
           [
             {[{"length", {:>, 120}}], "Long"},
             {[{"length", {:<, 90}}], "Short"}
-          ], else: "Medium", as: "length_desc")
+          ],
+          else: "Medium",
+          as: "length_desc"
+        )
         |> Selecto.gen_sql([])
 
       assert String.contains?(sql, "CASE")
@@ -276,7 +293,10 @@ defmodule SelectoCaseExpressionsTest do
             {"PG", "2"},
             {"PG-13", "3"},
             {"R", "4"}
-          ], else: "5", as: "rating_order")
+          ],
+          else: "5",
+          as: "rating_order"
+        )
         # Order by the original field instead of calculated field
         |> Selecto.order_by([{"rating", :asc}])
         # Limit results
@@ -299,7 +319,10 @@ defmodule SelectoCaseExpressionsTest do
           [
             {[{"length", {:>, 120}}], "Long"},
             {[{"length", {:<, 90}}], "Short"}
-          ], else: "Medium", as: "length_category")
+          ],
+          else: "Medium",
+          as: "length_category"
+        )
         # Don't select the CASE alias separately
         |> Selecto.select([{:count, "*"}])
         # Group by the base field instead of calculated field
@@ -331,12 +354,18 @@ defmodule SelectoCaseExpressionsTest do
           [
             {"G", "Family"},
             {"R", "Adult"}
-          ], else: "General", as: "audience")
+          ],
+          else: "General",
+          as: "audience"
+        )
         |> Selecto.case_when_select(
           [
             {[{"length", {:>, 120}}], "Long"},
             {[{"length", {:<, 90}}], "Short"}
-          ], else: "Medium", as: "duration")
+          ],
+          else: "Medium",
+          as: "duration"
+        )
         # Limit results
         |> Selecto.filter([{"film_id", {:<, 10}}])
         |> Selecto.execute()
@@ -362,7 +391,10 @@ defmodule SelectoCaseExpressionsTest do
           [
             {nil, "Unrated"},
             {"G", "General"}
-          ], else: "Other", as: "rating_desc")
+          ],
+          else: "Other",
+          as: "rating_desc"
+        )
         # Limit results
         |> Selecto.filter([{"film_id", {:<, 10}}])
         |> Selecto.execute()
@@ -387,7 +419,10 @@ defmodule SelectoCaseExpressionsTest do
                {"rating", {:in, ["G", "PG"]}},
                {"rental_rate", {:<, 2.50}}
              ], "Budget Family"}
-          ], else: "Standard", as: "film_tier")
+          ],
+          else: "Standard",
+          as: "film_tier"
+        )
         # Limit dataset
         |> Selecto.filter([{"film_id", {:<, 50}}])
         |> Selecto.execute()

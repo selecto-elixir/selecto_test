@@ -14,7 +14,7 @@ defmodule SelectoComponentsNestedTableScalarSubselectTest do
     end
 
     test "normalizes scalar JSON arrays using map column config" do
-      config = %{columns: [%{field: "posts[title]"}]}
+      config = %{columns: [%{field: "posts.title"}]}
 
       parsed = NestedTable.parse_subselect_data(~s(["A","B"]), config)
 

@@ -248,7 +248,8 @@ defmodule SelectoTest.Overlays.PagilaDomainFilmsOverlay do
               raise ArgumentError, "BETWEEN requires start and end values"
             end
 
-          _ -> raise ArgumentError, "BETWEEN requires start and end values"
+          _ ->
+            raise ArgumentError, "BETWEEN requires start and end values"
         end
 
       true ->

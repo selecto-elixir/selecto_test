@@ -5,7 +5,7 @@ defmodule SelectoTest.MixProject do
     [
       app: :selecto_test,
       version: "0.3.2",
-      elixir: "~> 1.17",
+      elixir: "~> 1.18",
       compilers: [:phoenix_live_view] ++ Mix.compilers(),
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -70,6 +70,7 @@ defmodule SelectoTest.MixProject do
       {:jason, "~> 1.2"},
       {:bandit, "~> 1.5"},
       selecto_dep(),
+      selecto_db_postgresql_dep(),
       selecto_components_dep(),
       selecto_mix_dep(),
       {:timex, "~> 3.7.9"},
@@ -84,7 +85,7 @@ defmodule SelectoTest.MixProject do
 
   defp selecto_dep do
     if use_local_ecosystem?() do
-      {:selecto, path: "./vendor/selecto", override: true}
+      {:selecto, path: "../selecto", override: true}
     else
       {:selecto, ">= 0.3.3 and < 0.4.0", override: true}
     end
@@ -100,9 +101,17 @@ defmodule SelectoTest.MixProject do
 
   defp selecto_postgis_dep do
     if use_local_ecosystem?() do
-      {:selecto_postgis, path: "./vendor/selecto_postgis", override: true}
+      {:selecto_postgis, path: "../selecto_postgis", override: true}
     else
       {:selecto_postgis, "~> 0.1", override: true}
+    end
+  end
+
+  defp selecto_db_postgresql_dep do
+    if use_local_ecosystem?() do
+      {:selecto_db_postgresql, path: "../selecto_db_postgresql", override: true}
+    else
+      {:selecto_db_postgresql, ">= 0.1.0 and < 0.2.0", override: true}
     end
   end
 
@@ -112,7 +121,7 @@ defmodule SelectoTest.MixProject do
 
   defp selecto_components_dep do
     if use_local_ecosystem?() do
-      {:selecto_components, path: "./vendor/selecto_components", override: true}
+      {:selecto_components, path: "../selecto_components", override: true}
     else
       {:selecto_components, ">= 0.3.4 and < 0.4.0", override: true}
     end
@@ -120,7 +129,7 @@ defmodule SelectoTest.MixProject do
 
   defp selecto_mix_dep do
     if use_local_ecosystem?() do
-      {:selecto_mix, path: "./vendor/selecto_mix", only: [:dev, :test]}
+      {:selecto_mix, path: "../selecto_mix", only: [:dev, :test]}
     else
       {:selecto_mix, "~> 0.3.2", only: [:dev, :test]}
     end

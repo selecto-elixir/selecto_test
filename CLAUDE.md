@@ -128,7 +128,7 @@ When making changes, you may need to modify code across multiple projects to mai
 - **SelectoMix**: Code generation tools for domains and schemas
 - **Phoenix LiveView**: Powers the reactive UI components (v1.1+)
 - **Ecto**: Database operations with PostgreSQL (v3.12+)
-- **Tailwind CSS + Alpine.js**: Required for SelectoComponents styling and interactivity
+- **Tailwind CSS**: Required for SelectoComponents styling
 - **Timex**: Date/time handling across all Selecto components
 - **UUID**: Identifier generation for saved views and components
 
@@ -166,9 +166,8 @@ When making changes, you may need to modify code across multiple projects to mai
 ### Asset Pipeline
 - **Tailwind CSS**: Custom configuration including SelectoComponents content paths
 - **JavaScript Integration**: 
-  - **Colocated Hooks**: Phoenix LiveView 1.1+ colocated hooks for SelectoComponents (replaces standalone JS files)
-  - **Legacy Hooks**: Color scheme management in `assets/js/hooks/` for app-level functionality
-  - Alpine.js integration required for SelectoComponents functionality
+  - **Colocated Hooks**: Phoenix LiveView 1.1+ colocated hooks for SelectoComponents and app-level LiveViews
+  - **App Hooks**: Keep only truly app-specific hooks in `assets/js/hooks/`
 - **Build Process**: esbuild + Tailwind with development and production targets
 - **Colocated Hook Compilation**: Hooks are automatically extracted during `mix compile` to `_build/{env}/phoenix-colocated/`
 

@@ -12,7 +12,7 @@ This is an Elixir/Phoenix project that serves as a test and development environm
 *   **Selecto:** A library for creating data-driven components.
 *   **SelectoComponents:** A set of pre-built components for use with Selecto.
 *   **Tailwind CSS:** For styling the user interface.
-*   **Alpine.js:** For client-side interactivity.
+*   **Phoenix LiveView colocated hooks:** For client-side interactivity.
 
 **Architecture:**
 
@@ -77,4 +77,4 @@ The application will be available at `http://localhost:4080`.
 
 *   **Styling:** The project uses Tailwind CSS for styling. The configuration is in `assets/tailwind.config.js`.
 
-*   **JavaScript:** The project uses Alpine.js for client-side interactivity. The main JavaScript file is `assets/js/app.js`.
+*   **JavaScript:** The project uses Phoenix LiveView hooks for client-side interactivity. The main JavaScript file is `assets/js/app.js`.

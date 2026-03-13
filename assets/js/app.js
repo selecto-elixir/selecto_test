@@ -20,40 +20,72 @@ import "phoenix_html"
 // Establish Phoenix Socket and LiveView configuration.
 import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
+import {hooks as colocatedHooks} from "phoenix-colocated/selecto_test"
+import {hooks as selectoComponentsHooks} from "phoenix-colocated/selecto_components"
 import topbar from "../vendor/topbar"
 import hooks from "./hooks";
 
 // Load Chart.js globally
 import "../vendor/chart.js"
 
-// Import colocated hooks from Phoenix LiveView
-// Colocated hooks are automatically extracted and compiled
-// Import SelectoComponents colocated hooks
-import { selectoComponentsHooks } from "./selecto_components_hooks"
-
 // Combine all hooks
 let myHooks = {
   ...hooks,
+  ...colocatedHooks,
   ...selectoComponentsHooks
 }
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
     params: {_csrf_token: csrfToken},
     hooks: myHooks,
-    dom: {
-        onBeforeElUpdated(from, to) {
-        if (from._x_dataStack) {
-            window.Alpine.clone(from, to);
-        }
-        },
-    },
-
 })
 
 // Show progress bar on live navigation and form submits
 topbar.config({barColors: {0: "#29d"}, shadowColor: "rgba(0, 0, 0, .3)"})
 window.addEventListener("phx:page-loading-start", _info => topbar.show(300))
 window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
+
+window.addEventListener("phx:download_csv", (event) => {
+  const { filename, content } = event.detail || {}
+
+  if (!filename || content === undefined || content === null) {
+    return
+  }
+
+  const blob = new Blob([content], { type: "text/csv;charset=utf-8" })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement("a")
+
+  link.href = url
+  link.download = filename
+  link.style.display = "none"
+
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+})
+
+window.addEventListener("phx:download_file", (event) => {
+  const { filename, content, mime_type } = event.detail || {}
+
+  if (!filename || content === undefined || content === null) {
+    return
+  }
+
+  const blob = new Blob([content], { type: mime_type || "text/plain;charset=utf-8" })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement("a")
+
+  link.href = url
+  link.download = filename
+  link.style.display = "none"
+
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+})
 
 // connect if there are any LiveViews on the page
 liveSocket.connect()
@@ -63,4 +95,3 @@ liveSocket.connect()
 // >> liveSocket.enableLatencySim(1000)  // enabled for duration of browser session
 // >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket
-

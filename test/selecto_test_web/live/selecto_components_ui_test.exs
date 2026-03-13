@@ -67,7 +67,7 @@ defmodule SelectoTestWeb.SelectoComponentsUITest do
       # The rating filter might be in the SelectoComponents form or available as an option
       rating_present =
         html =~ "rating" or html =~ "Rating" or
-          html =~ "film[rating]" or html =~ "Film Rating" or
+          html =~ "film.rating" or html =~ "Film Rating" or
           html =~ "select" or html =~ "filter"
 
       # Should have some form of rating interface or filter capability
@@ -89,7 +89,12 @@ defmodule SelectoTestWeb.SelectoComponentsUITest do
           result =
             view
             |> element("form")
-            |> render_submit()
+            |> render_change(%{
+              "view_mode" => "detail",
+              "per_page" => "10",
+              "max_rows" => "10",
+              "aggregate_per_page" => "10"
+            })
 
           # Should return HTML response (not crash)
           assert is_binary(result)
@@ -151,7 +156,12 @@ defmodule SelectoTestWeb.SelectoComponentsUITest do
           result =
             view
             |> element("form")
-            |> render_submit()
+            |> render_change(%{
+              "view_mode" => "detail",
+              "per_page" => "10",
+              "max_rows" => "10",
+              "aggregate_per_page" => "10"
+            })
 
           assert is_binary(result)
         rescue
@@ -195,7 +205,7 @@ defmodule SelectoTestWeb.SelectoComponentsUITest do
       # This is a basic check - actual interaction depends on SelectoComponents UI
       rating_filter_present =
         html =~ "Film Rating" or
-          html =~ "film[rating]" or
+          html =~ "film.rating" or
           html =~ "rating"
 
       if rating_filter_present do
@@ -340,9 +350,9 @@ defmodule SelectoTestWeb.SelectoComponentsUITest do
   describe "Error handling and edge cases" do
     test "handles invalid routes gracefully", %{conn: conn} do
       # Test non-existent route path
-      assert_error_sent 404, fn ->
+      assert_error_sent(404, fn ->
         live(conn, "/nonexistent/route", on_error: :warn)
-      end
+      end)
     end
 
     test "handles malformed requests", %{conn: conn} do
@@ -360,7 +370,7 @@ defmodule SelectoTestWeb.SelectoComponentsUITest do
           result =
             view
             |> element("form")
-            |> render_submit(%{"invalid" => "data"})
+            |> render_change(%{"invalid" => "data"})
 
           # Should handle gracefully (not crash)
           assert is_binary(result)
